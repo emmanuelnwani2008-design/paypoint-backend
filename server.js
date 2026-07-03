@@ -1,5 +1,15 @@
 // Load environment variables from .env file
 require('dotenv').config({ path: './.env' });
+require('dotenv').config();
+
+// Check required environment variables
+const requiredEnv = ['SUPABASE_URL', 'SUPABASE_ANON_KEY', 'PAYSTACK_SECRET_KEY'];
+for (const env of requiredEnv) {
+    if (!process.env[env]) {
+        console.error(`❌ Missing ${env} environment variable`);
+        process.exit(1);
+    }
+}
 
 const express = require('express');
 const path = require('path');
