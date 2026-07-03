@@ -29,14 +29,13 @@ const app = express();
 const port = process.env.PORT || 3000;
 
 // ENV validation (fail fast if critical values missing)
-const SUPABASE_URL = process.env.SUPABASE_URL;
-const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY;
-if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
-    console.error('❌ Missing Supabase configuration. Set SUPABASE_URL and SUPABASE_ANON_KEY.');
-    process.exit(1);
-}
+// Initialize Supabase client - HARDCODED FOR RENDER DEPLOYMENT
+const supabaseUrl = 'https://mqggkwhdbwkaftmewdca.supabase.co';
+const supabaseAnonKey = 'sb_publishable_u1Ag_qpF5L8LbHc6ZzYnxQ_z4w3ExhV';
 
-const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+// Skip validation since we hardcoded it
+const supabase = createClient(supabaseUrl, supabaseAnonKey);
+console.log('✅ Supabase connected with hardcoded credentials');
 
 // Security middlewares (helmet, cors, rate-limit, xss-clean, logging)
 const allowed = (process.env.ALLOWED_ORIGINS || 'http://localhost:3000').split(',').map(s => s.trim());
