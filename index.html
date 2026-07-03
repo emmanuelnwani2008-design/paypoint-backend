@@ -524,7 +524,7 @@
         // ============================================
         // CONFIGURATION
         // ============================================
-        const API_URL = window.__API_URL__ || '/api';
+        const API_URL = window.__API_URL__ || 'https://paypoint-backend-9m63.onrender.com/api';
 
         function getAuthHeaders() {
             const token = localStorage.getItem('paypoint_session');
@@ -776,7 +776,7 @@
             navLogout?.addEventListener('click', async (e) => {
                 e.preventDefault();
                 try {
-                    await fetch(https://paypoint-backend-9m63.onrender.com/api/auth/logout', { method: 'POST' });
+                    await fetch(`${API_URL}/auth/logout`, { method: 'POST' });
                 } catch (err) {
                     console.warn('Logout request failed, continuing anyway.', err);
                 }
