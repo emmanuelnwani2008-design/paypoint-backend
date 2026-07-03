@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PayPoint · Finance OS</title>
+    <title>PayPoint · Finance OS for Creators</title>
     <style>
         /* ============================================
                GLOBAL RESET & VARIABLES
@@ -776,7 +776,7 @@
             navLogout?.addEventListener('click', async (e) => {
                 e.preventDefault();
                 try {
-                    await fetch('http://localhost:3000/api/auth/logout', { method: 'POST' });
+                    await fetch(https://paypoint-backend-9m63.onrender.com/api/auth/logout', { method: 'POST' });
                 } catch (err) {
                     console.warn('Logout request failed, continuing anyway.', err);
                 }

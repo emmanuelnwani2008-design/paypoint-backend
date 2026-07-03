@@ -960,7 +960,7 @@
         document.getElementById('navLogout')?.addEventListener('click', async (e) => {
             e.preventDefault();
             try {
-                await fetch('http://localhost:3000/api/auth/logout', { method: 'POST' });
+                await fetch(https://paypoint-backend-9m63.onrender.com/api/auth/logout', { method: 'POST' });
             } catch (err) {}
             localStorage.removeItem('paypoint_user');
             localStorage.removeItem('paypoint_session');
