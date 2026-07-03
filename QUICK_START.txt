@@ -1,0 +1,77 @@
+# QUICK REFERENCE - COPY-PASTE COMMANDS
+
+## 🔴 CRITICAL URLS & KEYS
+```
+GitHub Repo: https://github.com/emmanuelnwani2008-design/paypoint-backend
+Render Backend: https://paypoint-backend-9m63.onrender.com
+Render Dashboard: https://render.com/dashboard
+Netlify Dashboard: https://app.netlify.com
+Paystack Dashboard: https://dashboard.paystack.co/settings/developers
+```
+
+## 💾 GIT COMMANDS - PASTE IN VS CODE TERMINAL
+```bash
+cd "C:\Users\Emmanuel Nwani\Desktop\paypoint-backend"
+git add .
+git commit -m "Initial deployment setup with Render backend integration"
+git branch -M main
+git remote add origin https://github.com/emmanuelnwani2008-design/paypoint-backend.git
+git push -u origin main
+```
+
+## 🌍 RENDER ENVIRONMENT VARIABLES - COPY THESE
+```
+SUPABASE_URL=https://mqggkwhdbwkaftmewdca.supabase.co
+SUPABASE_ANON_KEY=sb_publishable_ulAg_qpF5L8LbHc6ZzYnxQ_z4w3ExhV
+PAYSTACK_SECRET_KEY=sk_test_272bd56a30ebfb3a214e39c6d7030bb4dc256571
+FRONTEND_URL=[YOUR_NETLIFY_URL_HERE]
+ALLOWED_ORIGINS=[YOUR_NETLIFY_URL_HERE],https://paypoint-backend-9m63.onrender.com
+JWT_SECRET=paypoint_jwt_secret_key_2024_change_this_in_production
+NODE_ENV=production
+PORT=3000
+```
+
+## 🔗 PAYSTACK WEBHOOK URL
+```
+https://paypoint-backend-9m63.onrender.com/api/payments/webhook
+```
+
+## 📋 RENDER SETUP CHECKLIST
+- [ ] Create Web Service
+- [ ] Connect GitHub repo
+- [ ] Set Build Command: `npm install`
+- [ ] Set Start Command: `npm run start:prod`
+- [ ] Add all env variables above
+- [ ] Wait for "Live" status
+
+## 📋 NETLIFY SETUP CHECKLIST
+- [ ] Click "Add new site"
+- [ ] Select "Import an existing project"
+- [ ] Choose GitHub > paypoint-backend repo
+- [ ] Leave build command empty
+- [ ] Publish directory: `.`
+- [ ] Click Deploy
+- [ ] Copy your URL
+
+## ✅ EVERYTHING NEEDED IS ALREADY IN YOUR CODE:
+✅ `config.js` - Handles API URL routing
+✅ `.gitignore` - Protects sensitive files
+✅ `netlify.toml` - Frontend config updated
+✅ `render.yaml` - Backend config ready
+✅ HTML files - All use config.js
+✅ `.env` - Has all your keys (KEEP LOCAL)
+
+## 🚀 AFTER DEPLOYMENT - TEST IN THIS ORDER:
+1. Open Netlify URL → Should see login page
+2. Sign up → Check email for verification
+3. Login → Should see dashboard
+4. Click Deals → Should load
+5. Try a payment → Test card: 4111 1111 1111 1111
+6. Check Render logs → Should see 200 status codes
+
+## 🆘 IF SOMETHING BREAKS:
+1. Check Render Logs (Dashboard > Logs tab)
+2. Verify all env variables match EXACTLY
+3. Restart service (Dashboard > Settings > Restart)
+4. Wait 2-3 minutes
+5. Try again

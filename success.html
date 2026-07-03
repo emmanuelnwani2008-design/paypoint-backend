@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Payment Successful · PayPoint</title>
+  <style>
+    body{font-family:Inter,system-ui,Arial;background:#0A0E1A;color:#fff;display:flex;align-items:center;justify-content:center;height:100vh;margin:0}
+    .card{background:#071029;padding:32px;border-radius:12px;max-width:720px;text-align:center;border:1px solid rgba(255,255,255,0.04)}
+    a.button{display:inline-block;margin-top:20px;padding:10px 18px;border-radius:8px;background:linear-gradient(135deg,#F59E0B,#D97706);color:#071029;text-decoration:none;font-weight:700}
+    .muted{color:#94A3B8}
+  </style>
+  <script src="config.js"></script>
+</head>
+<body>
+  <div class="card">
+    <h1>Processing payment...</h1>
+    <p class="muted" id="status">Verifying transaction, please wait.</p>
+    <div id="details" style="margin-top:12px"></div>
+    <a class="button" id="back" href="/index.html">Back to dashboard</a>
+  </div>
+
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const ref = params.get('reference') || params.get('tx_ref') || params.get('reference_code');
+    const API_URL = window.__API_URL__ || '/api';
+
+    async function verify(r) {
+      if (!r) {
+        document.getElementById('status').textContent = 'No reference found in URL.';
+        return;
+      }
+      document.getElementById('status').textContent = 'Verifying reference ' + r + '...';
+      try {
+        const token = localStorage.getItem('paypoint_session');
+        const headers = { 'Content-Type': 'application/json', ...(token?{ Authorization: `Bearer ${token}` }:{}) };
+        const res = await fetch(`${API_URL}/payments/verify/${encodeURIComponent(r)}`, { headers });
+        const j = await res.json();
+        if (res.ok && j.success) {
+          document.getElementById('status').textContent = 'Payment verified: ' + (j.paid? 'SUCCESS' : j.status);
+          document.getElementById('details').innerHTML = `<p>Amount: $${j.amount}</p><p>For: ${j.brand_name || 'unknown'}</p>`;
+        } else {
+          document.getElementById('status').textContent = 'Could not verify payment.';
+          document.getElementById('details').textContent = JSON.stringify(j || {});
+        }
+      } catch (err) {
+        document.getElementById('status').textContent = 'Verification failed';
+        document.getElementById('details').textContent = String(err);
+      }
+    }
+
+    verify(ref);
+  </script>
+</body>
+</html>

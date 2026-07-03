@@ -1,0 +1,999 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PayPoint · Deals</title>
+    <style>
+        /* ============================================
+           GLOBAL RESET & VARIABLES
+        ============================================ */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #0A0E1A;
+            color: #FFFFFF;
+            padding: 24px;
+            min-height: 100vh;
+        }
+
+        .app-container {
+            max-width: 1280px;
+            margin: 0 auto;
+        }
+
+        /* ============================================
+           NAVBAR
+        ============================================ */
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 0 32px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            margin-bottom: 32px;
+        }
+
+        .logo {
+            font-size: 28px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            background: linear-gradient(135deg, #F59E0B, #FCD34D);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-decoration: none;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 32px;
+            align-items: center;
+        }
+
+        .nav-links a {
+            color: #94A3B8;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+
+        .nav-links a:hover {
+            color: #FFFFFF;
+        }
+
+        .nav-links a.active {
+            color: #F59E0B;
+        }
+
+        .user-badge {
+            background: rgba(255, 255, 255, 0.06);
+            padding: 8px 16px;
+            border-radius: 40px;
+            font-size: 13px;
+            color: #FFFFFF;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .nav-links a.logout {
+            color: #EF4444;
+        }
+
+        .nav-links a.logout:hover {
+            color: #DC2626;
+        }
+
+        /* ============================================
+           PAGE HEADER
+        ============================================ */
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .page-header h1 {
+            font-size: 28px;
+            font-weight: 700;
+        }
+
+        .page-header h1 span {
+            color: #94A3B8;
+            font-weight: 400;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #F59E0B, #D97706);
+            border: none;
+            padding: 10px 20px;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 14px;
+            color: #0A0E1A;
+            cursor: pointer;
+            transition: opacity 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary:hover {
+            opacity: 0.9;
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            padding: 10px 20px;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 14px;
+            color: #94A3B8;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        /* ============================================
+           STATS ROW
+        ============================================ */
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 12px;
+            padding: 16px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .stat-card .label {
+            color: #94A3B8;
+            font-size: 13px;
+        }
+
+        .stat-card .value {
+            font-size: 20px;
+            font-weight: 700;
+        }
+
+        .stat-card .value.gold {
+            color: #F59E0B;
+        }
+        .stat-card .value.green {
+            color: #10B981;
+        }
+        .stat-card .value.red {
+            color: #EF4444;
+        }
+
+        /* ============================================
+           SEARCH & FILTER
+        ============================================ */
+        .search-filter-row {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .search-box {
+            flex: 1;
+            min-width: 200px;
+            padding: 10px 16px;
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            color: #FFFFFF;
+            font-size: 14px;
+        }
+
+        .search-box:focus {
+            outline: none;
+            border-color: #F59E0B;
+        }
+
+        .search-box::placeholder {
+            color: #64748B;
+        }
+
+        .filter-select {
+            padding: 10px 16px;
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            color: #FFFFFF;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        .filter-select:focus {
+            outline: none;
+            border-color: #F59E0B;
+        }
+
+        .filter-select option {
+            background: #1A1F2E;
+            color: #FFFFFF;
+        }
+
+        /* ============================================
+           DEALS TABLE
+        ============================================ */
+        .table-container {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 16px;
+            overflow: hidden;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        thead {
+            background: rgba(255, 255, 255, 0.04);
+        }
+
+        th {
+            text-align: left;
+            padding: 14px 20px;
+            font-size: 12px;
+            font-weight: 600;
+            color: #94A3B8;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        td {
+            padding: 14px 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.04);
+            font-size: 14px;
+        }
+
+        td .brand-name {
+            font-weight: 600;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 14px;
+            border-radius: 40px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .status-badge.pending {
+            background: rgba(245, 158, 11, 0.15);
+            color: #F59E0B;
+        }
+
+        .status-badge.paid {
+            background: rgba(16, 185, 129, 0.15);
+            color: #10B981;
+        }
+
+        .status-badge.overdue {
+            background: rgba(239, 68, 68, 0.15);
+            color: #EF4444;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 8px;
+        }
+
+        .action-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 16px;
+            transition: background 0.2s;
+        }
+
+        .action-btn.edit {
+            color: #F59E0B;
+        }
+
+        .action-btn.edit:hover {
+            background: rgba(245, 158, 11, 0.1);
+        }
+
+        .action-btn.delete {
+            color: #EF4444;
+        }
+
+        .action-btn.delete:hover {
+            background: rgba(239, 68, 68, 0.1);
+        }
+
+        /* ============================================
+           EMPTY STATE
+        ============================================ */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #64748B;
+        }
+
+        .empty-state .icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
+
+        .empty-state h3 {
+            color: #FFFFFF;
+            margin-bottom: 8px;
+        }
+
+        /* ============================================
+           MODAL (Edit / Add)
+        ============================================ */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(10, 14, 26, 0.85);
+            backdrop-filter: blur(8px);
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal {
+            background: #111827;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 24px;
+            padding: 40px;
+            width: 100%;
+            max-width: 460px;
+            box-shadow: 0 32px 80px rgba(0, 0, 0, 0.8);
+        }
+
+        .modal h2 {
+            font-size: 24px;
+            margin-bottom: 6px;
+            color: #FFFFFF;
+        }
+
+        .modal p {
+            color: #94A3B8;
+            font-size: 14px;
+            margin-bottom: 24px;
+        }
+
+        .modal label {
+            display: block;
+            font-size: 13px;
+            font-weight: 500;
+            color: #CBD5E1;
+            margin-bottom: 6px;
+        }
+
+        .modal input,
+        .modal select {
+            width: 100%;
+            padding: 12px 16px;
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            color: #FFFFFF;
+            font-size: 14px;
+            margin-bottom: 18px;
+            transition: border 0.2s;
+        }
+
+        .modal input:focus,
+        .modal select:focus {
+            outline: none;
+            border-color: #F59E0B;
+        }
+
+        .modal select option {
+            background: #1A1F2E;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 8px;
+        }
+
+        .btn-save {
+            flex: 1;
+            background: linear-gradient(135deg, #F59E0B, #D97706);
+            border: none;
+            padding: 14px;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 15px;
+            color: #0A0E1A;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        .btn-save:hover {
+            opacity: 0.9;
+        }
+
+        .btn-cancel {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            padding: 14px;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 15px;
+            color: #94A3B8;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .btn-cancel:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        /* ============================================
+           RESPONSIVE
+        ============================================ */
+        @media (max-width: 768px) {
+            .navbar {
+                flex-direction: column;
+                gap: 12px;
+                align-items: flex-start;
+            }
+
+            .nav-links {
+                flex-wrap: wrap;
+                gap: 16px;
+            }
+
+            .stats-row {
+                grid-template-columns: 1fr;
+            }
+
+            .page-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .search-filter-row {
+                flex-direction: column;
+            }
+
+            .table-container {
+                overflow-x: auto;
+            }
+
+            table {
+                font-size: 12px;
+            }
+
+            th,
+            td {
+                padding: 10px 12px;
+            }
+
+            .action-buttons {
+                flex-direction: column;
+            }
+
+            .modal {
+                margin: 16px;
+                padding: 24px;
+            }
+        }
+    </style>
+    <script src="config.js"></script>
+</head>
+<body>
+
+    <div class="app-container">
+        <!-- ==========================================
+        NAVBAR
+        ========================================== -->
+        <nav class="navbar">
+            <a href="index.html" class="logo">PayPoint</a>
+            <div class="nav-links">
+                <a href="index.html">Dashboard</a>
+                <a href="deals.html" class="active">Deals</a>
+                <a href="#" id="navExpenses">Expenses</a>
+                <a href="#" id="navInvoices">Invoices</a>
+                <a href="#" id="navCreator">Creator</a>
+                <span class="user-badge" id="userBadge">👤 Creator</span>
+                <a href="#" class="logout" id="navLogout">Logout</a>
+            </div>
+        </nav>
+
+        <!-- ==========================================
+        PAGE HEADER
+        ========================================== -->
+        <div class="page-header">
+            <h1>Deals <span>· Manage all your brand deals</span></h1>
+            <div class="header-actions">
+                <button class="btn-primary" id="openModalBtn">+ New Deal</button>
+            </div>
+        </div>
+
+        <!-- ==========================================
+        STATS ROW
+        ========================================== -->
+        <div class="stats-row">
+            <div class="stat-card">
+                <span class="label">Total Deals</span>
+                <span class="value" id="totalDeals">0</span>
+            </div>
+            <div class="stat-card">
+                <span class="label">Total Revenue</span>
+                <span class="value gold" id="totalRevenue">$0</span>
+            </div>
+            <div class="stat-card">
+                <span class="label">Pending Payments</span>
+                <span class="value red" id="pendingPayments">$0</span>
+            </div>
+        </div>
+
+        <!-- ==========================================
+        SEARCH & FILTER
+        ========================================== -->
+        <div class="search-filter-row">
+            <input type="text" class="search-box" id="searchInput" placeholder="🔍 Search by brand name...">
+            <select class="filter-select" id="filterSelect">
+                <option value="all">All Deals</option>
+                <option value="pending">Pending</option>
+                <option value="paid">Paid</option>
+                <option value="overdue">Overdue</option>
+            </select>
+            <button class="btn-secondary" id="refreshBtn">🔄 Refresh</button>
+        </div>
+
+        <!-- ==========================================
+        DEALS TABLE
+        ========================================== -->
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Brand</th>
+                        <th>Amount</th>
+                        <th>Deliverable</th>
+                        <th>Due Date</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="dealsTableBody">
+                    <tr>
+                        <td colspan="6">
+                            <div class="empty-state">
+                                <div class="icon">📋</div>
+                                <h3>No deals yet</h3>
+                                <p>Add your first brand deal to start tracking.</p>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- ==========================================
+    MODAL (Add / Edit Deal)
+    ========================================== -->
+    <div class="modal-overlay" id="dealModal">
+        <div class="modal">
+            <h2 id="modalTitle">💰 New Brand Deal</h2>
+            <p id="modalSubtitle">Log a new deal to start tracking your income.</p>
+
+            <label for="modalBrand">Brand Name</label>
+            <input type="text" id="modalBrand" placeholder="e.g. Nike, Glossier, Samsung">
+
+            <label for="modalAmount">Amount ($)</label>
+            <input type="number" id="modalAmount" placeholder="e.g. 5000">
+
+            <label for="modalDeliverable">Deliverable</label>
+            <input type="text" id="modalDeliverable" placeholder="e.g. 1 TikTok video">
+
+            <label for="modalDueDate">Due Date</label>
+            <input type="date" id="modalDueDate">
+
+            <label for="modalStatus">Status</label>
+            <select id="modalStatus">
+                <option value="pending">Pending</option>
+                <option value="paid">Paid</option>
+                <option value="overdue">Overdue</option>
+            </select>
+
+            <input type="hidden" id="modalDealId" value="">
+
+            <div class="modal-actions">
+                <button class="btn-cancel" id="closeModalBtn">Cancel</button>
+                <button class="btn-save" id="saveDealBtn">Save Deal</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==========================================
+    JAVASCRIPT
+    ========================================== -->
+    <script>
+        // ============================================
+        // CONFIGURATION
+        // ============================================
+        const API_URL = window.__API_URL__ || '/api';
+        let allDeals = [];
+        let currentEditId = null;
+
+        // ============================================
+        // DOM REFERENCES
+        // ============================================
+        const tableBody = document.getElementById('dealsTableBody');
+        const totalDealsEl = document.getElementById('totalDeals');
+        const totalRevenueEl = document.getElementById('totalRevenue');
+        const pendingPaymentsEl = document.getElementById('pendingPayments');
+        const searchInput = document.getElementById('searchInput');
+        const filterSelect = document.getElementById('filterSelect');
+        const refreshBtn = document.getElementById('refreshBtn');
+        const openModalBtn = document.getElementById('openModalBtn');
+        const closeModalBtn = document.getElementById('closeModalBtn');
+        const saveDealBtn = document.getElementById('saveDealBtn');
+        const modal = document.getElementById('dealModal');
+        const modalTitle = document.getElementById('modalTitle');
+        const modalSubtitle = document.getElementById('modalSubtitle');
+        const modalBrand = document.getElementById('modalBrand');
+        const modalAmount = document.getElementById('modalAmount');
+        const modalDeliverable = document.getElementById('modalDeliverable');
+        const modalDueDate = document.getElementById('modalDueDate');
+        const modalStatus = document.getElementById('modalStatus');
+        const modalDealId = document.getElementById('modalDealId');
+
+        // ============================================
+        // CHECK AUTHENTICATION
+        // ============================================
+        function checkAuth() {
+            const user = localStorage.getItem('paypoint_user');
+            if (!user) {
+                window.location.href = 'login.html';
+            } else {
+                try {
+                    const userData = JSON.parse(user);
+                    document.getElementById('userBadge').textContent = `👤 ${userData?.user_metadata?.name || 'Creator'}`;
+                } catch (e) {
+                    document.getElementById('userBadge').textContent = '👤 Creator';
+                }
+            }
+        }
+
+        // ============================================
+        // AUTH HEADER HELPERS
+        // ============================================
+        function getAuthHeaders() {
+            const token = localStorage.getItem('paypoint_session');
+            return {
+                'Content-Type': 'application/json',
+                ...(token ? { Authorization: `Bearer ${token}` } : {})
+            };
+        }
+
+        // ============================================
+        // LOAD DEALS
+        // ============================================
+        async function loadDeals() {
+            try {
+            const res = await fetch(`${API_URL}/deals`, { headers: getAuthHeaders() });
+                const result = await res.json();
+
+                if (result.success) {
+                    allDeals = result.data || [];
+                    renderDeals(allDeals);
+                    updateStats(allDeals);
+                } else {
+                    showError('Failed to load deals');
+                }
+            } catch (err) {
+                console.error('Error loading deals:', err);
+                tableBody.innerHTML = `
+                    <tr>
+                        <td colspan="6">
+                            <div class="empty-state">
+                                <div class="icon">⚠️</div>
+                                <h3>Connection Error</h3>
+                                <p>Could not connect to backend. Make sure it's running on port 3000.</p>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }
+        }
+
+        // ============================================
+        // RENDER DEALS
+        // ============================================
+        function renderDeals(deals) {
+            if (deals.length === 0) {
+                tableBody.innerHTML = `
+                    <tr>
+                        <td colspan="6">
+                            <div class="empty-state">
+                                <div class="icon">📋</div>
+                                <h3>No deals found</h3>
+                                <p>Add your first brand deal to start tracking.</p>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            tableBody.innerHTML = '';
+            deals.forEach(deal => {
+                const tr = document.createElement('tr');
+                const dueDate = deal.due_date ? new Date(deal.due_date).toLocaleDateString() : 'Not set';
+
+                let statusClass = 'pending';
+                if (deal.status === 'paid') statusClass = 'paid';
+                if (deal.status === 'overdue') statusClass = 'overdue';
+
+                tr.innerHTML = `
+                    <td><span class="brand-name">${deal.brand_name}</span></td>
+                    <td>$${Number(deal.amount).toLocaleString()}</td>
+                    <td>${deal.deliverable || '—'}</td>
+                    <td>${dueDate}</td>
+                    <td><span class="status-badge ${statusClass}">${deal.status || 'pending'}</span></td>
+                    <td>
+                        <div class="action-buttons">
+                            <button class="action-btn edit" data-id="${deal.id}" title="Edit">✏️</button>
+                            <button class="action-btn delete" data-id="${deal.id}" title="Delete">🗑️</button>
+                        </div>
+                    </td>
+                `;
+                tableBody.appendChild(tr);
+            });
+
+            // Add event listeners to action buttons
+            document.querySelectorAll('.action-btn.edit').forEach(btn => {
+                btn.addEventListener('click', () => openEditModal(btn.dataset.id));
+            });
+
+            document.querySelectorAll('.action-btn.delete').forEach(btn => {
+                btn.addEventListener('click', () => deleteDeal(btn.dataset.id));
+            });
+        }
+
+        // ============================================
+        // UPDATE STATS
+        // ============================================
+        function updateStats(deals) {
+            const total = deals.length;
+            const revenue = deals.reduce((sum, d) => sum + Number(d.amount), 0);
+            const pending = deals
+                .filter(d => d.status === 'pending' || d.status === 'overdue')
+                .reduce((sum, d) => sum + Number(d.amount), 0);
+
+            totalDealsEl.textContent = total;
+            totalRevenueEl.textContent = `$${revenue.toLocaleString()}`;
+            pendingPaymentsEl.textContent = `$${pending.toLocaleString()}`;
+        }
+
+        // ============================================
+        // FILTER & SEARCH
+        // ============================================
+        function filterDeals() {
+            const search = searchInput.value.toLowerCase();
+            const filter = filterSelect.value;
+
+            let filtered = allDeals;
+
+            // Apply search
+            if (search) {
+                filtered = filtered.filter(d =>
+                    d.brand_name.toLowerCase().includes(search)
+                );
+            }
+
+            // Apply filter
+            if (filter !== 'all') {
+                filtered = filtered.filter(d => d.status === filter);
+            }
+
+            renderDeals(filtered);
+        }
+
+        searchInput.addEventListener('input', filterDeals);
+        filterSelect.addEventListener('change', filterDeals);
+        refreshBtn.addEventListener('click', loadDeals);
+
+        // ============================================
+        // OPEN ADD MODAL
+        // ============================================
+        openModalBtn.addEventListener('click', () => {
+            currentEditId = null;
+            modalTitle.textContent = '💰 New Brand Deal';
+            modalSubtitle.textContent = 'Log a new deal to start tracking your income.';
+            modalBrand.value = '';
+            modalAmount.value = '';
+            modalDeliverable.value = '';
+            modalDueDate.value = '';
+            modalStatus.value = 'pending';
+            modalDealId.value = '';
+            modal.classList.add('active');
+        });
+
+        // ============================================
+        // OPEN EDIT MODAL
+        // ============================================
+        function openEditModal(id) {
+            const deal = allDeals.find(d => String(d.id) === String(id));
+            if (!deal) return;
+
+            currentEditId = id;
+            modalTitle.textContent = '✏️ Edit Deal';
+            modalSubtitle.textContent = 'Update your deal details.';
+            modalBrand.value = deal.brand_name;
+            modalAmount.value = deal.amount;
+            modalDeliverable.value = deal.deliverable || '';
+            modalDueDate.value = deal.due_date || '';
+            modalStatus.value = deal.status || 'pending';
+            modalDealId.value = id;
+            modal.classList.add('active');
+        }
+
+        // ============================================
+        // CLOSE MODAL
+        // ============================================
+        function closeModal() {
+            modal.classList.remove('active');
+        }
+
+        closeModalBtn.addEventListener('click', closeModal);
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) closeModal();
+        });
+
+        // ============================================
+        // SAVE DEAL (Add or Update)
+        // ============================================
+        saveDealBtn.addEventListener('click', async () => {
+            const brand_name = modalBrand.value.trim();
+            const amount = modalAmount.value;
+            const deliverable = modalDeliverable.value.trim();
+            const due_date = modalDueDate.value;
+            const status = modalStatus.value;
+
+            if (!brand_name || !amount) {
+                alert('Brand Name and Amount are required!');
+                return;
+            }
+
+            const dealData = {
+                brand_name,
+                amount: parseFloat(amount),
+                deliverable: deliverable || '',
+                due_date: due_date || null,
+                status: status || 'pending'
+            };
+
+            const isEdit = currentEditId !== null;
+            const url = isEdit ? `${API_URL}/deals/${currentEditId}` : `${API_URL}/deals`;
+            const method = isEdit ? 'PUT' : 'POST';
+
+            try {
+                const res = await fetch(url, {
+                    method: method,
+                    headers: getAuthHeaders(),
+                    body: JSON.stringify(dealData)
+                });
+
+                const result = await res.json();
+                if (result.success) {
+                    alert(isEdit ? '✅ Deal updated successfully!' : '✅ Deal added successfully!');
+                    closeModal();
+                    loadDeals();
+                } else {
+                    alert('❌ Error: ' + (result.error || 'Unknown error'));
+                }
+            } catch (err) {
+                alert('❌ Could not connect to backend.');
+                console.error(err);
+            }
+        });
+
+        // ============================================
+        // DELETE DEAL
+        // ============================================
+        async function deleteDeal(id) {
+            if (!confirm('Are you sure you want to delete this deal?')) return;
+
+            try {
+                const res = await fetch(`${API_URL}/deals/${id}`, {
+                    method: 'DELETE'
+                });
+
+                const result = await res.json();
+                if (result.success) {
+                    alert('🗑️ Deal deleted successfully!');
+                    loadDeals();
+                } else {
+                    alert('❌ Error: ' + (result.error || 'Unknown error'));
+                }
+            } catch (err) {
+                alert('❌ Could not connect to backend.');
+                console.error(err);
+            }
+        }
+
+        // ============================================
+        // LOGOUT
+        // ============================================
+        document.getElementById('navLogout')?.addEventListener('click', async (e) => {
+            e.preventDefault();
+            try {
+                await fetch('http://localhost:3000/api/auth/logout', { method: 'POST' });
+            } catch (err) {}
+            localStorage.removeItem('paypoint_user');
+            localStorage.removeItem('paypoint_session');
+            window.location.href = 'login.html';
+        });
+
+        // ============================================
+        // PLACEHOLDER NAVIGATION
+        // ============================================
+        document.querySelectorAll('#navExpenses, #navInvoices, #navCreator').forEach(el => {
+            el.addEventListener('click', (e) => {
+                e.preventDefault();
+                alert('🛠️ This page is coming soon!');
+            });
+        });
+create table payments (
+  id uuid default gen_random_uuid() primary key,
+  user_id uuid,
+  deal_id uuid,
+  amount numeric,
+  reference text unique,
+  status text,
+  created_at timestamptz default now()
+);
+        // ============================================
+        // INIT
+        // ============================================
+        checkAuth();
+        loadDeals();
+
+        console.log('📋 PayPoint Deals Page loaded');
+        console.log('📡 Connected to:', API_URL);
+    </script>
+
+</body>
+</html>
