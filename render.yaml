@@ -9,12 +9,3 @@ services:
     branch: main
     healthCheckPath: "/health"
     disk: 512
-    envVars:
-      - key: SUPABASE_URL
-      - key: SUPABASE_ANON_KEY
-      - key: PAYSTACK_SECRET_KEY
-      - key: FRONTEND_URL
-      - key: ALLOWED_ORIGINS
-      - key: JWT_SECRET
-      - key: NODE_ENV
-      - key: PORT

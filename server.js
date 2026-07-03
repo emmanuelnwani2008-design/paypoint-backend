@@ -1,7 +1,6 @@
-console.log('SUPABASE_URL:', process.env.SUPABASE_URL);
-// Load environment variables from .env file
-require('dotenv').config({ path: './.env' });
+// Load environment variables from .env file (development). Render provides env at runtime.
 require('dotenv').config();
+console.log('SUPABASE_URL:', process.env.SUPABASE_URL);
 
 // Check required environment variables
 const requiredEnv = ['SUPABASE_URL', 'SUPABASE_ANON_KEY', 'PAYSTACK_SECRET_KEY'];
