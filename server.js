@@ -17,7 +17,7 @@ const { createClient } = require('@supabase/supabase-js');
 const PDFDocument = require('pdfkit');
 const crypto = require('crypto');
 const fetch = global.fetch || require('node-fetch');
-const { createSecurity } = require('./security');
+// Security is handled inline
 const { body, param, validationResult } = require('express-validator');
 const helmet = require('helmet');
 const cors = require('cors');
@@ -39,7 +39,16 @@ console.log('✅ Supabase connected with hardcoded credentials');
 
 // Security middlewares (helmet, cors, rate-limit, xss-clean, logging)
 const allowed = (process.env.ALLOWED_ORIGINS || 'http://localhost:3000').split(',').map(s => s.trim());
-createSecurity(app, { allowedOrigins: allowed, rate: { windowMs: 15 * 60 * 1000, max: 200 } });
+// CORS
+app.use(cors({
+    origin: allowed,
+    credentials: true
+}));
+
+// Helmet for security headers
+app.use(helmet({
+    contentSecurityPolicy: false
+}));
 
 // Body parser that also saves raw body for webhook signature verification
 app.use(express.json({ verify: (req, res, buf) => { req.rawBody = buf; } }));
@@ -47,6 +56,45 @@ app.use(express.urlencoded({ extended: true }));
 
 // Serve static files (frontend)
 app.use(express.static(path.join(__dirname)));
+// ============================================
+// AUTHENTICATION MIDDLEWARE
+// ============================================
+
+async function authenticate(req, res, next) {
+    try {
+        const authHeader = req.headers.authorization;
+        const token = authHeader?.split(' ')[1];
+
+        if (!token) {
+            return res.status(401).json({ error: 'No token provided' });
+        }
+
+        // Try JWT verification if secret is set
+        const jwtSecret = process.env.JWT_SECRET || '';
+        if (jwtSecret) {
+            try {
+                const jwt = require('jsonwebtoken');
+                const decoded = jwt.verify(token, jwtSecret);
+                req.user = decoded;
+                return next();
+            } catch (e) {
+                // fall through to supabase verification
+            }
+        }
+
+        // Verify with Supabase
+        const { data, error } = await supabase.auth.getUser(token);
+        if (error || !data?.user) {
+            return res.status(401).json({ error: 'Invalid token' });
+        }
+
+        req.user = data.user;
+        next();
+    } catch (err) {
+        console.error('Auth middleware error:', err);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+}
 // ============================================
 // AUTHENTICATION & PROFILE ROUTES
 // ============================================
