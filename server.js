@@ -1,3 +1,4 @@
+console.log('SUPABASE_URL:', process.env.SUPABASE_URL);
 // Load environment variables from .env file
 require('dotenv').config({ path: './.env' });
 require('dotenv').config();
