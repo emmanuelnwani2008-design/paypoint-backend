@@ -445,13 +445,13 @@ app.delete('/api/expenses/:id', async (req, res) => {
 });
 
 // ============================================
-// START THE SERVER
+// START THE SERVER (MUST BE AT THE BOTTOM)
 // ============================================
 app.listen(port, () => {
     console.log(`🚀 PayPoint API running on http://localhost:${port}`);
 });
 
-// Graceful shutdown
+// Graceful shutdown handlers
 process.on('uncaughtException', (err) => {
     console.error('Uncaught exception:', err);
     process.exit(1);
