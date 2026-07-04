@@ -8,369 +8,348 @@
         /* ============================================
            GLOBAL RESET & VARIABLES
         ============================================ */
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
 
-        body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            background: #0A0E1A;
-            color: #FFFFFF;
-            padding: 24px;
-            min-height: 100vh;
-        }
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: #0B0E14;
+    color: #E8EDF2;
+    padding: 24px;
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+}
 
-        .app-container {
-            max-width: 1280px;
-            margin: 0 auto;
-        }
+.app-container {
+    max-width: 1280px;
+    margin: 0 auto;
+}
 
-        /* ============================================
-           NAVBAR
-        ============================================ */
-        .navbar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 16px 0 32px 0;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-            margin-bottom: 32px;
-        }
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 0 28px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    margin-bottom: 32px;
+}
 
-        .logo {
-            font-size: 28px;
-            font-weight: 700;
-            letter-spacing: -0.5px;
-            background: linear-gradient(135deg, #F59E0B, #FCD34D);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            text-decoration: none;
-        }
+.logo {
+    font-size: 24px;
+    font-weight: 700;
+    letter-spacing: -0.3px;
+    background: linear-gradient(135deg, #F5B056, #F7C97C);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-decoration: none;
+}
 
-        .nav-links {
-            display: flex;
-            gap: 32px;
-            align-items: center;
-        }
+.nav-links {
+    display: flex;
+    gap: 28px;
+    align-items: center;
+}
 
-        .nav-links a {
-            color: #94A3B8;
-            text-decoration: none;
-            font-size: 14px;
-            font-weight: 500;
-            transition: color 0.2s;
-        }
+.nav-links a {
+    color: #8A9AAB;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 500;
+    transition: color 0.2s ease;
+}
 
-        .nav-links a:hover {
-            color: #FFFFFF;
-        }
+.nav-links a:hover {
+    color: #FFFFFF;
+}
 
-        .nav-links a.active {
-            color: #F59E0B;
-        }
+.nav-links a.active {
+    color: #FFFFFF;
+    font-weight: 600;
+}
 
-        .user-badge {
-            background: rgba(255, 255, 255, 0.06);
-            padding: 8px 16px;
-            border-radius: 40px;
-            font-size: 13px;
-            color: #FFFFFF;
-            border: 1px solid rgba(255, 255, 255, 0.08);
-        }
+.nav-links a.logout {
+    color: #EF6B6B;
+}
 
-        .nav-links a.logout {
-            color: #EF4444;
-        }
+.nav-links a.logout:hover {
+    color: #FF8A8A;
+}
 
-        .nav-links a.logout:hover {
-            color: #DC2626;
-        }
+.user-badge {
+    background: rgba(255, 255, 255, 0.06);
+    padding: 6px 14px;
+    border-radius: 40px;
+    font-size: 13px;
+    color: #E8EDF2;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+}
 
-        /* ============================================
-           PAGE HEADER
-        ============================================ */
-        .page-header {
-            margin-bottom: 32px;
-        }
+.page-header {
+    margin-bottom: 32px;
+}
 
-        .page-header h1 {
-            font-size: 28px;
-            font-weight: 700;
-        }
+.page-header h1 {
+    font-size: 28px;
+    font-weight: 700;
+}
 
-        .page-header h1 span {
-            color: #94A3B8;
-            font-weight: 400;
-        }
+.page-header h1 span {
+    color: #8A9AAB;
+    font-weight: 400;
+}
 
-        /* ============================================
-           PROFILE LAYOUT
-        ============================================ */
-        .profile-grid {
-            display: grid;
-            grid-template-columns: 280px 1fr;
-            gap: 32px;
-        }
+.profile-grid {
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    gap: 32px;
+}
 
-        /* ============================================
-           PROFILE SIDEBAR
-        ============================================ */
-        .profile-sidebar {
-            background: rgba(255, 255, 255, 0.04);
-            border: 1px solid rgba(255, 255, 255, 0.06);
-            border-radius: 16px;
-            padding: 32px 24px;
-            text-align: center;
-        }
+.profile-sidebar {
+    background: #151C25;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 16px;
+    padding: 32px 24px;
+    text-align: center;
+}
 
-        .profile-avatar {
-            width: 120px;
-            height: 120px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #F59E0B, #D97706);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 48px;
-            font-weight: 700;
-            color: #0A0E1A;
-            margin: 0 auto 16px;
-            border: 3px solid rgba(255, 255, 255, 0.1);
-        }
+.profile-avatar {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #F5B056, #F7C97C);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 48px;
+    font-weight: 700;
+    color: #0B0E14;
+    margin: 0 auto 16px;
+    border: 3px solid rgba(255, 255, 255, 0.08);
+}
 
-        .profile-name {
-            font-size: 20px;
-            font-weight: 700;
-        }
+.profile-name {
+    font-size: 20px;
+    font-weight: 700;
+}
 
-        .profile-email {
-            color: #94A3B8;
-            font-size: 14px;
-            margin-top: 4px;
-        }
+.profile-email {
+    color: #8A9AAB;
+    font-size: 14px;
+    margin-top: 4px;
+}
 
-        .profile-joined {
-            color: #64748B;
-            font-size: 12px;
-            margin-top: 8px;
-            border-top: 1px solid rgba(255, 255, 255, 0.06);
-            padding-top: 16px;
-        }
+.profile-joined {
+    color: #5E6F82;
+    font-size: 12px;
+    margin-top: 8px;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    padding-top: 16px;
+}
 
-        /* ============================================
-           STATS CARDS IN SIDEBAR
-        ============================================ */
-        .sidebar-stats {
-            margin-top: 20px;
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-        }
+.sidebar-stats {
+    margin-top: 20px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
 
-        .sidebar-stat {
-            background: rgba(255, 255, 255, 0.04);
-            border-radius: 10px;
-            padding: 12px;
-        }
+.sidebar-stat {
+    background: rgba(255, 255, 255, 0.04);
+    border-radius: 10px;
+    padding: 12px;
+}
 
-        .sidebar-stat .num {
-            font-size: 18px;
-            font-weight: 700;
-            color: #F59E0B;
-        }
+.sidebar-stat .num {
+    font-size: 18px;
+    font-weight: 700;
+    color: #F5B056;
+}
 
-        .sidebar-stat .label {
-            font-size: 11px;
-            color: #94A3B8;
-            margin-top: 2px;
-        }
+.sidebar-stat .label {
+    font-size: 11px;
+    color: #8A9AAB;
+    margin-top: 2px;
+}
 
-        /* ============================================
-           PROFILE MAIN CONTENT
-        ============================================ */
-        .profile-main {
-            display: flex;
-            flex-direction: column;
-            gap: 24px;
-        }
+.profile-main {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
 
-        .profile-card {
-            background: rgba(255, 255, 255, 0.04);
-            border: 1px solid rgba(255, 255, 255, 0.06);
-            border-radius: 16px;
-            padding: 28px 32px;
-        }
+.profile-card {
+    background: #151C25;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 16px;
+    padding: 28px 32px;
+}
 
-        .profile-card h3 {
-            font-size: 16px;
-            font-weight: 600;
-            margin-bottom: 20px;
-            color: #FFFFFF;
-        }
+.profile-card h3 {
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 20px;
+    color: #E8EDF2;
+}
 
-        .form-group {
-            margin-bottom: 18px;
-        }
+.form-group {
+    margin-bottom: 18px;
+}
 
-        .form-group label {
-            display: block;
-            font-size: 13px;
-            font-weight: 500;
-            color: #CBD5E1;
-            margin-bottom: 6px;
-        }
+.form-group label {
+    display: block;
+    font-size: 13px;
+    font-weight: 500;
+    color: #B0C0D0;
+    margin-bottom: 5px;
+}
 
-        .form-group input,
-        .form-group textarea {
-            width: 100%;
-            padding: 12px 16px;
-            background: rgba(255, 255, 255, 0.06);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 12px;
-            color: #FFFFFF;
-            font-size: 14px;
-            transition: border 0.2s;
-        }
+.form-group input,
+.form-group textarea {
+    width: 100%;
+    padding: 12px 16px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 12px;
+    color: #E8EDF2;
+    font-size: 14px;
+    transition: border 0.2s ease;
+    font-family: 'Inter', sans-serif;
+}
 
-        .form-group input:focus,
-        .form-group textarea:focus {
-            outline: none;
-            border-color: #F59E0B;
-        }
+.form-group input:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: #F5B056;
+}
 
-        .form-group textarea {
-            resize: vertical;
-            min-height: 80px;
-        }
+.form-group textarea {
+    resize: vertical;
+    min-height: 80px;
+}
 
-        .form-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 16px;
-        }
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
 
-        .btn-primary {
-            background: linear-gradient(135deg, #F59E0B, #D97706);
-            border: none;
-            padding: 10px 24px;
-            border-radius: 12px;
-            font-weight: 600;
-            font-size: 14px;
-            color: #0A0E1A;
-            cursor: pointer;
-            transition: opacity 0.2s;
-        }
+.btn-primary {
+    background: #F5B056;
+    border: none;
+    padding: 10px 24px;
+    border-radius: 12px;
+    font-weight: 600;
+    font-size: 14px;
+    color: #0B0E14;
+    cursor: pointer;
+    transition: opacity 0.2s ease;
+    font-family: 'Inter', sans-serif;
+}
 
-        .btn-primary:hover {
-            opacity: 0.9;
-        }
+.btn-primary:hover {
+    opacity: 0.9;
+}
 
-        .btn-secondary {
-            background: rgba(255, 255, 255, 0.06);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            padding: 10px 24px;
-            border-radius: 12px;
-            font-weight: 600;
-            font-size: 14px;
-            color: #94A3B8;
-            cursor: pointer;
-            transition: background 0.2s;
-        }
+.btn-secondary {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    padding: 10px 24px;
+    border-radius: 12px;
+    font-weight: 600;
+    font-size: 14px;
+    color: #8A9AAB;
+    cursor: pointer;
+    transition: background 0.2s ease;
+    font-family: 'Inter', sans-serif;
+}
 
-        .btn-secondary:hover {
-            background: rgba(255, 255, 255, 0.1);
-        }
+.btn-secondary:hover {
+    background: rgba(255, 255, 255, 0.08);
+}
 
-        .btn-danger {
-            background: rgba(239, 68, 68, 0.15);
-            border: 1px solid rgba(239, 68, 68, 0.2);
-            padding: 10px 24px;
-            border-radius: 12px;
-            font-weight: 600;
-            font-size: 14px;
-            color: #EF4444;
-            cursor: pointer;
-            transition: background 0.2s;
-        }
+.btn-danger {
+    background: rgba(239, 107, 107, 0.12);
+    border: 1px solid rgba(239, 107, 107, 0.15);
+    padding: 10px 24px;
+    border-radius: 12px;
+    font-weight: 600;
+    font-size: 14px;
+    color: #EF6B6B;
+    cursor: pointer;
+    transition: background 0.2s ease;
+    font-family: 'Inter', sans-serif;
+}
 
-        .btn-danger:hover {
-            background: rgba(239, 68, 68, 0.25);
-        }
+.btn-danger:hover {
+    background: rgba(239, 107, 107, 0.2);
+}
 
-        .form-actions {
-            display: flex;
-            gap: 12px;
-            margin-top: 8px;
-        }
+.form-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 8px;
+}
 
-        .message-success {
-            display: none;
-            background: rgba(16, 185, 129, 0.1);
-            border: 1px solid rgba(16, 185, 129, 0.2);
-            color: #10B981;
-            padding: 12px 16px;
-            border-radius: 12px;
-            font-size: 14px;
-            margin-bottom: 16px;
-        }
+.message-success {
+    display: none;
+    background: rgba(75, 192, 160, 0.1);
+    border: 1px solid rgba(75, 192, 160, 0.15);
+    color: #4BC0A0;
+    padding: 12px 16px;
+    border-radius: 12px;
+    font-size: 14px;
+    margin-bottom: 16px;
+}
 
-        .message-success.show {
-            display: block;
-        }
+.message-success.show {
+    display: block;
+}
 
-        .message-error {
-            display: none;
-            background: rgba(239, 68, 68, 0.1);
-            border: 1px solid rgba(239, 68, 68, 0.2);
-            color: #EF4444;
-            padding: 12px 16px;
-            border-radius: 12px;
-            font-size: 14px;
-            margin-bottom: 16px;
-        }
+.message-error {
+    display: none;
+    background: rgba(239, 107, 107, 0.1);
+    border: 1px solid rgba(239, 107, 107, 0.15);
+    color: #EF6B6B;
+    padding: 12px 16px;
+    border-radius: 12px;
+    font-size: 14px;
+    margin-bottom: 16px;
+}
 
-        .message-error.show {
-            display: block;
-        }
+.message-error.show {
+    display: block;
+}
 
-        /* ============================================
-           RESPONSIVE
-        ============================================ */
-        @media (max-width: 768px) {
-            .navbar {
-                flex-direction: column;
-                gap: 12px;
-                align-items: flex-start;
-            }
-
-            .nav-links {
-                flex-wrap: wrap;
-                gap: 16px;
-            }
-
-            .profile-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .form-row {
-                grid-template-columns: 1fr;
-            }
-
-            .profile-card {
-                padding: 20px;
-            }
-
-            .form-actions {
-                flex-direction: column;
-            }
-
-            .form-actions button {
-                width: 100%;
-            }
-        }
+@media (max-width: 768px) {
+    .navbar {
+        flex-direction: column;
+        gap: 12px;
+        align-items: flex-start;
+    }
+    .nav-links {
+        flex-wrap: wrap;
+        gap: 14px;
+    }
+    .profile-grid {
+        grid-template-columns: 1fr;
+    }
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+    .profile-card {
+        padding: 20px;
+    }
+    .form-actions {
+        flex-direction: column;
+    }
+    .form-actions button {
+        width: 100%;
+    }
+}
     </style>
     <script src="config.js"></script>
 </head>

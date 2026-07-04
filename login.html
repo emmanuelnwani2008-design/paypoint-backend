@@ -6,165 +6,168 @@
     <title>PayPoint · Login</title>
     <style>
         * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
 
-        body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            background: #0A0E1A;
-            color: #FFFFFF;
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
-        }
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: #0B0E14;
+    color: #E8EDF2;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+    -webkit-font-smoothing: antialiased;
+}
 
-        .login-container {
-            background: rgba(255, 255, 255, 0.04);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 24px;
-            padding: 48px;
-            width: 100%;
-            max-width: 420px;
-            box-shadow: 0 32px 80px rgba(0, 0, 0, 0.6);
-        }
+.login-container {
+    background: #151C25;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 24px;
+    padding: 48px 40px;
+    width: 100%;
+    max-width: 420px;
+    box-shadow: 0 24px 64px rgba(0, 0, 0, 0.5);
+}
 
-        .logo {
-            font-size: 32px;
-            font-weight: 700;
-            letter-spacing: -0.5px;
-            background: linear-gradient(135deg, #F59E0B, #FCD34D);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            text-align: center;
-            margin-bottom: 6px;
-        }
+.logo {
+    font-size: 32px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    background: linear-gradient(135deg, #F5B056, #F7C97C);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-align: center;
+    margin-bottom: 4px;
+}
 
-        .subtitle {
-            text-align: center;
-            color: #94A3B8;
-            font-size: 14px;
-            margin-bottom: 32px;
-        }
+.subtitle {
+    text-align: center;
+    color: #8A9AAB;
+    font-size: 14px;
+    margin-bottom: 32px;
+}
 
-        .tab-switch {
-            display: flex;
-            background: rgba(255, 255, 255, 0.06);
-            border-radius: 12px;
-            padding: 4px;
-            margin-bottom: 24px;
-        }
+.tab-switch {
+    display: flex;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    padding: 4px;
+    margin-bottom: 24px;
+}
 
-        .tab-btn {
-            flex: 1;
-            padding: 10px;
-            border: none;
-            background: transparent;
-            color: #94A3B8;
-            font-weight: 600;
-            font-size: 14px;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
+.tab-btn {
+    flex: 1;
+    padding: 10px;
+    border: none;
+    background: transparent;
+    color: #8A9AAB;
+    font-weight: 600;
+    font-size: 14px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: 'Inter', sans-serif;
+}
 
-        .tab-btn.active {
-            background: #F59E0B;
-            color: #0A0E1A;
-        }
+.tab-btn.active {
+    background: #F5B056;
+    color: #0B0E14;
+}
 
-        .tab-btn:hover:not(.active) {
-            color: #FFFFFF;
-        }
+.tab-btn:hover:not(.active) {
+    color: #FFFFFF;
+}
 
-        .form-group {
-            margin-bottom: 18px;
-        }
+.form-group {
+    margin-bottom: 18px;
+}
 
-        .form-group label {
-            display: block;
-            font-size: 13px;
-            font-weight: 500;
-            color: #CBD5E1;
-            margin-bottom: 6px;
-        }
+.form-group label {
+    display: block;
+    font-size: 13px;
+    font-weight: 500;
+    color: #B0C0D0;
+    margin-bottom: 5px;
+}
 
-        .form-group input {
-            width: 100%;
-            padding: 12px 16px;
-            background: rgba(255, 255, 255, 0.06);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 12px;
-            color: #FFFFFF;
-            font-size: 14px;
-            transition: border 0.2s;
-        }
+.form-group input {
+    width: 100%;
+    padding: 12px 16px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 12px;
+    color: #E8EDF2;
+    font-size: 14px;
+    transition: border 0.2s ease;
+    font-family: 'Inter', sans-serif;
+}
 
-        .form-group input:focus {
-            outline: none;
-            border-color: #F59E0B;
-        }
+.form-group input:focus {
+    outline: none;
+    border-color: #F5B056;
+}
 
-        .btn-primary {
-            width: 100%;
-            background: linear-gradient(135deg, #F59E0B, #D97706);
-            border: none;
-            padding: 14px;
-            border-radius: 12px;
-            font-weight: 600;
-            font-size: 15px;
-            color: #0A0E1A;
-            cursor: pointer;
-            transition: opacity 0.2s;
-            margin-top: 8px;
-        }
+.btn-primary {
+    width: 100%;
+    background: #F5B056;
+    border: none;
+    padding: 14px;
+    border-radius: 12px;
+    font-weight: 600;
+    font-size: 15px;
+    color: #0B0E14;
+    cursor: pointer;
+    transition: opacity 0.2s ease;
+    font-family: 'Inter', sans-serif;
+    margin-top: 8px;
+}
 
-        .btn-primary:hover {
-            opacity: 0.9;
-        }
+.btn-primary:hover {
+    opacity: 0.9;
+}
 
-        .error-msg {
-            color: #EF4444;
-            font-size: 13px;
-            text-align: center;
-            margin-top: 12px;
-            display: none;
-        }
+.error-msg {
+    color: #EF6B6B;
+    font-size: 13px;
+    text-align: center;
+    margin-top: 12px;
+    display: none;
+}
 
-        .success-msg {
-            color: #10B981;
-            font-size: 13px;
-            text-align: center;
-            margin-top: 12px;
-            display: none;
-        }
+.success-msg {
+    color: #4BC0A0;
+    font-size: 13px;
+    text-align: center;
+    margin-top: 12px;
+    display: none;
+}
 
-        .form-hidden {
-            display: none;
-        }
+.form-hidden {
+    display: none;
+}
 
-        .demo-note {
-            text-align: center;
-            color: #64748B;
-            font-size: 12px;
-            margin-top: 16px;
-            border-top: 1px solid rgba(255, 255, 255, 0.06);
-            padding-top: 16px;
-        }
+.demo-note {
+    text-align: center;
+    color: #5E6F82;
+    font-size: 12px;
+    margin-top: 16px;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    padding-top: 16px;
+}
 
-        .demo-note span {
-            color: #F59E0B;
-            cursor: pointer;
-        }
+.demo-note span {
+    color: #F5B056;
+    cursor: pointer;
+}
 
-        .demo-note span:hover {
-            text-decoration: underline;
-        }
+.demo-note span:hover {
+    text-decoration: underline;
+}
     </style>
     <script src="config.js"></script>
 </head>
