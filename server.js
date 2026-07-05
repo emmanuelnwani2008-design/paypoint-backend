@@ -9,12 +9,14 @@ const port = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 
-// SUPABASE
+// SUPABASE - HARDCODED
 const supabaseUrl = 'https://mqggkwhdbwkaftmewdca.supabase.co';
 const supabaseAnonKey = 'sb_publishable_u1Ag_qpF5L8LbHc6ZzYnxQ_z4w3ExhV';
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
-// ROUTES
+// ============================================
+// TEST ROUTES
+// ============================================
 app.get('/', (req, res) => {
     res.json({ message: '🚀 PayPoint API is running!' });
 });
@@ -23,7 +25,9 @@ app.get('/health', (req, res) => {
     res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-// SIGNUP
+// ============================================
+// AUTHENTICATION ROUTES
+// ============================================
 app.post('/api/auth/signup', async (req, res) => {
     try {
         const { name, email, password } = req.body || {};
@@ -42,7 +46,6 @@ app.post('/api/auth/signup', async (req, res) => {
     }
 });
 
-// LOGIN
 app.post('/api/auth/login', async (req, res) => {
     try {
         const { email, password } = req.body || {};
@@ -57,7 +60,6 @@ app.post('/api/auth/login', async (req, res) => {
     }
 });
 
-// LOGOUT
 app.post('/api/auth/logout', async (req, res) => {
     try {
         const { error } = await supabase.auth.signOut();
@@ -68,7 +70,9 @@ app.post('/api/auth/logout', async (req, res) => {
     }
 });
 
-// DEALS
+// ============================================
+// DEALS ROUTES
+// ============================================
 app.get('/api/deals', async (req, res) => {
     try {
         const token = req.headers.authorization?.split(' ')[1];
@@ -106,7 +110,9 @@ app.post('/api/deals', async (req, res) => {
     }
 });
 
-// EXPENSES
+// ============================================
+// EXPENSES ROUTES
+// ============================================
 app.get('/api/expenses', async (req, res) => {
     try {
         const token = req.headers.authorization?.split(' ')[1];
@@ -143,6 +149,215 @@ app.post('/api/expenses', async (req, res) => {
     }
 });
 
+// ============================================
+// PAYSTACK PAYMENT ROUTES
+// ============================================
+const PAYSTACK_SECRET_KEY = 'sk_test_272bd56a30ebfb3a214e39c6d7030bb4dc256571';
+
+app.post('/api/payments/initialize', async (req, res) => {
+    try {
+        const { dealId, email } = req.body;
+        const token = req.headers.authorization?.split(' ')[1];
+        if (!token) return res.status(401).json({ error: 'No token provided' });
+        const { data: userData, error: userError } = await supabase.auth.getUser(token);
+        if (userError || !userData?.user) return res.status(401).json({ error: 'Invalid token' });
+
+        if (!dealId) return res.status(400).json({ error: 'dealId required' });
+
+        const { data: deal, error: dealError } = await supabase
+            .from('deals')
+            .select('*')
+            .eq('id', dealId)
+            .eq('user_id', userData.user.id)
+            .single();
+
+        if (dealError || !deal) return res.status(404).json({ error: 'Deal not found' });
+
+        const amountInKobo = Math.round(deal.amount * 100);
+        const callbackUrl = 'https://paypoint-app.netlify.app/success.html';
+
+        const response = await fetch('https://api.paystack.co/transaction/initialize', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${PAYSTACK_SECRET_KEY}`
+            },
+            body: JSON.stringify({
+                email: email || 'customer@example.com',
+                amount: amountInKobo,
+                callback_url: callbackUrl,
+                metadata: { deal_id: dealId, brand_name: deal.brand_name }
+            })
+        });
+
+        const result = await response.json();
+
+        if (!result.status) {
+            return res.status(502).json({ error: 'Payment provider error', details: result });
+        }
+
+        res.json({
+            success: true,
+            authorization_url: result.data.authorization_url,
+            reference: result.data.reference
+        });
+
+    } catch (err) {
+        console.error('Paystack error:', err);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+app.get('/api/payments/verify/:reference', async (req, res) => {
+    try {
+        const { reference } = req.params;
+        if (!reference) return res.status(400).json({ error: 'Reference required' });
+
+        const response = await fetch(`https://api.paystack.co/transaction/verify/${reference}`, {
+            headers: { Authorization: `Bearer ${PAYSTACK_SECRET_KEY}` }
+        });
+        const result = await response.json();
+
+        if (!result.status) {
+            return res.status(502).json({ error: 'Verification failed' });
+        }
+
+        const status = result.data.status;
+        const paid = status === 'success';
+        const dealId = result.data.metadata?.deal_id;
+
+        if (paid && dealId) {
+            const { error } = await supabase
+                .from('deals')
+                .update({ status: 'paid' })
+                .eq('id', dealId);
+            if (error) console.error('Error updating deal:', error);
+        }
+
+        res.json({
+            success: true,
+            status: status,
+            paid: paid,
+            amount: result.data.amount / 100,
+            brand_name: result.data.metadata?.brand_name || 'Unknown'
+        });
+
+    } catch (err) {
+        console.error('Verification error:', err);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// ============================================
+// INVOICE ROUTES
+// ============================================
+app.post('/api/invoices/create', async (req, res) => {
+    try {
+        const { dealId, invoiceNumber, brandEmail } = req.body;
+        const token = req.headers.authorization?.split(' ')[1];
+        if (!token) return res.status(401).json({ error: 'No token provided' });
+        const { data: userData, error: userError } = await supabase.auth.getUser(token);
+        if (userError || !userData?.user) return res.status(401).json({ error: 'Invalid token' });
+
+        if (!dealId || !brandEmail) {
+            return res.status(400).json({ error: 'dealId and brandEmail required' });
+        }
+
+        const { data, error } = await supabase
+            .from('invoices')
+            .insert([{
+                user_id: userData.user.id,
+                deal_id: dealId,
+                invoice_number: invoiceNumber || `INV-${Date.now()}`,
+                brand_email: brandEmail,
+                status: 'sent'
+            }])
+            .select();
+
+        if (error) return res.status(500).json({ error: error.message });
+        res.status(201).json({ success: true, data: data[0] });
+
+    } catch (err) {
+        console.error('Invoice create error:', err);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+app.post('/api/invoices/generate', async (req, res) => {
+    try {
+        const { dealId } = req.body;
+        const token = req.headers.authorization?.split(' ')[1];
+        if (!token) return res.status(401).json({ error: 'No token provided' });
+        const { data: userData, error: userError } = await supabase.auth.getUser(token);
+        if (userError || !userData?.user) return res.status(401).json({ error: 'Invalid token' });
+
+        if (!dealId) return res.status(400).json({ error: 'dealId required' });
+
+        const { data: deal, error: dealError } = await supabase
+            .from('deals')
+            .select('*')
+            .eq('id', dealId)
+            .eq('user_id', userData.user.id)
+            .single();
+
+        if (dealError || !deal) return res.status(404).json({ error: 'Deal not found' });
+
+        // Simple HTML invoice that can be printed as PDF
+        const html = `
+            <html>
+            <head><title>Invoice</title></head>
+            <body style="font-family:Arial;padding:40px;">
+                <h1 style="color:#4F7CFF;">PayPoint</h1>
+                <h2>Invoice #INV-${Date.now()}</h2>
+                <hr>
+                <p><strong>Brand:</strong> ${deal.brand_name}</p>
+                <p><strong>Amount:</strong> $${Number(deal.amount).toLocaleString()}</p>
+                <p><strong>Deliverable:</strong> ${deal.deliverable || 'Not specified'}</p>
+                <p><strong>Due Date:</strong> ${deal.due_date || 'Not set'}</p>
+                <hr>
+                <p>Thank you for using PayPoint!</p>
+            </body>
+            </html>
+        `;
+
+        res.setHeader('Content-Type', 'text/html');
+        res.send(html);
+
+    } catch (err) {
+        console.error('PDF generation error:', err);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// ============================================
+// PAYSTACK WEBHOOK
+// ============================================
+app.post('/api/webhooks/paystack', express.raw({ type: 'application/json' }), async (req, res) => {
+    try {
+        const event = JSON.parse(req.body.toString());
+        console.log('📨 Webhook event:', event.event);
+
+        if (event.event === 'charge.success') {
+            const dealId = event.data.metadata?.deal_id;
+            if (dealId) {
+                const { error } = await supabase
+                    .from('deals')
+                    .update({ status: 'paid' })
+                    .eq('id', dealId);
+                if (error) console.error('Error updating deal:', error);
+                else console.log(`✅ Deal ${dealId} marked as paid via webhook`);
+            }
+        }
+        res.sendStatus(200);
+    } catch (err) {
+        console.error('Webhook error:', err);
+        res.sendStatus(500);
+    }
+});
+
+// ============================================
+// START SERVER
+// ============================================
 app.listen(port, () => {
     console.log(`🚀 PayPoint API running on port ${port}`);
 });
