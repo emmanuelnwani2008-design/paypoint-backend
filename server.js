@@ -5,30 +5,25 @@ const { createClient } = require('@supabase/supabase-js');
 const app = express();
 const port = process.env.PORT || 3000;
 
-// MIDDLEWARE - MUST BE FIRST
+// MIDDLEWARE
 app.use(cors());
 app.use(express.json());
 
-// SUPABASE - HARDCODED
+// SUPABASE
 const supabaseUrl = 'https://mqggkwhdbwkaftmewdca.supabase.co';
 const supabaseAnonKey = 'sb_publishable_u1Ag_qpF5L8LbHc6ZzYnxQ_z4w3ExhV';
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
-// ============================================
-// ROUTES - MUST BE BEFORE static files
-// ============================================
-
-// TEST ROUTE
+// ROUTES
 app.get('/', (req, res) => {
     res.json({ message: '🚀 PayPoint API is running!' });
 });
 
-// HEALTH CHECK
 app.get('/health', (req, res) => {
     res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-// SIGNUP - POST only
+// SIGNUP
 app.post('/api/auth/signup', async (req, res) => {
     try {
         const { name, email, password } = req.body || {};
@@ -47,7 +42,7 @@ app.post('/api/auth/signup', async (req, res) => {
     }
 });
 
-// LOGIN - POST only
+// LOGIN
 app.post('/api/auth/login', async (req, res) => {
     try {
         const { email, password } = req.body || {};
@@ -62,7 +57,18 @@ app.post('/api/auth/login', async (req, res) => {
     }
 });
 
-// DEALS - GET
+// LOGOUT
+app.post('/api/auth/logout', async (req, res) => {
+    try {
+        const { error } = await supabase.auth.signOut();
+        if (error) return res.status(400).json({ error: error.message });
+        res.json({ success: true, message: 'Logged out' });
+    } catch (err) {
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// DEALS
 app.get('/api/deals', async (req, res) => {
     try {
         const token = req.headers.authorization?.split(' ')[1];
@@ -77,7 +83,6 @@ app.get('/api/deals', async (req, res) => {
     }
 });
 
-// DEALS - POST
 app.post('/api/deals', async (req, res) => {
     try {
         const token = req.headers.authorization?.split(' ')[1];
@@ -101,7 +106,7 @@ app.post('/api/deals', async (req, res) => {
     }
 });
 
-// EXPENSES - GET
+// EXPENSES
 app.get('/api/expenses', async (req, res) => {
     try {
         const token = req.headers.authorization?.split(' ')[1];
@@ -116,7 +121,6 @@ app.get('/api/expenses', async (req, res) => {
     }
 });
 
-// EXPENSES - POST
 app.post('/api/expenses', async (req, res) => {
     try {
         const token = req.headers.authorization?.split(' ')[1];
@@ -139,9 +143,6 @@ app.post('/api/expenses', async (req, res) => {
     }
 });
 
-// ============================================
-// START THE SERVER - MUST BE AT THE BOTTOM
-// ============================================
 app.listen(port, () => {
     console.log(`🚀 PayPoint API running on port ${port}`);
 });
