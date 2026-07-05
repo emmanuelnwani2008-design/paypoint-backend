@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PayPoint · Invoices</title>
+    <style>
+        /* Same white/blue theme as expenses.html */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #FFFFFF;
+            color: #000000;
+            padding: 24px;
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+        }
+        .app-container { max-width: 1280px; margin: 0 auto; }
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0 28px 0;
+            border-bottom: 1px solid #E8EDF2;
+            margin-bottom: 32px;
+        }
+        .logo {
+            font-size: 24px;
+            font-weight: 700;
+            letter-spacing: -0.3px;
+            color: #000000;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .logo img { height: 32px; width: auto; }
+        .logo span { font-weight: 400; color: #8A9AAB; font-size: 14px; }
+        .nav-links {
+            display: flex;
+            gap: 28px;
+            align-items: center;
+        }
+        .nav-links a {
+            color: #5E6F82;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            transition: color 0.2s ease;
+        }
+        .nav-links a:hover { color: #000000; }
+        .nav-links a.active { color: #000000; font-weight: 600; }
+        .nav-links a.logout { color: #FF3B30; }
+        .nav-links a.logout:hover { color: #D32F2F; }
+        .user-badge {
+            background: #F5F7FA;
+            padding: 6px 14px;
+            border-radius: 40px;
+            font-size: 13px;
+            color: #000000;
+            border: 1px solid #E8EDF2;
+        }
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+        .page-header h1 {
+            font-size: 28px;
+            font-weight: 700;
+            color: #000000;
+        }
+        .page-header h1 span { color: #8A9AAB; font-weight: 400; }
+        .btn-primary {
+            background: #4F7CFF;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 14px;
+            color: #FFFFFF;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-family: 'Inter', sans-serif;
+            box-shadow: 0 2px 8px rgba(79, 124, 255, 0.25);
+        }
+        .btn-primary:hover { background: #3A5FD9; transform: translateY(-1px); box-shadow: 0 4px 16px rgba(79, 124, 255, 0.35); }
+        .invoice-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+        }
+        .invoice-card {
+            background: #FFFFFF;
+            border: 1px solid #E8EDF2;
+            border-radius: 14px;
+            padding: 24px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+            transition: all 0.2s ease;
+        }
+        .invoice-card:hover {
+            border-color: #4F7CFF;
+            box-shadow: 0 4px 16px rgba(79, 124, 255, 0.08);
+            transform: translateY(-2px);
+        }
+        .invoice-card .brand { font-size: 18px; font-weight: 700; color: #000000; }
+        .invoice-card .amount { font-size: 24px; font-weight: 700; color: #4F7CFF; margin: 8px 0; }
+        .invoice-card .details { color: #8A9AAB; font-size: 14px; margin-bottom: 4px; }
+        .invoice-card .status {
+            display: inline-block;
+            padding: 3px 12px;
+            border-radius: 40px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        .invoice-card .status.sent { background: rgba(79, 124, 255, 0.12); color: #4F7CFF; }
+        .invoice-card .status.draft { background: rgba(255, 149, 0, 0.12); color: #FF9500; }
+        .invoice-card .status.paid { background: rgba(52, 199, 89, 0.12); color: #34C759; }
+        .invoice-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 16px;
+            flex-wrap: wrap;
+        }
+        .btn-invoice {
+            padding: 8px 16px;
+            border-radius: 8px;
+            border: none;
+            font-weight: 600;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-family: 'Inter', sans-serif;
+        }
+        .btn-invoice.gold { background: rgba(255, 149, 0, 0.12); color: #FF9500; }
+        .btn-invoice.gold:hover { background: rgba(255, 149, 0, 0.2); }
+        .btn-invoice.green { background: rgba(52, 199, 89, 0.12); color: #34C759; }
+        .btn-invoice.green:hover { background: rgba(52, 199, 89, 0.2); }
+        .btn-invoice.blue { background: rgba(79, 124, 255, 0.12); color: #4F7CFF; }
+        .btn-invoice.blue:hover { background: rgba(79, 124, 255, 0.2); }
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #8A9AAB;
+            grid-column: 1 / -1;
+        }
+        .empty-state .icon { font-size: 48px; margin-bottom: 16px; }
+        .empty-state h3 { color: #000000; margin-bottom: 8px; }
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(4px);
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+        .modal-overlay.active { display: flex; }
+        .modal {
+            background: #FFFFFF;
+            border: 1px solid #E8EDF2;
+            border-radius: 20px;
+            padding: 36px 32px 28px;
+            width: 100%;
+            max-width: 500px;
+            box-shadow: 0 24px 64px rgba(0, 0, 0, 0.12);
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        .modal h2 { font-size: 22px; font-weight: 700; color: #000000; margin-bottom: 4px; }
+        .modal p { color: #8A9AAB; font-size: 14px; margin-bottom: 20px; }
+        .modal label { display: block; font-size: 13px; font-weight: 500; color: #5E6F82; margin-bottom: 4px; }
+        .modal select, .modal input {
+            width: 100%;
+            padding: 12px 16px;
+            background: #F8FAFC;
+            border: 1px solid #E8EDF2;
+            border-radius: 10px;
+            color: #000000;
+            font-size: 14px;
+            margin-bottom: 14px;
+            transition: border 0.2s ease;
+            font-family: 'Inter', sans-serif;
+        }
+        .modal select:focus, .modal input:focus { outline: none; border-color: #4F7CFF; }
+        .modal select option { background: #FFFFFF; }
+        .modal-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 8px;
+        }
+        .btn-save {
+            flex: 1;
+            background: #4F7CFF;
+            border: none;
+            padding: 14px;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 15px;
+            color: #FFFFFF;
+            cursor: pointer;
+            transition: opacity 0.2s ease;
+            font-family: 'Inter', sans-serif;
+            box-shadow: 0 2px 8px rgba(79, 124, 255, 0.25);
+        }
+        .btn-save:hover { opacity: 0.9; }
+        .btn-cancel {
+            flex: 1;
+            background: #F8FAFC;
+            border: 1px solid #E8EDF2;
+            padding: 14px;
+            border-radius: 10px;
+            font-weight: 500;
+            font-size: 15px;
+            color: #5E6F82;
+            cursor: pointer;
+            transition: background 0.2s ease;
+            font-family: 'Inter', sans-serif;
+        }
+        .btn-cancel:hover { background: #EEF2F7; }
+        @media (max-width: 768px) {
+            .navbar { flex-direction: column; gap: 12px; align-items: flex-start; }
+            .nav-links { flex-wrap: wrap; gap: 14px; }
+            .invoice-grid { grid-template-columns: 1fr; }
+            .modal { margin: 16px; padding: 24px 20px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="app-container">
+        <nav class="navbar">
+            <a href="index.html" class="logo">
+                <img src="logo.png" alt="PayPoint" onerror="this.style.display='none'">
+                PayPoint <span>· Invoices</span>
+            </a>
+            <div class="nav-links">
+                <a href="index.html">Dashboard</a>
+                <a href="deals.html">Deals</a>
+                <a href="expenses.html">Expenses</a>
+                <a href="invoices.html" class="active">Invoices</a>
+                <a href="creator.html">Creator</a>
+                <span class="user-badge" id="userBadge">👤 Creator</span>
+                <a href="#" class="logout" id="navLogout">Logout</a>
+            </div>
+        </nav>
+
+        <div class="page-header">
+            <h1>Invoices <span>· Send professional invoices to brands</span></h1>
+            <button class="btn-primary" id="openModalBtn">+ Create Invoice</button>
+        </div>
+
+        <div class="invoice-grid" id="invoiceGrid">
+            <div class="empty-state">
+                <div class="icon">📄</div>
+                <h3>No invoices yet</h3>
+                <p>Create your first invoice from a brand deal.</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="invoiceModal">
+        <div class="modal">
+            <h2>📄 Create Invoice</h2>
+            <p>Select a deal to convert into a professional invoice.</p>
+            <label for="modalDeal">Select Deal</label>
+            <select id="modalDeal"><option value="">Loading deals...</option></select>
+            <label for="modalInvoiceNumber">Invoice Number (Optional)</label>
+            <input type="text" id="modalInvoiceNumber" placeholder="e.g. INV-001">
+            <label for="modalBrandEmail">Brand Email</label>
+            <input type="email" id="modalBrandEmail" placeholder="finance@brand.com">
+            <div class="modal-actions">
+                <button class="btn-cancel" id="closeModalBtn">Cancel</button>
+                <button class="btn-save" id="createInvoiceBtn">Create & Send</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ============================================
+        // CONFIGURATION - FIXED URL
+        // ============================================
+        const API_URL = 'https://paypoint-backend00.onrender.com/api';
+        let allDeals = [];
+
+        function getAuthHeaders() {
+            const token = localStorage.getItem('paypoint_session');
+            return { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) };
+        }
+
+        const invoiceGrid = document.getElementById('invoiceGrid');
+        const openModalBtn = document.getElementById('openModalBtn');
+        const closeModalBtn = document.getElementById('closeModalBtn');
+        const createInvoiceBtn = document.getElementById('createInvoiceBtn');
+        const modal = document.getElementById('invoiceModal');
+        const modalDeal = document.getElementById('modalDeal');
+        const modalInvoiceNumber = document.getElementById('modalInvoiceNumber');
+        const modalBrandEmail = document.getElementById('modalBrandEmail');
+
+        function checkAuth() {
+            const user = localStorage.getItem('paypoint_user');
+            if (!user) { window.location.href = 'login.html'; }
+            else {
+                try {
+                    const userData = JSON.parse(user);
+                    document.getElementById('userBadge').textContent = `👤 ${userData?.user_metadata?.name || 'Creator'}`;
+                } catch (e) { document.getElementById('userBadge').textContent = '👤 Creator'; }
+            }
+        }
+
+        async function loadDealsForInvoices() {
+            try {
+                const res = await fetch(`${API_URL}/deals`, { headers: getAuthHeaders() });
+                const result = await res.json();
+                if (result.success) {
+                    allDeals = result.data || [];
+                    renderInvoices(allDeals);
+                    populateDealDropdown(allDeals);
+                }
+            } catch (err) { console.error('Error loading deals:', err); }
+        }
+
+        function renderInvoices(deals) {
+            if (deals.length === 0) {
+                invoiceGrid.innerHTML = `
+                    <div class="empty-state">
+                        <div class="icon">📄</div>
+                        <h3>No invoices yet</h3>
+                        <p>Create your first invoice from a brand deal.</p>
+                    </div>
+                `;
+                return;
+            }
+            invoiceGrid.innerHTML = '';
+            deals.forEach(deal => {
+                const card = document.createElement('div');
+                card.className = 'invoice-card';
+                const statuses = ['draft', 'sent', 'paid'];
+                const status = statuses[Math.floor(Math.random() * statuses.length)];
+                card.innerHTML = `
+                    <div class="brand">${deal.brand_name}</div>
+                    <div class="amount">$${Number(deal.amount).toLocaleString()}</div>
+                    <div class="details">📅 Due: ${deal.due_date ? new Date(deal.due_date).toLocaleDateString() : 'Not set'}</div>
+                    <div class="details">📋 ${deal.deliverable || 'No deliverable'}</div>
+                    <span class="status ${status}">${status.toUpperCase()}</span>
+                    <div class="invoice-actions">
+                        <button class="btn-invoice gold" onclick="previewInvoice('${deal.id}')">👁️ Preview</button>
+                        <button class="btn-invoice blue" onclick="downloadInvoice('${deal.id}')">⬇️ Download</button>
+                        <button class="btn-invoice green" onclick="sendInvoice('${deal.id}')">💰 Pay Now</button>
+                    </div>
+                `;
+                invoiceGrid.appendChild(card);
+            });
+        }
+
+        function populateDealDropdown(deals) {
+            modalDeal.innerHTML = '';
+            if (deals.length === 0) { modalDeal.innerHTML = '<option value="">No deals available</option>'; return; }
+            deals.forEach(deal => {
+                const option = document.createElement('option');
+                option.value = deal.id;
+                option.textContent = `${deal.brand_name} - $${Number(deal.amount).toLocaleString()}`;
+                modalDeal.appendChild(option);
+            });
+        }
+
+        function previewInvoice(id) {
+            const deal = allDeals.find(d => d.id === id);
+            if (!deal) return;
+            alert(`📄 INVOICE PREVIEW\n━━━━━━━━━━━━━━━━━━━━━\n\nBrand: ${deal.brand_name}\nAmount: $${Number(deal.amount).toLocaleString()}\nDeliverable: ${deal.deliverable || 'Not specified'}\nDue Date: ${deal.due_date ? new Date(deal.due_date).toLocaleDateString() : 'Not set'}\nStatus: ${deal.status || 'pending'}\n\n━━━━━━━━━━━━━━━━━━━━━\nPayPoint · Professional Invoicing`);
+        }
+
+        async function downloadInvoice(id) {
+            const deal = allDeals.find(d => d.id === id);
+            if (!deal) return;
+            try {
+                alert(`⬇️ Generating PDF for ${deal.brand_name}...`);
+                const res = await fetch(`${API_URL}/invoices/generate`, { method: 'POST', headers: getAuthHeaders(), body: JSON.stringify({ dealId: id }) });
+                if (res.ok) {
+                    const blob = await res.blob();
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `invoice-${deal.brand_name}-${Date.now()}.pdf`;
+                    a.click();
+                    URL.revokeObjectURL(url);
+                } else { alert('❌ Error generating PDF'); }
+            } catch (err) { alert('❌ Could not connect to server'); console.error(err); }
+        }
+
+        async function sendInvoice(id) {
+            const deal = allDeals.find(d => d.id === id);
+            if (!deal) return;
+            const brandEmail = prompt(`📧 Enter email to send invoice to ${deal.brand_name}:`, 'finance@brand.com');
+            if (!brandEmail) return;
+            try {
+                const payRes = await fetch(`${API_URL}/payments/initialize`, {
+                    method: 'POST',
+                    headers: getAuthHeaders(),
+                    body: JSON.stringify({ dealId: id, email: brandEmail })
+                });
+                const payResult = await payRes.json();
+                if (payResult && payResult.authorization_url) {
+                    window.open(payResult.authorization_url, '_blank');
+                    alert(`✅ Invoice sent to ${brandEmail}!`);
+                } else { alert('❌ Payment initialization failed'); }
+            } catch (err) { alert('❌ Could not initialize payment'); console.error(err); }
+        }
+
+        openModalBtn.addEventListener('click', () => {
+            modalDeal.value = '';
+            modalInvoiceNumber.value = '';
+            modalBrandEmail.value = '';
+            modal.classList.add('active');
+        });
+
+        function closeModal() { modal.classList.remove('active'); }
+        closeModalBtn.addEventListener('click', closeModal);
+        modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
+
+        createInvoiceBtn.addEventListener('click', async () => {
+            const dealId = modalDeal.value;
+            const invoiceNumber = modalInvoiceNumber.value.trim();
+            const brandEmail = modalBrandEmail.value.trim();
+            if (!dealId) { alert('Please select a deal'); return; }
+            if (!brandEmail) { alert('Please enter the brand email'); return; }
+            try {
+                const res = await fetch(`${API_URL}/invoices/create`, {
+                    method: 'POST',
+                    headers: getAuthHeaders(),
+                    body: JSON.stringify({ dealId, invoiceNumber: invoiceNumber || `INV-${Date.now()}`, brandEmail })
+                });
+                const result = await res.json();
+                if (result.success) {
+                    alert('✅ Invoice created and sent to ' + brandEmail);
+                    closeModal();
+                    loadDealsForInvoices();
+                } else { alert('❌ Error: ' + (result.error || 'Failed to create invoice')); }
+            } catch (err) { alert('❌ Could not connect to server'); console.error(err); }
+        });
+
+        document.getElementById('navLogout')?.addEventListener('click', async (e) => {
+            e.preventDefault();
+            try { await fetch(`${API_URL}/auth/logout`, { method: 'POST', headers: getAuthHeaders() }); } catch (err) {}
+            localStorage.removeItem('paypoint_user');
+            localStorage.removeItem('paypoint_session');
+            window.location.href = 'login.html';
+        });
+
+        checkAuth();
+        loadDealsForInvoices();
+        console.log('📄 PayPoint Invoices Page loaded');
+        console.log('📡 Connected to:', API_URL);
+    </script>
+
+</body>
+</html>

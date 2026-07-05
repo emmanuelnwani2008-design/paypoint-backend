@@ -2,10 +2,5 @@ services:
   - type: web
     name: paypoint-backend
     env: node
-    plan: free
-    region: oregon
-    buildCommand: "npm install"
-    startCommand: "npm run start:prod"
-    branch: main
-    healthCheckPath: "/health"
-    disk: 512
+    buildCommand: npm install
+    startCommand: npm start

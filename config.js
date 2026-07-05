@@ -8,8 +8,8 @@
     // Local development: use relative path (same server)
     window.__API_URL__ = '/api';
   } else {
-    // Production: use Render backend URL
-    window.__API_URL__ = 'https://paypoint-backend-9m63.onrender.com/api';
+    // Production: use Render backend URL + API mount
+    window.__API_URL__ = 'https://paypoint-backend00.onrender.com/api';
   }
   
   console.log('[Config] API URL:', window.__API_URL__, '(Environment:', isDevelopment ? 'development' : 'production', ')');
