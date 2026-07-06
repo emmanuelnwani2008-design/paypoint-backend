@@ -17,11 +17,9 @@ createSecurity(app, { allowedOrigins });
 app.use(express.json());
 
 // SUPABASE - loaded from environment variables (set these in Render's Environment tab)
-const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseAnonKey = process.env.SUPABASE_ANON_KEY;
-if (!supabaseUrl || !supabaseAnonKey) {
-    console.warn('⚠️  SUPABASE_URL / SUPABASE_ANON_KEY are not set — auth and data routes will fail.');
-}
+// SUPABASE - HARDCODED for Render deployment
+const supabaseUrl = 'https://mqggkwhdbwkaftmewdca.supabase.co';
+const supabaseAnonKey = 'sb_publishable_u1Ag_qpF5L8LbHc6ZzYnxQ_z4w3ExhV';
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 // ============================================
