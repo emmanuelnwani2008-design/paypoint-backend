@@ -9,7 +9,6 @@
     "dev": "nodemon server.js"
   },
   "dependencies": {
-    "@alexasomba/paystack-node": "^1.10.8",
     "@supabase/supabase-js": "^2.110.0",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
@@ -17,9 +16,6 @@
     "express-rate-limit": "^7.5.1",
     "helmet": "^6.2.0",
     "jsonwebtoken": "^9.0.0",
-    "morgan": "^1.10.0",
-    "nodemon": "^3.0.1",
-    "pdfkit": "^0.19.1",
-    "xss-clean": "^0.1.4"
+    "nodemon": "^3.0.1"
   }
 }
