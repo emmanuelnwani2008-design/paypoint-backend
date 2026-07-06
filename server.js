@@ -1,17 +1,27 @@
+require('dotenv').config();
 const express = require('express');
-const cors = require('cors');
 const { createClient } = require('@supabase/supabase-js');
+const { createSecurity } = require('./security');
 
 const app = express();
 const port = process.env.PORT || 3000;
 
+// SECURITY - helmet, restricted CORS, rate limiting, XSS cleaning (see security.js)
+const allowedOrigins = (process.env.ALLOWED_ORIGINS || 'http://localhost:3000')
+    .split(',')
+    .map((o) => o.trim())
+    .filter(Boolean);
+createSecurity(app, { allowedOrigins });
+
 // MIDDLEWARE
-app.use(cors());
 app.use(express.json());
 
-// SUPABASE - HARDCODED
-const supabaseUrl = 'https://mqggkwhdbwkaftmewdca.supabase.co';
-const supabaseAnonKey = 'sb_publishable_u1Ag_qpF5L8LbHc6ZzYnxQ_z4w3ExhV';
+// SUPABASE - loaded from environment variables (set these in Render's Environment tab)
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseAnonKey = process.env.SUPABASE_ANON_KEY;
+if (!supabaseUrl || !supabaseAnonKey) {
+    console.warn('⚠️  SUPABASE_URL / SUPABASE_ANON_KEY are not set — auth and data routes will fail.');
+}
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 // ============================================
@@ -152,7 +162,10 @@ app.post('/api/expenses', async (req, res) => {
 // ============================================
 // PAYSTACK PAYMENT ROUTES
 // ============================================
-const PAYSTACK_SECRET_KEY = 'sk_test_272bd56a30ebfb3a214e39c6d7030bb4dc256571';
+const PAYSTACK_SECRET_KEY = process.env.PAYSTACK_SECRET_KEY;
+if (!PAYSTACK_SECRET_KEY) {
+    console.warn('⚠️  PAYSTACK_SECRET_KEY is not set — payment routes will fail.');
+}
 
 app.post('/api/payments/initialize', async (req, res) => {
     try {
@@ -354,6 +367,24 @@ app.post('/api/webhooks/paystack', express.raw({ type: 'application/json' }), as
         res.sendStatus(500);
     }
 });
+
+// ============================================
+// KEEP-ALIVE (prevents Render free tier from sleeping)
+// Only runs in production, and only if RENDER_EXTERNAL_URL is set
+// (Render sets this automatically — no config needed on your end)
+// ============================================
+if (process.env.RENDER_EXTERNAL_URL) {
+    const SELF_URL = process.env.RENDER_EXTERNAL_URL;
+    const PING_INTERVAL_MS = 10 * 60 * 1000; // every 10 minutes, safely under the 15-min sleep window
+
+    setInterval(() => {
+        fetch(`${SELF_URL}/health`)
+            .then(() => console.log('💓 Keep-alive ping sent'))
+            .catch((err) => console.warn('Keep-alive ping failed:', err.message));
+    }, PING_INTERVAL_MS);
+
+    console.log(`💓 Keep-alive enabled, pinging every ${PING_INTERVAL_MS / 60000} min`);
+}
 
 // ============================================
 // START SERVER
