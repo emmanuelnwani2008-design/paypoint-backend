@@ -5,9 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PayPoint · Creator Profile</title>
     <style>
-        /* ============================================
-           CLEAN WHITE/BLACK/GREY THEME
-        ============================================ */
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -275,7 +272,7 @@
 
     <script>
         // ============================================
-        // CONFIGURATION - FIXED URL
+        // CONFIGURATION
         // ============================================
         const API_URL = 'https://paypoint-backend-9m63.onrender.com/api';
         let currentUser = null;
@@ -285,6 +282,9 @@
             return { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) };
         }
 
+        // ============================================
+        // DOM REFERENCES
+        // ============================================
         const profileName = document.getElementById('profileName');
         const profileEmail = document.getElementById('profileEmail');
         const profileAvatar = document.getElementById('profileAvatar');
@@ -303,23 +303,38 @@
         const newPassword = document.getElementById('newPassword');
         const confirmPassword = document.getElementById('confirmPassword');
 
+        // ============================================
+        // CHECK AUTHENTICATION - SINGLE FUNCTION (FIXED)
+        // ============================================
         function checkAuth() {
             const user = localStorage.getItem('paypoint_user');
-            if (!user) { window.location.href = 'login.html'; }
-            else {
-                try {
-                    currentUser = JSON.parse(user);
-                    const name = currentUser?.user_metadata?.name || 'Creator';
-                    const email = currentUser?.email || 'creator@example.com';
-                    profileName.textContent = name;
-                    profileEmail.textContent = email;
-                    profileAvatar.textContent = name.charAt(0).toUpperCase();
-                    editName.value = name;
-                    document.getElementById('userBadge').textContent = `👤 ${name}`;
-                } catch (e) { console.error('Error parsing user:', e); }
+            if (!user) {
+                window.location.replace('login.html');
+                return false;
+            }
+
+            try {
+                const userData = JSON.parse(user);
+                const name = userData?.user_metadata?.name || userData?.name || 'Creator';
+                const email = userData?.email || 'creator@example.com';
+
+                document.getElementById('userBadge').textContent = `👤 ${name}`;
+                profileName.textContent = name;
+                profileEmail.textContent = email;
+                profileAvatar.textContent = name.charAt(0).toUpperCase();
+                editName.value = name;
+                return true;
+            } catch (e) {
+                localStorage.removeItem('paypoint_user');
+                localStorage.removeItem('paypoint_session');
+                window.location.replace('login.html');
+                return false;
             }
         }
 
+        // ============================================
+        // LOAD STATS
+        // ============================================
         async function loadStats() {
             try {
                 const dealsRes = await fetch(`${API_URL}/deals`, { headers: getAuthHeaders() });
@@ -339,85 +354,166 @@
                     statExpenses.textContent = expenses.length;
                     statSpent.textContent = `$${totalSpent.toLocaleString()}`;
                 }
-            } catch (err) { console.error('Error loading stats:', err); }
+            } catch (err) {
+                console.error('Error loading stats:', err);
+            }
         }
 
+        // ============================================
+        // UPDATE PROFILE
+        // ============================================
         document.getElementById('updateProfileBtn').addEventListener('click', async () => {
             const name = editName.value.trim();
             const bio = editBio.value.trim();
-            if (!name) { showMessage(profileError, 'Name is required'); return; }
+
+            if (!name) {
+                showMessage(profileError, 'Name is required');
+                return;
+            }
+
             try {
                 const res = await fetch(`${API_URL}/auth/update`, {
                     method: 'PUT',
                     headers: getAuthHeaders(),
                     body: JSON.stringify({ name, bio })
                 });
+
                 const result = await res.json();
+
                 if (result.success) {
                     const user = JSON.parse(localStorage.getItem('paypoint_user'));
                     user.user_metadata.name = name;
                     user.user_metadata.bio = bio;
                     localStorage.setItem('paypoint_user', JSON.stringify(user));
+
                     profileName.textContent = name;
                     profileAvatar.textContent = name.charAt(0).toUpperCase();
                     document.getElementById('userBadge').textContent = `👤 ${name}`;
                     showMessage(profileSuccess, '✅ Profile updated successfully!');
                     hideMessage(profileError);
-                } else { showMessage(profileError, result.error || 'Failed to update profile'); hideMessage(profileSuccess); }
-            } catch (err) { showMessage(profileError, 'Could not connect to server'); hideMessage(profileSuccess); console.error(err); }
+                } else {
+                    showMessage(profileError, result.error || 'Failed to update profile');
+                    hideMessage(profileSuccess);
+                }
+            } catch (err) {
+                showMessage(profileError, 'Could not connect to server');
+                hideMessage(profileSuccess);
+                console.error(err);
+            }
         });
 
+        // ============================================
+        // CHANGE PASSWORD
+        // ============================================
         document.getElementById('changePasswordBtn').addEventListener('click', async () => {
             const oldPassword = currentPassword.value;
             const newPass = newPassword.value;
             const confirmPass = confirmPassword.value;
-            if (!oldPassword || !newPass || !confirmPass) { showMessage(passwordError, 'Please fill in all fields'); hideMessage(passwordSuccess); return; }
-            if (newPass.length < 6) { showMessage(passwordError, 'New password must be at least 6 characters'); hideMessage(passwordSuccess); return; }
-            if (newPass !== confirmPass) { showMessage(passwordError, 'Passwords do not match'); hideMessage(passwordSuccess); return; }
+
+            if (!oldPassword || !newPass || !confirmPass) {
+                showMessage(passwordError, 'Please fill in all fields');
+                hideMessage(passwordSuccess);
+                return;
+            }
+
+            if (newPass.length < 6) {
+                showMessage(passwordError, 'New password must be at least 6 characters');
+                hideMessage(passwordSuccess);
+                return;
+            }
+
+            if (newPass !== confirmPass) {
+                showMessage(passwordError, 'Passwords do not match');
+                hideMessage(passwordSuccess);
+                return;
+            }
+
             try {
                 const res = await fetch(`${API_URL}/auth/change-password`, {
                     method: 'PUT',
                     headers: getAuthHeaders(),
                     body: JSON.stringify({ oldPassword, newPassword: newPass })
                 });
+
                 const result = await res.json();
+
                 if (result.success) {
                     showMessage(passwordSuccess, '✅ Password updated successfully!');
                     hideMessage(passwordError);
                     currentPassword.value = '';
                     newPassword.value = '';
                     confirmPassword.value = '';
-                } else { showMessage(passwordError, result.error || 'Failed to update password'); hideMessage(passwordSuccess); }
-            } catch (err) { showMessage(passwordError, 'Could not connect to server'); hideMessage(passwordSuccess); console.error(err); }
+                } else {
+                    showMessage(passwordError, result.error || 'Failed to update password');
+                    hideMessage(passwordSuccess);
+                }
+            } catch (err) {
+                showMessage(passwordError, 'Could not connect to server');
+                hideMessage(passwordSuccess);
+                console.error(err);
+            }
         });
 
+        // ============================================
+        // DELETE ACCOUNT
+        // ============================================
         document.getElementById('deleteAccountBtn').addEventListener('click', async () => {
             if (!confirm('⚠️ Are you sure you want to delete your account? This action cannot be undone!')) return;
             if (!confirm('Type "yes" to confirm deletion')) return;
+
             try {
-                const res = await fetch(`${API_URL}/auth/delete`, { method: 'DELETE', headers: getAuthHeaders() });
+                const res = await fetch(`${API_URL}/auth/delete`, {
+                    method: 'DELETE',
+                    headers: getAuthHeaders()
+                });
+
                 const result = await res.json();
+
                 if (result.success) {
                     alert('🗑️ Account deleted successfully.');
                     localStorage.removeItem('paypoint_user');
-                    window.location.href = 'login.html';
-                } else { alert('❌ Error: ' + (result.error || 'Failed to delete account')); }
-            } catch (err) { alert('❌ Could not connect to server'); console.error(err); }
+                    window.location.replace('login.html');
+                } else {
+                    alert('❌ Error: ' + (result.error || 'Failed to delete account'));
+                }
+            } catch (err) {
+                alert('❌ Could not connect to server');
+                console.error(err);
+            }
         });
 
-        function showMessage(el, text) { el.textContent = text; el.classList.add('show'); }
-        function hideMessage(el) { el.classList.remove('show'); }
+        // ============================================
+        // HELPER FUNCTIONS
+        // ============================================
+        function showMessage(el, text) {
+            el.textContent = text;
+            el.classList.add('show');
+        }
 
+        function hideMessage(el) {
+            el.classList.remove('show');
+        }
+
+        // ============================================
+        // LOGOUT - FIXED
+        // ============================================
         document.getElementById('navLogout')?.addEventListener('click', async (e) => {
             e.preventDefault();
-            try { await fetch(`${API_URL}/auth/logout`, { method: 'POST', headers: getAuthHeaders() }); } catch (err) {}
+            try {
+                await fetch(`${API_URL}/auth/logout`, { method: 'POST', headers: getAuthHeaders() });
+            } catch (err) {}
             localStorage.removeItem('paypoint_user');
             localStorage.removeItem('paypoint_session');
-            window.location.href = 'login.html';
+            window.location.replace('login.html');
         });
 
-        checkAuth();
-        loadStats();
+        // ============================================
+        // INIT
+        // ============================================
+        if (checkAuth()) {
+            loadStats();
+        }
+
         console.log('👤 PayPoint Creator Profile loaded');
         console.log('📡 Connected to:', API_URL);
     </script>

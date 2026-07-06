@@ -282,9 +282,9 @@
 
     <script>
         // ============================================
-        // CONFIGURATION - FIXED URL
+        // CONFIGURATION
         // ============================================
-        const API_URL = window.__API_URL__ || 'https://paypoint-backend-9m63.onrender.com/api';
+        const API_URL = 'https://paypoint-backend-9m63.onrender.com/api';
         let allDeals = [];
 
         function getAuthHeaders() {
@@ -292,6 +292,9 @@
             return { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) };
         }
 
+        // ============================================
+        // DOM REFERENCES
+        // ============================================
         const invoiceGrid = document.getElementById('invoiceGrid');
         const openModalBtn = document.getElementById('openModalBtn');
         const closeModalBtn = document.getElementById('closeModalBtn');
@@ -301,29 +304,50 @@
         const modalInvoiceNumber = document.getElementById('modalInvoiceNumber');
         const modalBrandEmail = document.getElementById('modalBrandEmail');
 
+        // ============================================
+        // CHECK AUTHENTICATION - SINGLE FUNCTION (FIXED)
+        // ============================================
         function checkAuth() {
             const user = localStorage.getItem('paypoint_user');
-            if (!user) { window.location.href = 'login.html'; }
-            else {
-                try {
-                    const userData = JSON.parse(user);
-                    document.getElementById('userBadge').textContent = `👤 ${userData?.user_metadata?.name || 'Creator'}`;
-                } catch (e) { document.getElementById('userBadge').textContent = '👤 Creator'; }
+            if (!user) {
+                window.location.replace('login.html');
+                return false;
+            }
+
+            try {
+                const userData = JSON.parse(user);
+                const name = userData?.user_metadata?.name || userData?.name || 'Creator';
+                document.getElementById('userBadge').textContent = `👤 ${name}`;
+                return true;
+            } catch (e) {
+                localStorage.removeItem('paypoint_user');
+                localStorage.removeItem('paypoint_session');
+                window.location.replace('login.html');
+                return false;
             }
         }
 
+        // ============================================
+        // LOAD DEALS
+        // ============================================
         async function loadDealsForInvoices() {
             try {
                 const res = await fetch(`${API_URL}/deals`, { headers: getAuthHeaders() });
                 const result = await res.json();
+
                 if (result.success) {
                     allDeals = result.data || [];
                     renderInvoices(allDeals);
                     populateDealDropdown(allDeals);
                 }
-            } catch (err) { console.error('Error loading deals:', err); }
+            } catch (err) {
+                console.error('Error loading deals:', err);
+            }
         }
 
+        // ============================================
+        // RENDER INVOICES
+        // ============================================
         function renderInvoices(deals) {
             if (deals.length === 0) {
                 invoiceGrid.innerHTML = `
@@ -335,12 +359,14 @@
                 `;
                 return;
             }
+
             invoiceGrid.innerHTML = '';
             deals.forEach(deal => {
                 const card = document.createElement('div');
                 card.className = 'invoice-card';
                 const statuses = ['draft', 'sent', 'paid'];
                 const status = statuses[Math.floor(Math.random() * statuses.length)];
+
                 card.innerHTML = `
                     <div class="brand">${deal.brand_name}</div>
                     <div class="amount">$${Number(deal.amount).toLocaleString()}</div>
@@ -357,9 +383,16 @@
             });
         }
 
+        // ============================================
+        // POPULATE DROPDOWN
+        // ============================================
         function populateDealDropdown(deals) {
             modalDeal.innerHTML = '';
-            if (deals.length === 0) { modalDeal.innerHTML = '<option value="">No deals available</option>'; return; }
+            if (deals.length === 0) {
+                modalDeal.innerHTML = '<option value="">No deals available</option>';
+                return;
+            }
+
             deals.forEach(deal => {
                 const option = document.createElement('option');
                 option.value = deal.id;
@@ -368,18 +401,30 @@
             });
         }
 
+        // ============================================
+        // PREVIEW INVOICE
+        // ============================================
         function previewInvoice(id) {
             const deal = allDeals.find(d => d.id === id);
             if (!deal) return;
             alert(`📄 INVOICE PREVIEW\n━━━━━━━━━━━━━━━━━━━━━\n\nBrand: ${deal.brand_name}\nAmount: $${Number(deal.amount).toLocaleString()}\nDeliverable: ${deal.deliverable || 'Not specified'}\nDue Date: ${deal.due_date ? new Date(deal.due_date).toLocaleDateString() : 'Not set'}\nStatus: ${deal.status || 'pending'}\n\n━━━━━━━━━━━━━━━━━━━━━\nPayPoint · Professional Invoicing`);
         }
 
+        // ============================================
+        // DOWNLOAD INVOICE
+        // ============================================
         async function downloadInvoice(id) {
             const deal = allDeals.find(d => d.id === id);
             if (!deal) return;
+
             try {
                 alert(`⬇️ Generating PDF for ${deal.brand_name}...`);
-                const res = await fetch(`${API_URL}/invoices/generate`, { method: 'POST', headers: getAuthHeaders(), body: JSON.stringify({ dealId: id }) });
+                const res = await fetch(`${API_URL}/invoices/generate`, {
+                    method: 'POST',
+                    headers: getAuthHeaders(),
+                    body: JSON.stringify({ dealId: id })
+                });
+
                 if (res.ok) {
                     const blob = await res.blob();
                     const url = URL.createObjectURL(blob);
@@ -388,29 +433,49 @@
                     a.download = `invoice-${deal.brand_name}-${Date.now()}.pdf`;
                     a.click();
                     URL.revokeObjectURL(url);
-                } else { alert('❌ Error generating PDF'); }
-            } catch (err) { alert('❌ Could not connect to server'); console.error(err); }
+                } else {
+                    alert('❌ Error generating PDF');
+                }
+            } catch (err) {
+                alert('❌ Could not connect to server');
+                console.error(err);
+            }
         }
 
+        // ============================================
+        // SEND INVOICE
+        // ============================================
         async function sendInvoice(id) {
             const deal = allDeals.find(d => d.id === id);
             if (!deal) return;
+
             const brandEmail = prompt(`📧 Enter email to send invoice to ${deal.brand_name}:`, 'finance@brand.com');
             if (!brandEmail) return;
+
             try {
                 const payRes = await fetch(`${API_URL}/payments/initialize`, {
                     method: 'POST',
                     headers: getAuthHeaders(),
                     body: JSON.stringify({ dealId: id, email: brandEmail })
                 });
+
                 const payResult = await payRes.json();
+
                 if (payResult && payResult.authorization_url) {
                     window.open(payResult.authorization_url, '_blank');
                     alert(`✅ Invoice sent to ${brandEmail}!`);
-                } else { alert('❌ Payment initialization failed'); }
-            } catch (err) { alert('❌ Could not initialize payment'); console.error(err); }
+                } else {
+                    alert('❌ Payment initialization failed');
+                }
+            } catch (err) {
+                alert('❌ Could not initialize payment');
+                console.error(err);
+            }
         }
 
+        // ============================================
+        // MODAL CONTROLS
+        // ============================================
         openModalBtn.addEventListener('click', () => {
             modalDeal.value = '';
             modalInvoiceNumber.value = '';
@@ -418,41 +483,79 @@
             modal.classList.add('active');
         });
 
-        function closeModal() { modal.classList.remove('active'); }
-        closeModalBtn.addEventListener('click', closeModal);
-        modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
+        function closeModal() {
+            modal.classList.remove('active');
+        }
 
+        closeModalBtn.addEventListener('click', closeModal);
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) closeModal();
+        });
+
+        // ============================================
+        // CREATE INVOICE
+        // ============================================
         createInvoiceBtn.addEventListener('click', async () => {
             const dealId = modalDeal.value;
             const invoiceNumber = modalInvoiceNumber.value.trim();
             const brandEmail = modalBrandEmail.value.trim();
-            if (!dealId) { alert('Please select a deal'); return; }
-            if (!brandEmail) { alert('Please enter the brand email'); return; }
+
+            if (!dealId) {
+                alert('Please select a deal');
+                return;
+            }
+
+            if (!brandEmail) {
+                alert('Please enter the brand email');
+                return;
+            }
+
             try {
                 const res = await fetch(`${API_URL}/invoices/create`, {
                     method: 'POST',
                     headers: getAuthHeaders(),
-                    body: JSON.stringify({ dealId, invoiceNumber: invoiceNumber || `INV-${Date.now()}`, brandEmail })
+                    body: JSON.stringify({
+                        dealId,
+                        invoiceNumber: invoiceNumber || `INV-${Date.now()}`,
+                        brandEmail
+                    })
                 });
+
                 const result = await res.json();
+
                 if (result.success) {
                     alert('✅ Invoice created and sent to ' + brandEmail);
                     closeModal();
                     loadDealsForInvoices();
-                } else { alert('❌ Error: ' + (result.error || 'Failed to create invoice')); }
-            } catch (err) { alert('❌ Could not connect to server'); console.error(err); }
+                } else {
+                    alert('❌ Error: ' + (result.error || 'Failed to create invoice'));
+                }
+            } catch (err) {
+                alert('❌ Could not connect to server');
+                console.error(err);
+            }
         });
 
+        // ============================================
+        // LOGOUT - FIXED
+        // ============================================
         document.getElementById('navLogout')?.addEventListener('click', async (e) => {
             e.preventDefault();
-            try { await fetch(`${API_URL}/auth/logout`, { method: 'POST', headers: getAuthHeaders() }); } catch (err) {}
+            try {
+                await fetch(`${API_URL}/auth/logout`, { method: 'POST', headers: getAuthHeaders() });
+            } catch (err) {}
             localStorage.removeItem('paypoint_user');
             localStorage.removeItem('paypoint_session');
-            window.location.href = 'login.html';
+            window.location.replace('login.html');
         });
 
-        checkAuth();
-        loadDealsForInvoices();
+        // ============================================
+        // INIT
+        // ============================================
+        if (checkAuth()) {
+            loadDealsForInvoices();
+        }
+
         console.log('📄 PayPoint Invoices Page loaded');
         console.log('📡 Connected to:', API_URL);
     </script>
