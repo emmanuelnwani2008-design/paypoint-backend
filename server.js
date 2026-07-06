@@ -160,10 +160,8 @@ app.post('/api/expenses', async (req, res) => {
 // ============================================
 // PAYSTACK PAYMENT ROUTES
 // ============================================
-const PAYSTACK_SECRET_KEY = process.env.PAYSTACK_SECRET_KEY;
-if (!PAYSTACK_SECRET_KEY) {
-    console.warn('⚠️  PAYSTACK_SECRET_KEY is not set — payment routes will fail.');
-}
+const PAYSTACK_SECRET_KEY = 'sk_test_272bd56a30ebfb3a214e39c6d7030bb4dc256571';
+console.log('✅ Paystack key hardcoded');
 
 app.post('/api/payments/initialize', async (req, res) => {
     try {
