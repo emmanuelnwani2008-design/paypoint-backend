@@ -1,16 +1,10 @@
-// API Configuration
-// This file sets the API URL based on the environment
+// config.js
 (function() {
-  const hostname = window.location.hostname;
-  const isDevelopment = hostname === 'localhost' || hostname === '127.0.0.1';
-  
-  if (isDevelopment) {
-    // Local development: use relative path (same server)
-    window.__API_URL__ = '/api';
-  } else {
-    // Production: use Render backend URL + API mount
-  window.__API_URL__ = 'https://paypoint-backend-9m63.onrender.com/api';
-  }
-  
-  console.log('[Config] API URL:', window.__API_URL__, '(Environment:', isDevelopment ? 'development' : 'production', ')');
+    // If Cloudflare Pages sets an environment variable, use it
+    const apiUrl = window.__API_URL__ || 
+                   (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' ? 
+                   'http://localhost:3000/api' : 
+                   'https://paypoint-backend-9m63.onrender.com/api');
+    window.__API_URL__ = apiUrl;
+    console.log('[Config] API URL:', apiUrl);
 })();
