@@ -284,13 +284,6 @@
         });
 
         // ============================================
-        // DEMO LOGIN
-        // ============================================
-        demoLogin.addEventListener('click', () => {
-            window.location.href = 'index.html';
-        });
-
-        // ============================================
         // SIGNUP FUNCTION
         // ============================================
         signupBtn.addEventListener('click', async () => {
@@ -298,6 +291,11 @@
             const email = signupEmail.value.trim();
             const password = signupPassword.value;
 
+            // Clear previous messages
+            signupError.style.display = 'none';
+            signupSuccess.style.display = 'none';
+
+            // Validate
             if (!name || !email || !password) {
                 signupError.textContent = 'Please fill in all fields';
                 signupError.style.display = 'block';
@@ -320,17 +318,16 @@
                 const data = await res.json();
 
                 if (data.success) {
+                    signupSuccess.textContent = '✅ Account created! Please log in.';
                     signupSuccess.style.display = 'block';
                     signupError.style.display = 'none';
-                    if (data.user) {
-                        localStorage.setItem('paypoint_user', JSON.stringify(data.user));
-                    }
-                    if (data.session?.access_token) {
-                        localStorage.setItem('paypoint_session', data.session.access_token);
-                    }
+                    
+                    // Clear form
                     signupName.value = '';
                     signupEmail.value = '';
                     signupPassword.value = '';
+
+                    // Switch to login tab after 1.5 seconds
                     setTimeout(() => {
                         loginTab.click();
                     }, 1500);
@@ -340,10 +337,10 @@
                     signupSuccess.style.display = 'none';
                 }
             } catch (err) {
+                console.error('Signup error:', err);
                 signupError.textContent = 'Could not connect to server. Make sure backend is running.';
                 signupError.style.display = 'block';
                 signupSuccess.style.display = 'none';
-                console.error('Signup error:', err);
             }
         });
 
@@ -354,6 +351,10 @@
             const email = loginEmail.value.trim();
             const password = loginPassword.value;
 
+            // Clear previous messages
+            loginError.style.display = 'none';
+
+            // Validate
             if (!email || !password) {
                 loginError.textContent = 'Please enter email and password';
                 loginError.style.display = 'block';
@@ -369,21 +370,45 @@
 
                 const data = await res.json();
 
-                if (data.success) {
+                if (data.success && data.user) {
+                    // Save user to localStorage
                     localStorage.setItem('paypoint_user', JSON.stringify(data.user));
                     if (data.session?.access_token) {
                         localStorage.setItem('paypoint_session', data.session.access_token);
                     }
+                    // Redirect to dashboard
                     window.location.href = 'index.html';
                 } else {
                     loginError.textContent = data.error || 'Invalid credentials';
                     loginError.style.display = 'block';
                 }
             } catch (err) {
+                console.error('Login error:', err);
                 loginError.textContent = 'Could not connect to server. Make sure backend is running.';
                 loginError.style.display = 'block';
-                console.error('Login error:', err);
             }
+        });
+
+        // ============================================
+        // DEMO LOGIN - FIXED!
+        // ============================================
+        demoLogin.addEventListener('click', () => {
+            // Create a demo user for testing
+            const demoUser = {
+                id: 'demo-' + Date.now(),
+                user_metadata: { 
+                    name: 'Demo User',
+                    email: 'demo@paypoint.com'
+                },
+                email: 'demo@paypoint.com'
+            };
+            
+            // Store user in localStorage
+            localStorage.setItem('paypoint_user', JSON.stringify(demoUser));
+            localStorage.setItem('paypoint_session', 'demo-session-' + Date.now());
+            
+            // Redirect to dashboard
+            window.location.href = 'index.html';
         });
 
         // ============================================
@@ -396,6 +421,23 @@
         signupPassword.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') signupBtn.click();
         });
+
+        // ============================================
+        // CHECK IF ALREADY LOGGED IN
+        // ============================================
+        const user = localStorage.getItem('paypoint_user');
+        if (user) {
+            try {
+                const userData = JSON.parse(user);
+                if (userData && userData.id) {
+                    window.location.href = 'index.html';
+                }
+            } catch (e) {
+                // If invalid JSON, clear it
+                localStorage.removeItem('paypoint_user');
+                localStorage.removeItem('paypoint_session');
+            }
+        }
 
         console.log('🔐 PayPoint Login page loaded');
         console.log('📡 Connected to:', API_URL);
