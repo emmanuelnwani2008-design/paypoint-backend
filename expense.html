@@ -693,18 +693,25 @@
 
         // CHECK AUTHENTICATION
         function checkAuth() {
-            const user = localStorage.getItem('paypoint_user');
-            if (!user) {
-                window.location.href = 'login.html';
-            } else {
-                try {
-                    const userData = JSON.parse(user);
-                    document.getElementById('userBadge').textContent = `👤 ${userData?.user_metadata?.name || 'Creator'}`;
-                } catch (e) {
-                    document.getElementById('userBadge').textContent = '👤 Creator';
-                }
-            }
-        }
+    const user = localStorage.getItem('paypoint_user');
+    if (!user) {
+        window.location.replace('login.html');
+        return false;
+    }
+    
+    try {
+        const userData = JSON.parse(user);
+        const name = userData?.user_metadata?.name || userData?.name || 'Creator';
+        document.getElementById('userBadge').textContent = `👤 ${name}`;
+        return true;
+    } catch (e) {
+        localStorage.removeItem('paypoint_user');
+        localStorage.removeItem('paypoint_session');
+        window.location.replace('login.html');
+        return false;
+    }
+}
+
 
         // LOAD EXPENSES
         async function loadExpenses() {

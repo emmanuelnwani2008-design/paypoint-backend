@@ -5,12 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PayPoint · Login</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background: #FFFFFF;
@@ -22,7 +17,6 @@
             padding: 20px;
             -webkit-font-smoothing: antialiased;
         }
-
         .login-container {
             background: #FFFFFF;
             border: 1px solid #E8EDF2;
@@ -32,7 +26,6 @@
             max-width: 420px;
             box-shadow: 0 24px 64px rgba(0, 0, 0, 0.06);
         }
-
         .logo {
             font-size: 32px;
             font-weight: 700;
@@ -45,19 +38,13 @@
             justify-content: center;
             gap: 10px;
         }
-
-        .logo img {
-            height: 40px;
-            width: auto;
-        }
-
+        .logo img { height: 40px; width: auto; }
         .subtitle {
             text-align: center;
             color: #8A9AAB;
             font-size: 14px;
             margin-bottom: 32px;
         }
-
         .tab-switch {
             display: flex;
             background: #F8FAFC;
@@ -66,7 +53,6 @@
             margin-bottom: 24px;
             border: 1px solid #E8EDF2;
         }
-
         .tab-btn {
             flex: 1;
             padding: 10px;
@@ -80,21 +66,13 @@
             transition: all 0.2s ease;
             font-family: 'Inter', sans-serif;
         }
-
         .tab-btn.active {
             background: #4F7CFF;
             color: #FFFFFF;
             box-shadow: 0 2px 8px rgba(79, 124, 255, 0.25);
         }
-
-        .tab-btn:hover:not(.active) {
-            color: #000000;
-        }
-
-        .form-group {
-            margin-bottom: 18px;
-        }
-
+        .tab-btn:hover:not(.active) { color: #000000; }
+        .form-group { margin-bottom: 18px; }
         .form-group label {
             display: block;
             font-size: 13px;
@@ -102,7 +80,6 @@
             color: #5E6F82;
             margin-bottom: 4px;
         }
-
         .form-group input {
             width: 100%;
             padding: 12px 16px;
@@ -114,12 +91,7 @@
             transition: border 0.2s ease;
             font-family: 'Inter', sans-serif;
         }
-
-        .form-group input:focus {
-            outline: none;
-            border-color: #4F7CFF;
-        }
-
+        .form-group input:focus { outline: none; border-color: #4F7CFF; }
         .btn-primary {
             width: 100%;
             background: #4F7CFF;
@@ -135,13 +107,11 @@
             box-shadow: 0 2px 8px rgba(79, 124, 255, 0.25);
             margin-top: 8px;
         }
-
         .btn-primary:hover {
             background: #3A5FD9;
             transform: translateY(-1px);
             box-shadow: 0 4px 16px rgba(79, 124, 255, 0.35);
         }
-
         .error-msg {
             color: #FF3B30;
             font-size: 13px;
@@ -149,7 +119,6 @@
             margin-top: 12px;
             display: none;
         }
-
         .success-msg {
             color: #34C759;
             font-size: 13px;
@@ -157,11 +126,7 @@
             margin-top: 12px;
             display: none;
         }
-
-        .form-hidden {
-            display: none;
-        }
-
+        .form-hidden { display: none; }
         .demo-note {
             text-align: center;
             color: #8A9AAB;
@@ -170,20 +135,15 @@
             border-top: 1px solid #E8EDF2;
             padding-top: 16px;
         }
-
         .demo-note span {
             color: #4F7CFF;
             cursor: pointer;
             font-weight: 500;
         }
-
-        .demo-note span:hover {
-            text-decoration: underline;
-        }
+        .demo-note span:hover { text-decoration: underline; }
     </style>
 </head>
 <body>
-
     <div class="login-container">
         <div class="logo">
             <img src="logo.png" alt="PayPoint" onerror="this.style.display='none'">
@@ -191,13 +151,11 @@
         </div>
         <div class="subtitle">Finance OS for Creators</div>
 
-        <!-- Tab Switch: Login / Signup -->
         <div class="tab-switch">
             <button class="tab-btn active" id="loginTab">Log In</button>
             <button class="tab-btn" id="signupTab">Sign Up</button>
         </div>
 
-        <!-- LOGIN FORM -->
         <div id="loginForm">
             <div class="form-group">
                 <label>Email Address</label>
@@ -211,7 +169,6 @@
             <div class="error-msg" id="loginError">Invalid email or password</div>
         </div>
 
-        <!-- SIGNUP FORM -->
         <div id="signupForm" class="form-hidden">
             <div class="form-group">
                 <label>Full Name</label>
@@ -284,18 +241,16 @@
         });
 
         // ============================================
-        // SIGNUP FUNCTION
+        // SIGNUP
         // ============================================
         signupBtn.addEventListener('click', async () => {
             const name = signupName.value.trim();
             const email = signupEmail.value.trim();
             const password = signupPassword.value;
 
-            // Clear previous messages
             signupError.style.display = 'none';
             signupSuccess.style.display = 'none';
 
-            // Validate
             if (!name || !email || !password) {
                 signupError.textContent = 'Please fill in all fields';
                 signupError.style.display = 'block';
@@ -318,43 +273,33 @@
                 const data = await res.json();
 
                 if (data.success) {
-                    signupSuccess.textContent = '✅ Account created! Please log in.';
                     signupSuccess.style.display = 'block';
                     signupError.style.display = 'none';
-                    
-                    // Clear form
                     signupName.value = '';
                     signupEmail.value = '';
                     signupPassword.value = '';
-
-                    // Switch to login tab after 1.5 seconds
-                    setTimeout(() => {
-                        loginTab.click();
-                    }, 1500);
+                    setTimeout(() => loginTab.click(), 1500);
                 } else {
                     signupError.textContent = data.error || 'Signup failed';
                     signupError.style.display = 'block';
                     signupSuccess.style.display = 'none';
                 }
             } catch (err) {
-                console.error('Signup error:', err);
-                signupError.textContent = 'Could not connect to server. Make sure backend is running.';
+                signupError.textContent = 'Could not connect to server.';
                 signupError.style.display = 'block';
                 signupSuccess.style.display = 'none';
             }
         });
 
         // ============================================
-        // LOGIN FUNCTION
+        // LOGIN
         // ============================================
         loginBtn.addEventListener('click', async () => {
             const email = loginEmail.value.trim();
             const password = loginPassword.value;
 
-            // Clear previous messages
             loginError.style.display = 'none';
 
-            // Validate
             if (!email || !password) {
                 loginError.textContent = 'Please enter email and password';
                 loginError.style.display = 'block';
@@ -371,44 +316,37 @@
                 const data = await res.json();
 
                 if (data.success && data.user) {
-                    // Save user to localStorage
+                    // ✅ FIX: Save user properly
                     localStorage.setItem('paypoint_user', JSON.stringify(data.user));
                     if (data.session?.access_token) {
                         localStorage.setItem('paypoint_session', data.session.access_token);
                     }
-                    // Redirect to dashboard
-                    window.location.href = 'index.html';
+                    // ✅ FIX: Redirect to dashboard
+                    window.location.replace('index.html');
                 } else {
                     loginError.textContent = data.error || 'Invalid credentials';
                     loginError.style.display = 'block';
                 }
             } catch (err) {
-                console.error('Login error:', err);
-                loginError.textContent = 'Could not connect to server. Make sure backend is running.';
+                loginError.textContent = 'Could not connect to server.';
                 loginError.style.display = 'block';
             }
         });
 
         // ============================================
-        // DEMO LOGIN - FIXED!
+        // DEMO LOGIN
         // ============================================
         demoLogin.addEventListener('click', () => {
-            // Create a demo user for testing
             const demoUser = {
                 id: 'demo-' + Date.now(),
-                user_metadata: { 
-                    name: 'Demo User',
-                    email: 'demo@paypoint.com'
-                },
+                user_metadata: { name: 'Demo User' },
                 email: 'demo@paypoint.com'
             };
             
-            // Store user in localStorage
             localStorage.setItem('paypoint_user', JSON.stringify(demoUser));
             localStorage.setItem('paypoint_session', 'demo-session-' + Date.now());
             
-            // Redirect to dashboard
-            window.location.href = 'index.html';
+            window.location.replace('index.html');
         });
 
         // ============================================
@@ -423,17 +361,16 @@
         });
 
         // ============================================
-        // CHECK IF ALREADY LOGGED IN
+        // AUTO-REDIRECT IF ALREADY LOGGED IN
         // ============================================
         const user = localStorage.getItem('paypoint_user');
         if (user) {
             try {
                 const userData = JSON.parse(user);
                 if (userData && userData.id) {
-                    window.location.href = 'index.html';
+                    window.location.replace('index.html');
                 }
             } catch (e) {
-                // If invalid JSON, clear it
                 localStorage.removeItem('paypoint_user');
                 localStorage.removeItem('paypoint_session');
             }
@@ -442,6 +379,5 @@
         console.log('🔐 PayPoint Login page loaded');
         console.log('📡 Connected to:', API_URL);
     </script>
-
 </body>
 </html>

@@ -8,11 +8,7 @@
         /* ============================================
            CLEAN WHITE/BLACK/GREY THEME
         ============================================ */
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -77,23 +73,9 @@
             transition: all 0.2s ease;
         }
 
-        .sidebar-nav a:hover {
-            color: #000000;
-            background: #F5F7FA;
-        }
-
-        .sidebar-nav a.active {
-            color: #000000;
-            background: #F0F4FF;
-            font-weight: 600;
-        }
-
-        .sidebar-nav a .icon {
-            font-size: 18px;
-            width: 24px;
-            text-align: center;
-        }
-
+        .sidebar-nav a:hover { color: #000000; background: #F5F7FA; }
+        .sidebar-nav a.active { color: #000000; background: #F0F4FF; font-weight: 600; }
+        .sidebar-nav a .icon { font-size: 18px; width: 24px; text-align: center; }
         .sidebar-nav a .badge {
             margin-left: auto;
             background: #4F7CFF;
@@ -103,17 +85,13 @@
             font-size: 11px;
             font-weight: 600;
         }
-
         .sidebar-nav a.logout {
             margin-top: 20px;
             border-top: 1px solid #E8EDF2;
             padding-top: 16px;
             color: #FF3B30;
         }
-
-        .sidebar-nav a.logout:hover {
-            background: #FFF0EF;
-        }
+        .sidebar-nav a.logout:hover { background: #FFF0EF; }
 
         .sidebar-user {
             margin-top: auto;
@@ -137,24 +115,10 @@
             font-size: 14px;
         }
 
-        .sidebar-user .info {
-            flex: 1;
-        }
+        .sidebar-user .info { flex: 1; }
+        .sidebar-user .info .name { font-size: 14px; font-weight: 600; color: #000000; }
+        .sidebar-user .info .email { font-size: 12px; color: #8A9AAB; }
 
-        .sidebar-user .info .name {
-            font-size: 14px;
-            font-weight: 600;
-            color: #000000;
-        }
-
-        .sidebar-user .info .email {
-            font-size: 12px;
-            color: #8A9AAB;
-        }
-
-        /* ============================================
-           MOBILE MENU TOGGLE
-        ============================================ */
         .menu-toggle {
             display: none;
             position: fixed;
@@ -178,14 +142,8 @@
             background: rgba(0, 0, 0, 0.3);
             z-index: 999;
         }
+        .sidebar-overlay.active { display: block; }
 
-        .sidebar-overlay.active {
-            display: block;
-        }
-
-        /* ============================================
-           MAIN CONTENT
-        ============================================ */
         .main-content {
             margin-left: 240px;
             flex: 1;
@@ -194,9 +152,6 @@
             background: #F8FAFC;
         }
 
-        /* ============================================
-           TOP BAR
-        ============================================ */
         .top-bar {
             display: flex;
             justify-content: space-between;
@@ -206,28 +161,11 @@
             margin-bottom: 28px;
         }
 
-        .top-bar h1 {
-            font-size: 24px;
-            font-weight: 700;
-            color: #000000;
-        }
+        .top-bar h1 { font-size: 24px; font-weight: 700; color: #000000; }
+        .top-bar h1 span { color: #8A9AAB; font-weight: 400; font-size: 16px; }
 
-        .top-bar h1 span {
-            color: #8A9AAB;
-            font-weight: 400;
-            font-size: 16px;
-        }
-
-        .top-bar-actions {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-        }
-
-        .top-bar-actions .date {
-            color: #8A9AAB;
-            font-size: 13px;
-        }
+        .top-bar-actions { display: flex; align-items: center; gap: 16px; }
+        .top-bar-actions .date { color: #8A9AAB; font-size: 13px; }
 
         .btn-primary {
             background: #4F7CFF;
@@ -252,9 +190,37 @@
             box-shadow: 0 4px 16px rgba(79, 124, 255, 0.35);
         }
 
-        /* ============================================
-           METRIC CARDS
-        ============================================ */
+        .btn-save {
+            flex: 1;
+            background: #4F7CFF;
+            border: none;
+            padding: 14px;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 15px;
+            color: #FFFFFF;
+            cursor: pointer;
+            transition: opacity 0.2s ease;
+            font-family: 'Inter', sans-serif;
+            box-shadow: 0 2px 8px rgba(79, 124, 255, 0.25);
+        }
+        .btn-save:hover { opacity: 0.9; }
+
+        .btn-cancel {
+            flex: 1;
+            background: #F8FAFC;
+            border: 1px solid #E8EDF2;
+            padding: 14px;
+            border-radius: 10px;
+            font-weight: 500;
+            font-size: 15px;
+            color: #5E6F82;
+            cursor: pointer;
+            transition: background 0.2s ease;
+            font-family: 'Inter', sans-serif;
+        }
+        .btn-cancel:hover { background: #EEF2F7; }
+
         .metrics-grid {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
@@ -293,28 +259,13 @@
             letter-spacing: -0.3px;
         }
 
-        .metric-card .value.blue {
-            color: #4F7CFF;
-        }
-        .metric-card .value.green {
-            color: #34C759;
-        }
-        .metric-card .value.gold {
-            color: #FF9500;
-        }
-        .metric-card .value.white {
-            color: #000000;
-        }
+        .metric-card .value.blue { color: #4F7CFF; }
+        .metric-card .value.green { color: #34C759; }
+        .metric-card .value.gold { color: #FF9500; }
+        .metric-card .value.white { color: #000000; }
 
-        .metric-card .sub {
-            font-size: 13px;
-            color: #8A9AAB;
-            margin-top: 4px;
-        }
+        .metric-card .sub { font-size: 13px; color: #8A9AAB; margin-top: 4px; }
 
-        /* ============================================
-           PANELS
-        ============================================ */
         .split-panel {
             display: grid;
             grid-template-columns: 1.6fr 1fr;
@@ -337,28 +288,11 @@
             margin-bottom: 16px;
         }
 
-        .panel-header h3 {
-            font-size: 15px;
-            font-weight: 600;
-            color: #000000;
-        }
+        .panel-header h3 { font-size: 15px; font-weight: 600; color: #000000; }
+        .panel-header a { color: #4F7CFF; font-size: 13px; text-decoration: none; font-weight: 500; }
+        .panel-header a:hover { text-decoration: underline; }
 
-        .panel-header a {
-            color: #4F7CFF;
-            font-size: 13px;
-            text-decoration: none;
-            font-weight: 500;
-        }
-
-        .panel-header a:hover {
-            text-decoration: underline;
-        }
-
-        /* ============================================
-           DEAL & EXPENSE ITEMS
-        ============================================ */
-        .deal-item,
-        .expense-item {
+        .deal-item, .expense-item {
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -366,21 +300,9 @@
             border-bottom: 1px solid #F0F2F5;
         }
 
-        .deal-item:last-child,
-        .expense-item:last-child {
-            border-bottom: none;
-        }
-
-        .deal-brand {
-            font-weight: 500;
-            font-size: 14px;
-            color: #000000;
-        }
-
-        .deal-amount {
-            font-weight: 600;
-            color: #4F7CFF;
-        }
+        .deal-item:last-child, .expense-item:last-child { border-bottom: none; }
+        .deal-brand { font-weight: 500; font-size: 14px; color: #000000; }
+        .deal-amount { font-weight: 600; color: #4F7CFF; }
 
         .deal-status {
             font-size: 11px;
@@ -389,41 +311,14 @@
             border-radius: 40px;
         }
 
-        .deal-status.paid {
-            background: #E8F9EF;
-            color: #34C759;
-        }
+        .deal-status.paid { background: #E8F9EF; color: #34C759; }
+        .deal-status.pending { background: #FFF5E6; color: #FF9500; }
+        .deal-status.overdue { background: #FFEBEA; color: #FF3B30; }
 
-        .deal-status.pending {
-            background: #FFF5E6;
-            color: #FF9500;
-        }
+        .expense-vendor { font-weight: 500; font-size: 14px; color: #000000; }
+        .expense-amount { font-weight: 600; color: #8A9AAB; }
+        .expense-category { font-size: 12px; color: #8A9AAB; margin-right: 12px; }
 
-        .deal-status.overdue {
-            background: #FFEBEA;
-            color: #FF3B30;
-        }
-
-        .expense-vendor {
-            font-weight: 500;
-            font-size: 14px;
-            color: #000000;
-        }
-
-        .expense-amount {
-            font-weight: 600;
-            color: #8A9AAB;
-        }
-
-        .expense-category {
-            font-size: 12px;
-            color: #8A9AAB;
-            margin-right: 12px;
-        }
-
-        /* ============================================
-           MODAL
-        ============================================ */
         .modal-overlay {
             display: none;
             position: fixed;
@@ -434,10 +329,7 @@
             align-items: center;
             z-index: 9999;
         }
-
-        .modal-overlay.active {
-            display: flex;
-        }
+        .modal-overlay.active { display: flex; }
 
         .modal {
             background: #FFFFFF;
@@ -449,27 +341,9 @@
             box-shadow: 0 24px 64px rgba(0, 0, 0, 0.12);
         }
 
-        .modal h2 {
-            font-size: 22px;
-            font-weight: 700;
-            color: #000000;
-            margin-bottom: 4px;
-        }
-
-        .modal p {
-            color: #8A9AAB;
-            font-size: 14px;
-            margin-bottom: 20px;
-        }
-
-        .modal label {
-            display: block;
-            font-size: 13px;
-            font-weight: 500;
-            color: #5E6F82;
-            margin-bottom: 4px;
-        }
-
+        .modal h2 { font-size: 22px; font-weight: 700; color: #000000; margin-bottom: 4px; }
+        .modal p { color: #8A9AAB; font-size: 14px; margin-bottom: 20px; }
+        .modal label { display: block; font-size: 13px; font-weight: 500; color: #5E6F82; margin-bottom: 4px; }
         .modal input {
             width: 100%;
             padding: 12px 16px;
@@ -482,11 +356,7 @@
             transition: border 0.2s ease;
             font-family: 'Inter', sans-serif;
         }
-
-        .modal input:focus {
-            outline: none;
-            border-color: #4F7CFF;
-        }
+        .modal input:focus { outline: none; border-color: #4F7CFF; }
 
         .modal-actions {
             display: flex;
@@ -494,139 +364,56 @@
             margin-top: 8px;
         }
 
-        .btn-save {
-            flex: 1;
-            background: #4F7CFF;
-            border: none;
-            padding: 14px;
-            border-radius: 10px;
-            font-weight: 600;
-            font-size: 15px;
-            color: #FFFFFF;
-            cursor: pointer;
-            transition: opacity 0.2s ease;
-            font-family: 'Inter', sans-serif;
-            box-shadow: 0 2px 8px rgba(79, 124, 255, 0.25);
-        }
-
-        .btn-save:hover {
-            opacity: 0.9;
-        }
-
-        .btn-cancel {
-            flex: 1;
-            background: #F8FAFC;
-            border: 1px solid #E8EDF2;
-            padding: 14px;
-            border-radius: 10px;
-            font-weight: 500;
-            font-size: 15px;
-            color: #5E6F82;
-            cursor: pointer;
-            transition: background 0.2s ease;
-            font-family: 'Inter', sans-serif;
-        }
-
-        .btn-cancel:hover {
-            background: #EEF2F7;
-        }
-
-        /* ============================================
-           RESPONSIVE
-        ============================================ */
         @media (max-width: 1024px) {
-            .metrics-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
-            .split-panel {
-                grid-template-columns: 1fr;
-            }
+            .metrics-grid { grid-template-columns: repeat(2, 1fr); }
+            .split-panel { grid-template-columns: 1fr; }
         }
 
         @media (max-width: 768px) {
-            .menu-toggle {
-                display: block;
-            }
-
+            .menu-toggle { display: block; }
             .sidebar {
                 transform: translateX(-100%);
                 width: 280px;
                 box-shadow: 2px 0 24px rgba(0,0,0,0.08);
             }
-
-            .sidebar.open {
-                transform: translateX(0);
-            }
-
-            .sidebar-overlay.active {
-                display: block;
-            }
-
+            .sidebar.open { transform: translateX(0); }
+            .sidebar-overlay.active { display: block; }
             .main-content {
                 margin-left: 0;
                 padding: 16px;
                 padding-top: 64px;
             }
-
             .top-bar {
                 flex-direction: column;
                 align-items: flex-start;
                 gap: 12px;
             }
-
-            .top-bar h1 {
-                font-size: 20px;
-            }
-
+            .top-bar h1 { font-size: 20px; }
             .metrics-grid {
                 grid-template-columns: 1fr 1fr;
                 gap: 12px;
             }
-
-            .metric-card {
-                padding: 16px;
-            }
-
-            .metric-card .value {
-                font-size: 22px;
-            }
-
-            .panel {
-                padding: 16px;
-            }
-
-            .modal {
-                margin: 16px;
-                padding: 24px 20px;
-            }
+            .metric-card { padding: 16px; }
+            .metric-card .value { font-size: 22px; }
+            .panel { padding: 16px; }
+            .modal { margin: 16px; padding: 24px 20px; }
         }
 
         @media (max-width: 480px) {
-            .metrics-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .top-bar h1 {
-                font-size: 18px;
-            }
+            .metrics-grid { grid-template-columns: 1fr; }
+            .top-bar h1 { font-size: 18px; }
         }
     </style>
 </head>
 <body>
 
-    <!-- ==========================================
-    MOBILE MENU TOGGLE
-    ========================================== -->
     <button class="menu-toggle" id="menuToggle">☰</button>
     <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
-    <!-- ==========================================
-    SIDEBAR
-    ========================================== -->
     <nav class="sidebar" id="sidebar">
         <div class="sidebar-logo">
-    <img src="logo.png" alt="PayPoint" style="height: 32px;">
-</div>
+            <img src="logo.png" alt="PayPoint" style="height: 32px;">
+        </div>
 
         <div class="sidebar-nav">
             <a href="index.html" class="active">
@@ -659,12 +446,7 @@
         </div>
     </nav>
 
-    <!-- ==========================================
-    MAIN CONTENT
-    ========================================== -->
     <div class="main-content">
-
-        <!-- TOP BAR -->
         <header class="top-bar">
             <h1>Dashboard <span>· Overview</span></h1>
             <div class="top-bar-actions">
@@ -673,7 +455,6 @@
             </div>
         </header>
 
-        <!-- METRICS -->
         <section class="metrics-grid" id="metricsGrid">
             <div class="metric-card">
                 <div class="label">Total Revenue</div>
@@ -697,9 +478,7 @@
             </div>
         </section>
 
-        <!-- PANELS -->
         <section class="split-panel">
-            <!-- DEALS -->
             <div class="panel">
                 <div class="panel-header">
                     <h3>📋 Active Deals</h3>
@@ -710,7 +489,6 @@
                 </div>
             </div>
 
-            <!-- EXPENSES -->
             <div class="panel">
                 <div class="panel-header">
                     <h3>🧾 Recent Expenses</h3>
@@ -721,10 +499,8 @@
                 </div>
             </div>
         </section>
-
     </div>
 
-    <!-- MODAL -->
     <div class="modal-overlay" id="dealModal">
         <div class="modal">
             <h2>💰 New Brand Deal</h2>
@@ -749,14 +525,11 @@
         </div>
     </div>
 
-    <!-- ==========================================
-    JAVASCRIPT
-    ========================================== -->
     <script>
         // ============================================
         // CONFIGURATION
         // ============================================
-        const API_URL = window.__API_URL__ || 'https://paypoint-backend-9m63.onrender.com/api';
+        const API_URL = 'https://paypoint-backend-9m63.onrender.com/api';
 
         function getAuthHeaders() {
             const token = localStorage.getItem('paypoint_session');
@@ -804,6 +577,34 @@
         const openModalBtn = document.getElementById('openModalBtn');
         const closeModalBtn = document.getElementById('closeModalBtn');
         const saveDealBtn = document.getElementById('saveDealBtn');
+
+        // ============================================
+        // CHECK AUTHENTICATION
+        // ============================================
+        function checkAuth() {
+            const user = localStorage.getItem('paypoint_user');
+            if (!user) {
+                window.location.replace('login.html');
+                return false;
+            }
+            
+            try {
+                const userData = JSON.parse(user);
+                const name = userData?.user_metadata?.name || userData?.name || 'Creator';
+                const email = userData?.email || 'creator@paypoint.com';
+                
+                document.getElementById('sidebarName').textContent = name;
+                document.getElementById('sidebarEmail').textContent = email;
+                document.getElementById('sidebarAvatar').textContent = name.charAt(0).toUpperCase();
+                document.getElementById('userBadge').textContent = `👤 ${name}`;
+                return true;
+            } catch (e) {
+                localStorage.removeItem('paypoint_user');
+                localStorage.removeItem('paypoint_session');
+                window.location.replace('login.html');
+                return false;
+            }
+        }
 
         // ============================================
         // LOAD DEALS
@@ -968,33 +769,19 @@
             } catch (err) {}
             localStorage.removeItem('paypoint_user');
             localStorage.removeItem('paypoint_session');
-            window.location.href = 'login.html';
+            window.location.replace('login.html');
         });
 
         // ============================================
         // LOAD EVERYTHING
         // ============================================
-        // Check auth and load user
-        const user = localStorage.getItem('paypoint_user');
-        if (!user) {
-            window.location.href = 'login.html';
-        } else {
-            try {
-                const userData = JSON.parse(user);
-                const name = userData?.user_metadata?.name || 'Creator';
-                const email = userData?.email || 'creator@paypoint.com';
-                document.getElementById('sidebarName').textContent = name;
-                document.getElementById('sidebarEmail').textContent = email;
-                document.getElementById('sidebarAvatar').textContent = name.charAt(0).toUpperCase();
-            } catch (e) {}
+        if (checkAuth()) {
+            loadDeals();
+            loadExpenses();
         }
-
-        loadDeals();
-        loadExpenses();
 
         console.log('🚀 PayPoint Dashboard loaded');
         console.log('📡 Connected to:', API_URL);
     </script>
-
 </body>
 </html>
