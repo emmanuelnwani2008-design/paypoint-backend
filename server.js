@@ -86,8 +86,8 @@ app.use((req, res, next) => {
 // ============================================
 // SUPABASE - HARDCODED
 // ============================================
-const supabaseUrl = 'https://mqggkwhdbwkaftmewdca.supabase.co';
-const supabaseAnonKey = 'sb_publishable_u1Ag_qpF5L8LbHc6ZzYnxQ_z4w3ExhV';
+const supabaseUrl = https//xpccuovjcsixpcmudyin.supabase.co
+const supabaseAnonKey = sb_publishable_IOAC8ZpWsF1YOGTsrrnXLQ_5SzGAGWf
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 // ============================================
