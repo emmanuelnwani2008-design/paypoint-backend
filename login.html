@@ -241,7 +241,7 @@
         });
 
         // ============================================
-        // SIGNUP (with auto-login after signup)
+        // SIGNUP
         // ============================================
         signupBtn.addEventListener('click', async () => {
             const name = signupName.value.trim();
@@ -264,49 +264,25 @@
             }
 
             try {
-                // 1. Sign up
                 const res = await fetch(`${API_URL}/auth/signup`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ name, email, password })
                 });
+
                 const data = await res.json();
 
-                if (!data.success) {
+                if (data.success) {
+                    signupSuccess.style.display = 'block';
+                    signupError.style.display = 'none';
+                    signupName.value = '';
+                    signupEmail.value = '';
+                    signupPassword.value = '';
+                    setTimeout(() => loginTab.click(), 1500);
+                } else {
                     signupError.textContent = data.error || 'Signup failed';
                     signupError.style.display = 'block';
-                    return;
                 }
-
-                // 2. Auto-login after successful signup
-                try {
-                    const loginRes = await fetch(`${API_URL}/auth/login`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ email, password })
-                    });
-                    const loginData = await loginRes.json();
-
-                    if (loginData.success && loginData.user) {
-                        localStorage.setItem('paypoint_user', JSON.stringify(loginData.user));
-                        if (loginData.session?.access_token) {
-                            localStorage.setItem('paypoint_session', loginData.session.access_token);
-                        }
-                        window.location.replace('index.html');
-                        return;
-                    }
-                } catch (autoLoginErr) {
-                    // If auto-login fails, fallback to showing success and switching to login tab
-                    console.warn('Auto-login failed, user must login manually', autoLoginErr);
-                }
-
-                // Fallback: show success and switch to login tab
-                signupSuccess.style.display = 'block';
-                signupName.value = '';
-                signupEmail.value = '';
-                signupPassword.value = '';
-                setTimeout(() => loginTab.click(), 1500);
-
             } catch (err) {
                 signupError.textContent = 'Could not connect to server.';
                 signupError.style.display = 'block';
@@ -314,7 +290,7 @@
         });
 
         // ============================================
-        // LOGIN (fixed)
+        // LOGIN (FIXED)
         // ============================================
         loginBtn.addEventListener('click', async () => {
             const email = loginEmail.value.trim();
@@ -338,10 +314,12 @@
                 const data = await res.json();
 
                 if (data.success && data.user) {
+                    // Save user and token
                     localStorage.setItem('paypoint_user', JSON.stringify(data.user));
                     if (data.session?.access_token) {
                         localStorage.setItem('paypoint_session', data.session.access_token);
                     }
+                    // Redirect to dashboard
                     window.location.replace('index.html');
                 } else {
                     loginError.textContent = data.error || 'Invalid credentials';
@@ -355,30 +333,31 @@
         });
 
         // ============================================
-        // DEMO LOGIN
+        // DEMO LOGIN (REAL ACCOUNT)
         // ============================================
-demoLogin.addEventListener('click', async () => {
-    try {
-        const res = await fetch(`${API_URL}/auth/login`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email: 'demo@paypoint.com', password: 'DemoPassword123' })
-        });
-        const data = await res.json();
-        if (data.success && data.user) {
-            localStorage.setItem('paypoint_user', JSON.stringify(data.user));
-            if (data.session?.access_token) {
-                localStorage.setItem('paypoint_session', data.session.access_token);
+        demoLogin.addEventListener('click', async () => {
+            try {
+                // Use a real demo account you create
+                const res = await fetch(`${API_URL}/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: 'demo@paypoint.com', password: 'DemoPassword123' })
+                });
+                const data = await res.json();
+                if (data.success && data.user) {
+                    localStorage.setItem('paypoint_user', JSON.stringify(data.user));
+                    if (data.session?.access_token) {
+                        localStorage.setItem('paypoint_session', data.session.access_token);
+                    }
+                    window.location.replace('index.html');
+                } else {
+                    alert('Demo login failed. Please try again.');
+                }
+            } catch (err) {
+                alert('Demo login could not connect to server.');
+                console.error(err);
             }
-            window.location.replace('index.html');
-        } else {
-            alert('Demo login failed. Please try again.');
-        }
-    } catch (err) {
-        alert('Demo login could not connect to server.');
-        console.error(err);
-    }
-});
+        });
 
         // ============================================
         // ENTER KEY SUPPORT
