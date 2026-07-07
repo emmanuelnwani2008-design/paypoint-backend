@@ -314,12 +314,10 @@
                 const data = await res.json();
 
                 if (data.success && data.user) {
-                    // Save user and token
                     localStorage.setItem('paypoint_user', JSON.stringify(data.user));
                     if (data.session?.access_token) {
                         localStorage.setItem('paypoint_session', data.session.access_token);
                     }
-                    // Redirect to dashboard
                     window.location.replace('index.html');
                 } else {
                     loginError.textContent = data.error || 'Invalid credentials';
@@ -333,17 +331,44 @@
         });
 
         // ============================================
-        // DEMO LOGIN (REAL ACCOUNT)
+        // DEMO LOGIN – auto-creates demo account if missing
         // ============================================
-        demoLogin.addEventListener('click', async () => {
+        async function demoLoginHandler() {
+            const DEMO_EMAIL = 'demo@paypoint.com';
+            const DEMO_PASSWORD = 'DemoPassword123';
+
             try {
-                // Use a real demo account you create
-                const res = await fetch(`${API_URL}/auth/login`, {
+                // 1. Try to log in
+                let res = await fetch(`${API_URL}/auth/login`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email: 'demo@paypoint.com', password: 'DemoPassword123' })
+                    body: JSON.stringify({ email: DEMO_EMAIL, password: DEMO_PASSWORD })
                 });
-                const data = await res.json();
+                let data = await res.json();
+
+                // 2. If login fails (account doesn't exist), create it
+                if (!data.success) {
+                    console.log('Demo account not found – creating...');
+                    const signupRes = await fetch(`${API_URL}/auth/signup`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ name: 'Demo User', email: DEMO_EMAIL, password: DEMO_PASSWORD })
+                    });
+                    const signupData = await signupRes.json();
+                    if (!signupData.success) {
+                        alert('Demo account creation failed: ' + (signupData.error || 'Unknown error'));
+                        return;
+                    }
+                    // Now login again
+                    res = await fetch(`${API_URL}/auth/login`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email: DEMO_EMAIL, password: DEMO_PASSWORD })
+                    });
+                    data = await res.json();
+                }
+
+                // 3. If login succeeded
                 if (data.success && data.user) {
                     localStorage.setItem('paypoint_user', JSON.stringify(data.user));
                     if (data.session?.access_token) {
@@ -355,9 +380,11 @@
                 }
             } catch (err) {
                 alert('Demo login could not connect to server.');
-                console.error(err);
+                console.error('Demo error:', err);
             }
-        });
+        }
+
+        demoLogin.addEventListener('click', demoLoginHandler);
 
         // ============================================
         // ENTER KEY SUPPORT
