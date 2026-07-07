@@ -357,16 +357,28 @@
         // ============================================
         // DEMO LOGIN
         // ============================================
-        demoLogin.addEventListener('click', () => {
-            const demoUser = {
-                id: 'demo-' + Date.now(),
-                user_metadata: { name: 'Demo User' },
-                email: 'demo@paypoint.com'
-            };
-            localStorage.setItem('paypoint_user', JSON.stringify(demoUser));
-            localStorage.setItem('paypoint_session', 'demo-session-' + Date.now());
-            window.location.replace('index.html');
+demoLogin.addEventListener('click', async () => {
+    try {
+        const res = await fetch(`${API_URL}/auth/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: 'demo@paypoint.com', password: 'DemoPassword123' })
         });
+        const data = await res.json();
+        if (data.success && data.user) {
+            localStorage.setItem('paypoint_user', JSON.stringify(data.user));
+            if (data.session?.access_token) {
+                localStorage.setItem('paypoint_session', data.session.access_token);
+            }
+            window.location.replace('index.html');
+        } else {
+            alert('Demo login failed. Please try again.');
+        }
+    } catch (err) {
+        alert('Demo login could not connect to server.');
+        console.error(err);
+    }
+});
 
         // ============================================
         // ENTER KEY SUPPORT
