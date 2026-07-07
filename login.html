@@ -241,7 +241,7 @@
         });
 
         // ============================================
-        // SIGNUP
+        // SIGNUP (with auto-login after signup)
         // ============================================
         signupBtn.addEventListener('click', async () => {
             const name = signupName.value.trim();
@@ -264,35 +264,57 @@
             }
 
             try {
+                // 1. Sign up
                 const res = await fetch(`${API_URL}/auth/signup`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ name, email, password })
                 });
-
                 const data = await res.json();
 
-                if (data.success) {
-                    signupSuccess.style.display = 'block';
-                    signupError.style.display = 'none';
-                    signupName.value = '';
-                    signupEmail.value = '';
-                    signupPassword.value = '';
-                    setTimeout(() => loginTab.click(), 1500);
-                } else {
+                if (!data.success) {
                     signupError.textContent = data.error || 'Signup failed';
                     signupError.style.display = 'block';
-                    signupSuccess.style.display = 'none';
+                    return;
                 }
+
+                // 2. Auto-login after successful signup
+                try {
+                    const loginRes = await fetch(`${API_URL}/auth/login`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email, password })
+                    });
+                    const loginData = await loginRes.json();
+
+                    if (loginData.success && loginData.user) {
+                        localStorage.setItem('paypoint_user', JSON.stringify(loginData.user));
+                        if (loginData.session?.access_token) {
+                            localStorage.setItem('paypoint_session', loginData.session.access_token);
+                        }
+                        window.location.replace('index.html');
+                        return;
+                    }
+                } catch (autoLoginErr) {
+                    // If auto-login fails, fallback to showing success and switching to login tab
+                    console.warn('Auto-login failed, user must login manually', autoLoginErr);
+                }
+
+                // Fallback: show success and switch to login tab
+                signupSuccess.style.display = 'block';
+                signupName.value = '';
+                signupEmail.value = '';
+                signupPassword.value = '';
+                setTimeout(() => loginTab.click(), 1500);
+
             } catch (err) {
                 signupError.textContent = 'Could not connect to server.';
                 signupError.style.display = 'block';
-                signupSuccess.style.display = 'none';
             }
         });
 
         // ============================================
-        // LOGIN
+        // LOGIN (fixed)
         // ============================================
         loginBtn.addEventListener('click', async () => {
             const email = loginEmail.value.trim();
@@ -315,36 +337,22 @@
 
                 const data = await res.json();
 
-                if (data.success) {
-    // Auto-login after signup
-    try {
-        const loginRes = await fetch(`${API_URL}/auth/login`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email, password })
-        });
-        const loginData = await loginRes.json();
-        if (loginData.success && loginData.user) {
-            localStorage.setItem('paypoint_user', JSON.stringify(loginData.user));
-            if (loginData.session?.access_token) {
-                localStorage.setItem('paypoint_session', loginData.session.access_token);
+                if (data.success && data.user) {
+                    localStorage.setItem('paypoint_user', JSON.stringify(data.user));
+                    if (data.session?.access_token) {
+                        localStorage.setItem('paypoint_session', data.session.access_token);
+                    }
+                    window.location.replace('index.html');
+                } else {
+                    loginError.textContent = data.error || 'Invalid credentials';
+                    loginError.style.display = 'block';
+                }
+            } catch (err) {
+                loginError.textContent = 'Could not connect to server.';
+                loginError.style.display = 'block';
+                console.error('Login error:', err);
             }
-            window.location.replace('index.html');
-        } else {
-            // If auto-login fails, fallback to showing success and switching to login
-            signupSuccess.style.display = 'block';
-            setTimeout(() => loginTab.click(), 1500);
-        }
-    } catch (err) {
-        // Fallback: show success and switch to login
-        signupSuccess.style.display = 'block';
-        setTimeout(() => loginTab.click(), 1500);
-    }
-    signupError.style.display = 'none';
-    signupName.value = '';
-    signupEmail.value = '';
-    signupPassword.value = '';
-}
+        });
 
         // ============================================
         // DEMO LOGIN
@@ -355,10 +363,8 @@
                 user_metadata: { name: 'Demo User' },
                 email: 'demo@paypoint.com'
             };
-            
             localStorage.setItem('paypoint_user', JSON.stringify(demoUser));
             localStorage.setItem('paypoint_session', 'demo-session-' + Date.now());
-            
             window.location.replace('index.html');
         });
 
