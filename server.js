@@ -84,10 +84,17 @@ app.use((req, res, next) => {
 });
 
 // ============================================
-// SUPABASE - HARDCODED
+// SUPABASE - READ FROM ENVIRONMENT VARIABLES
 // ============================================
-const supabaseUrl = https//xpccuovjcsixpcmudyin.supabase.co
-const supabaseAnonKey = sb_publishable_IOAC8ZpWsF1YOGTsrrnXLQ_5SzGAGWf
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseAnonKey = process.env.SUPABASE_ANON_KEY;
+
+// If environment variables are missing, exit with error (prevents silent failure)
+if (!supabaseUrl || !supabaseAnonKey) {
+    console.error('❌ Missing SUPABASE_URL or SUPABASE_ANON_KEY in environment variables.');
+    process.exit(1);
+}
+
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 // ============================================
