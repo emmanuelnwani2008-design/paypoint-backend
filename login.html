@@ -315,23 +315,36 @@
 
                 const data = await res.json();
 
-                if (data.success && data.user) {
-                    // ✅ FIX: Save user properly
-                    localStorage.setItem('paypoint_user', JSON.stringify(data.user));
-                    if (data.session?.access_token) {
-                        localStorage.setItem('paypoint_session', data.session.access_token);
-                    }
-                    // ✅ FIX: Redirect to dashboard
-                    window.location.replace('index.html');
-                } else {
-                    loginError.textContent = data.error || 'Invalid credentials';
-                    loginError.style.display = 'block';
-                }
-            } catch (err) {
-                loginError.textContent = 'Could not connect to server.';
-                loginError.style.display = 'block';
-            }
+                if (data.success) {
+    // Auto-login after signup
+    try {
+        const loginRes = await fetch(`${API_URL}/auth/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password })
         });
+        const loginData = await loginRes.json();
+        if (loginData.success && loginData.user) {
+            localStorage.setItem('paypoint_user', JSON.stringify(loginData.user));
+            if (loginData.session?.access_token) {
+                localStorage.setItem('paypoint_session', loginData.session.access_token);
+            }
+            window.location.replace('index.html');
+        } else {
+            // If auto-login fails, fallback to showing success and switching to login
+            signupSuccess.style.display = 'block';
+            setTimeout(() => loginTab.click(), 1500);
+        }
+    } catch (err) {
+        // Fallback: show success and switch to login
+        signupSuccess.style.display = 'block';
+        setTimeout(() => loginTab.click(), 1500);
+    }
+    signupError.style.display = 'none';
+    signupName.value = '';
+    signupEmail.value = '';
+    signupPassword.value = '';
+}
 
         // ============================================
         // DEMO LOGIN
