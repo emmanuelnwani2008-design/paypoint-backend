@@ -582,29 +582,47 @@
         // CHECK AUTHENTICATION
         // ============================================
         function checkAuth() {
-            const user = localStorage.getItem('paypoint_user');
-            if (!user) {
-                window.location.replace('login.html');
-                return false;
-            }
-            
-            try {
-                const userData = JSON.parse(user);
-                const name = userData?.user_metadata?.name || userData?.name || 'Creator';
-                const email = userData?.email || 'creator@paypoint.com';
-                
-                document.getElementById('sidebarName').textContent = name;
-                document.getElementById('sidebarEmail').textContent = email;
-                document.getElementById('sidebarAvatar').textContent = name.charAt(0).toUpperCase();
-                document.getElementById('userBadge').textContent = `👤 ${name}`;
-                return true;
-            } catch (e) {
-                localStorage.removeItem('paypoint_user');
-                localStorage.removeItem('paypoint_session');
-                window.location.replace('login.html');
-                return false;
-            }
+    const user = localStorage.getItem('paypoint_user');
+    console.log('🔍 checkAuth - user from localStorage:', user);
+
+    if (!user) {
+        console.log('❌ No user found, redirecting to login...');
+        window.location.replace('login.html');
+        return false;
+    }
+
+    try {
+        const userData = JSON.parse(user);
+        console.log('✅ Parsed userData:', userData);
+
+        // Ensure the user object has an id (to confirm it's valid)
+        if (!userData.id) {
+            console.warn('⚠️ User object missing id, clearing storage...');
+            throw new Error('Invalid user - missing id');
         }
+
+        // Update UI with user info
+        const name = userData?.user_metadata?.name || userData?.name || 'Creator';
+        const email = userData?.email || 'creator@paypoint.com';
+        
+        // Update sidebar
+        document.getElementById('sidebarName').textContent = name;
+        document.getElementById('sidebarEmail').textContent = email;
+        document.getElementById('sidebarAvatar').textContent = name.charAt(0).toUpperCase();
+        
+        // Update badge if exists
+        const badge = document.getElementById('userBadge');
+        if (badge) badge.textContent = '👤 ' + name;
+        
+        return true;
+    } catch (e) {
+        console.error('⚠️ checkAuth error:', e);
+        localStorage.removeItem('paypoint_user');
+        localStorage.removeItem('paypoint_session');
+        window.location.replace('login.html');
+        return false;
+    }
+}
 
         // ============================================
         // LOAD DEALS
