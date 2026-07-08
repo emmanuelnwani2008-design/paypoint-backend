@@ -611,55 +611,114 @@ app.get('/api/payments/verify/:reference', authenticate, async (req, res) => {
 });
 
 // ============================================
-// INVOICE ROUTES
+// INVOICE GENERATION (PDF DOWNLOAD)
 // ============================================
 
-app.post('/api/invoices/create', authenticate, async (req, res) => {
+app.post('/api/invoices/generate', authenticate, async (req, res) => {
     try {
-        const { dealId, invoiceNumber, brandEmail } = req.body;
+        const { dealId } = req.body;
         const userId = req.userId;
 
-        if (!dealId || !brandEmail) {
-            return res.status(400).json({ error: 'dealId and brandEmail required' });
+        if (!dealId) {
+            return res.status(400).json({ error: 'dealId required' });
         }
 
-        if (!isValidEmail(brandEmail)) {
-            return res.status(400).json({ error: 'Invalid brand email format' });
-        }
-
-        // Verify deal ownership
-        const { data: deal, error: dealError } = await supabase
+        // Fetch the deal
+        const { data: deal, error } = await supabase
             .from('deals')
             .select('*')
             .eq('id', dealId)
             .eq('user_id', userId)
             .single();
 
-        if (dealError || !deal) {
+        if (error || !deal) {
             return res.status(404).json({ error: 'Deal not found' });
         }
 
-        const { data, error } = await supabase
-            .from('invoices')
-            .insert([{
-                user_id: userId,
-                deal_id: dealId,
-                invoice_number: invoiceNumber || `INV-${Date.now()}`,
-                brand_email: brandEmail.toLowerCase().trim(),
-                status: 'sent'
-            }])
-            .select();
+        // Generate invoice number and date
+        const invoiceNumber = `INV-${Date.now().toString().slice(-8)}`;
+        const date = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+        const dueDate = deal.due_date ? new Date(deal.due_date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : 'Not set';
 
-        if (error) {
-            console.error('Invoice create error:', error);
-            return res.status(500).json({ error: error.message });
-        }
+        // Create PDF
+        const PDFDocument = require('pdfkit');
+        const doc = new PDFDocument({ size: 'A4', margin: 50 });
+        const stream = res.writeHead(200, {
+            'Content-Type': 'application/pdf',
+            'Content-Disposition': `attachment; filename=invoice-${deal.brand_name}-${Date.now()}.pdf`
+        });
+        doc.pipe(stream);
 
-        res.status(201).json({ success: true, data: data[0] });
+        // ============================================
+        // INVOICE TEMPLATE
+        // ============================================
+
+        // 1. Header - PayPoint Branding
+        doc.fontSize(24).font('Helvetica-Bold').text('PayPoint', { align: 'center' });
+        doc.fontSize(12).font('Helvetica').text('Finance OS for Creators', { align: 'center' });
+        doc.moveDown(0.5);
+
+        // Divider line
+        doc.moveTo(50, doc.y).lineTo(550, doc.y).stroke('#CCCCCC');
+        doc.moveDown(1);
+
+        // 2. Invoice Title
+        doc.fontSize(20).font('Helvetica-Bold').text('INVOICE', { align: 'center' });
+        doc.moveDown(0.5);
+
+        // 3. Invoice Metadata (right aligned)
+        const startX = 50;
+        const rightX = 500;
+        doc.fontSize(10).font('Helvetica');
+        doc.text(`Invoice #: ${invoiceNumber}`, startX, doc.y, { align: 'left' });
+        doc.text(`Date: ${date}`, rightX, doc.y - 12, { align: 'right' });
+        doc.moveDown(0.5);
+        doc.text(`Status: ${(deal.status || 'pending').toUpperCase()}`, startX, doc.y, { align: 'left' });
+
+        doc.moveDown(1.5);
+
+        // 4. Brand / Client Details
+        doc.fontSize(14).font('Helvetica-Bold').text('Brand Details', { underline: true });
+        doc.moveDown(0.3);
+        doc.fontSize(12).font('Helvetica').text(`Brand Name: ${deal.brand_name}`);
+        doc.text(`Email: ${req.user.email || 'Not provided'}`);
+        doc.moveDown(1);
+
+        // 5. Deal Details
+        doc.fontSize(14).font('Helvetica-Bold').text('Deal Details', { underline: true });
+        doc.moveDown(0.3);
+        doc.fontSize(12).font('Helvetica');
+        doc.text(`Deliverable: ${deal.deliverable || 'Not specified'}`);
+        doc.text(`Due Date: ${dueDate}`);
+        doc.moveDown(1);
+
+        // Divider
+        doc.moveTo(50, doc.y).lineTo(550, doc.y).stroke('#CCCCCC');
+        doc.moveDown(0.5);
+
+        // 6. Amount (Right aligned, large)
+        doc.fontSize(16).font('Helvetica-Bold');
+        doc.text(`Total Amount: $${Number(deal.amount).toLocaleString()}`, { align: 'right' });
+        doc.moveDown(2);
+
+        // 7. Footer
+        doc.fontSize(10).font('Helvetica');
+        doc.text('Thank you for your business!', { align: 'center' });
+        doc.text('Payment is due within 30 days of invoice date.', { align: 'center' });
+        doc.text('For questions, contact: support@paypoint.com', { align: 'center' });
+
+        // 8. Footer line
+        doc.moveDown(1);
+        doc.moveTo(50, doc.y).lineTo(550, doc.y).stroke('#EEEEEE');
+        doc.moveDown(0.3);
+        doc.fontSize(8).text('PayPoint · Finance OS for Creators · www.paypoint.com', { align: 'center' });
+
+        // Finalize PDF
+        doc.end();
 
     } catch (err) {
-        console.error('Invoice create error:', err);
-        res.status(500).json({ error: 'Internal server error' });
+        console.error('Invoice generation error:', err);
+        res.status(500).json({ error: 'Failed to generate invoice: ' + err.message });
     }
 });
 
