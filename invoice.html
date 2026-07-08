@@ -404,43 +404,63 @@
         // ============================================
         // PREVIEW INVOICE
         // ============================================
-        function previewInvoice(id) {
-            const deal = allDeals.find(d => d.id === id);
-            if (!deal) return;
-            alert(`📄 INVOICE PREVIEW\n━━━━━━━━━━━━━━━━━━━━━\n\nBrand: ${deal.brand_name}\nAmount: $${Number(deal.amount).toLocaleString()}\nDeliverable: ${deal.deliverable || 'Not specified'}\nDue Date: ${deal.due_date ? new Date(deal.due_date).toLocaleDateString() : 'Not set'}\nStatus: ${deal.status || 'pending'}\n\n━━━━━━━━━━━━━━━━━━━━━\nPayPoint · Professional Invoicing`);
+        async function previewInvoice(id) {
+    const deal = allDeals.find(d => d.id === id);
+    if (!deal) return;
+
+    try {
+        const res = await fetch(`${API_URL}/invoices/generate`, {
+            method: 'POST',
+            headers: getAuthHeaders(),
+            body: JSON.stringify({ dealId: id })
+        });
+
+        if (res.ok) {
+            const blob = await res.blob();
+            const url = URL.createObjectURL(blob);
+            window.open(url, '_blank');
+            setTimeout(() => URL.revokeObjectURL(url), 10000);
+        } else {
+            const err = await res.json();
+            alert('❌ Preview failed: ' + (err.error || 'Unknown error'));
         }
+    } catch (err) {
+        alert('❌ Could not connect to server');
+    }
+}
 
         // ============================================
         // DOWNLOAD INVOICE
         // ============================================
         async function downloadInvoice(id) {
-            const deal = allDeals.find(d => d.id === id);
-            if (!deal) return;
+    const deal = allDeals.find(d => d.id === id);
+    if (!deal) return; // <-- FIXED: now returns only if deal is missing
 
-            try {
-                alert(`⬇️ Generating PDF for ${deal.brand_name}...`);
-                const res = await fetch(`${API_URL}/invoices/generate`, {
-                    method: 'POST',
-                    headers: getAuthHeaders(),
-                    body: JSON.stringify({ dealId: id })
-                });
+    try {
+        const res = await fetch(`${API_URL}/invoices/generate`, {
+            method: 'POST',
+            headers: getAuthHeaders(),
+            body: JSON.stringify({ dealId: id })
+        });
 
-                if (res.ok) {
-                    const blob = await res.blob();
-                    const url = URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = `invoice-${deal.brand_name}-${Date.now()}.pdf`;
-                    a.click();
-                    URL.revokeObjectURL(url);
-                } else {
-                    alert('❌ Error generating PDF');
-                }
-            } catch (err) {
-                alert('❌ Could not connect to server');
-                console.error(err);
-            }
+        if (res.ok) {
+            const blob = await res.blob();
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `invoice-${deal.brand_name}-${Date.now()}.pdf`;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            URL.revokeObjectURL(url);
+        } else {
+            const err = await res.json();
+            alert('❌ Download failed: ' + (err.error || 'Unknown error'));
         }
+    } catch (err) {
+        alert('❌ Could not connect to server');
+    }
+}
 
         // ============================================
         // SEND INVOICE
