@@ -5,6 +5,7 @@ const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const { createClient } = require('@supabase/supabase-js');
 const PDFDocument = require('pdfkit');
+const nodemailer = require('nodemailer');
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -523,7 +524,7 @@ app.get('/api/payments/verify/:reference', authenticate, async (req, res) => {
 // INVOICE ROUTES
 // ============================================
 
-// CREATE INVOICE (saves to database)
+// CREATE INVOICE (saves to database AND sends email)
 app.post('/api/invoices/create', authenticate, async (req, res) => {
     try {
         const { dealId, invoiceNumber, brandEmail } = req.body;
@@ -548,12 +549,13 @@ app.post('/api/invoices/create', authenticate, async (req, res) => {
             return res.status(404).json({ error: 'Deal not found' });
         }
 
+        const invNumber = invoiceNumber || `INV-${Date.now()}`;
         const { data, error } = await supabase
             .from('invoices')
             .insert([{
                 user_id: userId,
                 deal_id: dealId,
-                invoice_number: invoiceNumber || `INV-${Date.now()}`,
+                invoice_number: invNumber,
                 brand_email: brandEmail.toLowerCase().trim(),
                 status: 'sent'
             }])
@@ -562,6 +564,48 @@ app.post('/api/invoices/create', authenticate, async (req, res) => {
         if (error) {
             console.error('Invoice create error:', error);
             return res.status(500).json({ error: error.message });
+        }
+
+        // ============================================
+        // SEND EMAIL (actual delivery)
+        // ============================================
+        try {
+            const transporter = nodemailer.createTransport({
+                service: 'gmail',
+                auth: {
+                    user: process.env.EMAIL_USER || 'your-email@gmail.com',
+                    pass: process.env.EMAIL_PASS || 'your-app-password'
+                }
+            });
+
+            const dueDate = deal.due_date ? new Date(deal.due_date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : 'Not set';
+
+            await transporter.sendMail({
+                from: process.env.EMAIL_USER || 'your-email@gmail.com',
+                to: brandEmail,
+                subject: `📄 Invoice #${invNumber} from ${deal.brand_name}`,
+                html: `
+                    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #E8EDF2; border-radius: 12px;">
+                        <h1 style="color: #4F7CFF; text-align: center;">PayPoint</h1>
+                        <h2 style="text-align: center; color: #000000;">Invoice</h2>
+                        <hr style="border: none; border-top: 1px solid #E8EDF2;">
+                        <p><strong>Invoice #:</strong> ${invNumber}</p>
+                        <p><strong>Brand:</strong> ${deal.brand_name}</p>
+                        <p><strong>Amount:</strong> <span style="font-size: 20px; font-weight: bold; color: #4F7CFF;">$${Number(deal.amount).toLocaleString()}</span></p>
+                        <p><strong>Deliverable:</strong> ${deal.deliverable || 'Not specified'}</p>
+                        <p><strong>Due Date:</strong> ${dueDate}</p>
+                        <hr style="border: none; border-top: 1px solid #E8EDF2;">
+                        <p style="text-align: center; color: #8A9AAB; font-size: 14px;">
+                            <a href="https://paypoint-backend.vercel.app/invoice.html" style="color: #4F7CFF; text-decoration: none;">View Invoice</a> · 
+                            PayPoint · Finance OS for Creators
+                        </p>
+                    </div>
+                `
+            });
+            console.log(`✅ Invoice email sent to ${brandEmail}`);
+        } catch (emailErr) {
+            console.error('❌ Email send error:', emailErr);
+            // Don't fail the request – invoice is still saved
         }
 
         res.status(201).json({ success: true, data: data[0] });
