@@ -376,7 +376,11 @@ app.post('/api/expenses', authenticate, async (req, res) => {
 // ============================================
 // PAYSTACK ROUTES
 // ============================================
-const PAYSTACK_SECRET_KEY = process.env.PAYSTACK_SECRET_KEY || 'sk_test_272bd56a30ebfb3a214e39c6d7030bb4dc256571';
+const PAYSTACK_SECRET_KEY = process.env.PAYSTACK_SECRET_KEY;
+if (!PAYSTACK_SECRET_KEY) {
+    console.error('❌ PAYSTACK_SECRET_KEY is missing. Set it in Render environment.');
+    process.exit(1);
+}
 
 app.post('/api/payments/initialize', authenticate, async (req, res) => {
     try {
