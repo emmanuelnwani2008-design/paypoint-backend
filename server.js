@@ -59,7 +59,7 @@ app.use(limiter);
 
 const authLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
-    max: 100,
+    max: 20, // Prevent brute-force attacks
     message: { error: 'Too many authentication attempts. Please try again later.' },
     standardHeaders: true,
     legacyHeaders: false,
