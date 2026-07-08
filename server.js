@@ -401,7 +401,6 @@ app.post('/api/payments/initialize', authenticate, async (req, res) => {
             return res.status(400).json({ error: 'This deal has already been paid' });
         }
 
-        // Add 5% platform fee
         const PLATFORM_FEE_PERCENT = 5;
         const totalAmount = Math.round(deal.amount * (1 + PLATFORM_FEE_PERCENT / 100) * 100);
         const callbackUrl = 'https://paypoint-backend.vercel.app/success.html';
@@ -524,7 +523,7 @@ app.get('/api/payments/verify/:reference', authenticate, async (req, res) => {
 // INVOICE ROUTES
 // ============================================
 
-// CREATE INVOICE
+// CREATE INVOICE (saves to database)
 app.post('/api/invoices/create', authenticate, async (req, res) => {
     try {
         const { dealId, invoiceNumber, brandEmail } = req.body;
