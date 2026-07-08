@@ -405,7 +405,7 @@
         // PREVIEW INVOICE
         // ============================================
         async function previewInvoice(id) {
-    const deal = allDeals.find(d => d.id === id);
+    const deal = allDeals.find(d => String(d.id) === String(id)); // <-- type coercion
     if (!deal) return;
 
     try {
@@ -433,8 +433,8 @@
         // DOWNLOAD INVOICE
         // ============================================
         async function downloadInvoice(id) {
-    const deal = allDeals.find(d => d.id === id);
-    if (!deal) return; // <-- FIXED: now returns only if deal is missing
+    const deal = allDeals.find(d => String(d.id) === String(id)); // <-- type coercion
+    if (!deal) return;
 
     try {
         const res = await fetch(`${API_URL}/invoices/generate`, {
@@ -466,32 +466,32 @@
         // SEND INVOICE
         // ============================================
         async function sendInvoice(id) {
-            const deal = allDeals.find(d => d.id === id);
-            if (!deal) return;
+    const deal = allDeals.find(d => String(d.id) === String(id)); // <-- type coercion
+    if (!deal) return;
 
-            const brandEmail = prompt(`📧 Enter email to send invoice to ${deal.brand_name}:`, 'finance@brand.com');
-            if (!brandEmail) return;
+    const brandEmail = prompt(`📧 Enter email to send invoice to ${deal.brand_name}:`, 'finance@brand.com');
+    if (!brandEmail) return;
 
-            try {
-                const payRes = await fetch(`${API_URL}/payments/initialize`, {
-                    method: 'POST',
-                    headers: getAuthHeaders(),
-                    body: JSON.stringify({ dealId: id, email: brandEmail })
-                });
+    try {
+        const payRes = await fetch(`${API_URL}/payments/initialize`, {
+            method: 'POST',
+            headers: getAuthHeaders(),
+            body: JSON.stringify({ dealId: id, email: brandEmail })
+        });
 
-                const payResult = await payRes.json();
+        const payResult = await payRes.json();
 
-                if (payResult && payResult.authorization_url) {
-                    window.open(payResult.authorization_url, '_blank');
-                    alert(`✅ Invoice sent to ${brandEmail}!`);
-                } else {
-                    alert('❌ Payment initialization failed');
-                }
-            } catch (err) {
-                alert('❌ Could not initialize payment');
-                console.error(err);
-            }
+        if (payResult && payResult.authorization_url) {
+            window.open(payResult.authorization_url, '_blank');
+            alert(`✅ Invoice sent to ${brandEmail}!`);
+        } else {
+            alert('❌ Payment initialization failed');
         }
+    } catch (err) {
+        alert('❌ Could not initialize payment');
+        console.error(err);
+    }
+}
 
         // ============================================
         // MODAL CONTROLS
