@@ -1,0 +1,813 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PayPoint · Finance OS for Creators</title>
+    <!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-HFJ9JM358E"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-HFJ9JM358E');
+</script>
+    <style>
+        /* ============================================
+           CLEAN WHITE/BLACK/GREY THEME
+        ============================================ */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #FFFFFF;
+            color: #000000;
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+            display: flex;
+        }
+
+        /* ============================================
+           SIDEBAR
+        ============================================ */
+        .sidebar {
+            width: 240px;
+            min-height: 100vh;
+            background: #FFFFFF;
+            border-right: 1px solid #E8EDF2;
+            padding: 28px 20px;
+            position: fixed;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            z-index: 1000;
+            transition: transform 0.3s ease;
+            overflow-y: auto;
+        }
+
+        .sidebar-logo {
+            font-size: 24px;
+            font-weight: 700;
+            letter-spacing: -0.3px;
+            color: #000000;
+            margin-bottom: 32px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .sidebar-logo span {
+            font-weight: 400;
+            color: #8A9AAB;
+            font-size: 14px;
+        }
+
+        .sidebar-nav {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .sidebar-nav a {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 14px;
+            border-radius: 10px;
+            color: #5E6F82;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        .sidebar-nav a:hover { color: #000000; background: #F5F7FA; }
+        .sidebar-nav a.active { color: #000000; background: #F0F4FF; font-weight: 600; }
+        .sidebar-nav a .icon { font-size: 18px; width: 24px; text-align: center; }
+        .sidebar-nav a .badge {
+            margin-left: auto;
+            background: #4F7CFF;
+            color: #FFFFFF;
+            padding: 2px 10px;
+            border-radius: 40px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+        .sidebar-nav a.logout {
+            margin-top: 20px;
+            border-top: 1px solid #E8EDF2;
+            padding-top: 16px;
+            color: #FF3B30;
+        }
+        .sidebar-nav a.logout:hover { background: #FFF0EF; }
+
+        .sidebar-user {
+            margin-top: auto;
+            padding-top: 16px;
+            border-top: 1px solid #E8EDF2;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .sidebar-user .avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: #4F7CFF;
+            color: #FFFFFF;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 14px;
+        }
+
+        .sidebar-user .info { flex: 1; }
+        .sidebar-user .info .name { font-size: 14px; font-weight: 600; color: #000000; }
+        .sidebar-user .info .email { font-size: 12px; color: #8A9AAB; }
+
+        .menu-toggle {
+            display: none;
+            position: fixed;
+            top: 16px;
+            left: 16px;
+            z-index: 1001;
+            background: #FFFFFF;
+            border: 1px solid #E8EDF2;
+            border-radius: 10px;
+            padding: 10px 14px;
+            color: #000000;
+            font-size: 20px;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        }
+
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.3);
+            z-index: 999;
+        }
+        .sidebar-overlay.active { display: block; }
+
+        .main-content {
+            margin-left: 240px;
+            flex: 1;
+            padding: 24px 32px;
+            min-height: 100vh;
+            background: #F8FAFC;
+        }
+
+        .top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #E8EDF2;
+            margin-bottom: 28px;
+        }
+
+        .top-bar h1 { font-size: 24px; font-weight: 700; color: #000000; }
+        .top-bar h1 span { color: #8A9AAB; font-weight: 400; font-size: 16px; }
+
+        .top-bar-actions { display: flex; align-items: center; gap: 16px; }
+        .top-bar-actions .date { color: #8A9AAB; font-size: 13px; }
+
+        .btn-primary {
+            background: #4F7CFF;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 14px;
+            color: #FFFFFF;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-family: 'Inter', sans-serif;
+            box-shadow: 0 2px 8px rgba(79, 124, 255, 0.25);
+        }
+
+        .btn-primary:hover {
+            background: #3A5FD9;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 16px rgba(79, 124, 255, 0.35);
+        }
+
+        .btn-save {
+            flex: 1;
+            background: #4F7CFF;
+            border: none;
+            padding: 14px;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 15px;
+            color: #FFFFFF;
+            cursor: pointer;
+            transition: opacity 0.2s ease;
+            font-family: 'Inter', sans-serif;
+            box-shadow: 0 2px 8px rgba(79, 124, 255, 0.25);
+        }
+        .btn-save:hover { opacity: 0.9; }
+
+        .btn-cancel {
+            flex: 1;
+            background: #F8FAFC;
+            border: 1px solid #E8EDF2;
+            padding: 14px;
+            border-radius: 10px;
+            font-weight: 500;
+            font-size: 15px;
+            color: #5E6F82;
+            cursor: pointer;
+            transition: background 0.2s ease;
+            font-family: 'Inter', sans-serif;
+        }
+        .btn-cancel:hover { background: #EEF2F7; }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 18px;
+            margin-bottom: 28px;
+        }
+
+        .metric-card {
+            background: #FFFFFF;
+            border: 1px solid #E8EDF2;
+            border-radius: 14px;
+            padding: 24px 20px;
+            transition: all 0.25s ease;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+        }
+
+        .metric-card:hover {
+            border-color: #4F7CFF;
+            box-shadow: 0 4px 16px rgba(79, 124, 255, 0.08);
+            transform: translateY(-2px);
+        }
+
+        .metric-card .label {
+            font-size: 12px;
+            font-weight: 500;
+            color: #8A9AAB;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            margin-bottom: 4px;
+        }
+
+        .metric-card .value {
+            font-size: 28px;
+            font-weight: 700;
+            color: #000000;
+            letter-spacing: -0.3px;
+        }
+
+        .metric-card .value.blue { color: #4F7CFF; }
+        .metric-card .value.green { color: #34C759; }
+        .metric-card .value.gold { color: #FF9500; }
+        .metric-card .value.white { color: #000000; }
+
+        .metric-card .sub { font-size: 13px; color: #8A9AAB; margin-top: 4px; }
+
+        .split-panel {
+            display: grid;
+            grid-template-columns: 1.6fr 1fr;
+            gap: 20px;
+            margin-bottom: 28px;
+        }
+
+        .panel {
+            background: #FFFFFF;
+            border: 1px solid #E8EDF2;
+            border-radius: 14px;
+            padding: 20px 24px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+        }
+
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .panel-header h3 { font-size: 15px; font-weight: 600; color: #000000; }
+        .panel-header a { color: #4F7CFF; font-size: 13px; text-decoration: none; font-weight: 500; }
+        .panel-header a:hover { text-decoration: underline; }
+
+        .deal-item, .expense-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #F0F2F5;
+        }
+
+        .deal-item:last-child, .expense-item:last-child { border-bottom: none; }
+        .deal-brand { font-weight: 500; font-size: 14px; color: #000000; }
+        .deal-amount { font-weight: 600; color: #4F7CFF; }
+
+        .deal-status {
+            font-size: 11px;
+            font-weight: 500;
+            padding: 3px 12px;
+            border-radius: 40px;
+        }
+
+        .deal-status.paid { background: #E8F9EF; color: #34C759; }
+        .deal-status.pending { background: #FFF5E6; color: #FF9500; }
+        .deal-status.overdue { background: #FFEBEA; color: #FF3B30; }
+
+        .expense-vendor { font-weight: 500; font-size: 14px; color: #000000; }
+        .expense-amount { font-weight: 600; color: #8A9AAB; }
+        .expense-category { font-size: 12px; color: #8A9AAB; margin-right: 12px; }
+
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(4px);
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+        .modal-overlay.active { display: flex; }
+
+        .modal {
+            background: #FFFFFF;
+            border: 1px solid #E8EDF2;
+            border-radius: 20px;
+            padding: 36px 32px 28px;
+            width: 100%;
+            max-width: 440px;
+            box-shadow: 0 24px 64px rgba(0, 0, 0, 0.12);
+        }
+
+        .modal h2 { font-size: 22px; font-weight: 700; color: #000000; margin-bottom: 4px; }
+        .modal p { color: #8A9AAB; font-size: 14px; margin-bottom: 20px; }
+        .modal label { display: block; font-size: 13px; font-weight: 500; color: #5E6F82; margin-bottom: 4px; }
+        .modal input {
+            width: 100%;
+            padding: 12px 16px;
+            background: #F8FAFC;
+            border: 1px solid #E8EDF2;
+            border-radius: 10px;
+            color: #000000;
+            font-size: 14px;
+            margin-bottom: 14px;
+            transition: border 0.2s ease;
+            font-family: 'Inter', sans-serif;
+        }
+        .modal input:focus { outline: none; border-color: #4F7CFF; }
+
+        .modal-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 8px;
+        }
+
+        @media (max-width: 1024px) {
+            .metrics-grid { grid-template-columns: repeat(2, 1fr); }
+            .split-panel { grid-template-columns: 1fr; }
+        }
+
+        @media (max-width: 768px) {
+            .menu-toggle { display: block; }
+            .sidebar {
+                transform: translateX(-100%);
+                width: 280px;
+                box-shadow: 2px 0 24px rgba(0,0,0,0.08);
+            }
+            .sidebar.open { transform: translateX(0); }
+            .sidebar-overlay.active { display: block; }
+            .main-content {
+                margin-left: 0;
+                padding: 16px;
+                padding-top: 64px;
+            }
+            .top-bar {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 12px;
+            }
+            .top-bar h1 { font-size: 20px; }
+            .metrics-grid {
+                grid-template-columns: 1fr 1fr;
+                gap: 12px;
+            }
+            .metric-card { padding: 16px; }
+            .metric-card .value { font-size: 22px; }
+            .panel { padding: 16px; }
+            .modal { margin: 16px; padding: 24px 20px; }
+        }
+
+        @media (max-width: 480px) {
+            .metrics-grid { grid-template-columns: 1fr; }
+            .top-bar h1 { font-size: 18px; }
+        }
+    </style>
+</head>
+<body>
+
+    <button class="menu-toggle" id="menuToggle">☰</button>
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <nav class="sidebar" id="sidebar">
+        <div class="sidebar-logo">
+            <img src="logo.png" alt="PayPoint" style="height: 32px;">
+        </div>
+
+        <div class="sidebar-nav">
+            <a href="dashboard.html" class="active"></a>
+                <span class="icon">📊</span> Dashboard
+            </a>
+            <a href="deals.html">
+                <span class="icon">💼</span> Deals
+                <span class="badge">New</span>
+            </a>
+            <a href="expense.html">
+                <span class="icon">💳</span> Expenses
+            </a>
+            <a href="invoice.html">
+                <span class="icon">📄</span> Invoices
+            </a>
+            <a href="creator.html">
+                <span class="icon">👤</span> Profile
+            </a>
+            <a href="#" id="navLogout" class="logout">
+                <span class="icon">🚪</span> Logout
+            </a>
+        </div>
+
+        <div class="sidebar-user">
+            <div class="avatar" id="sidebarAvatar">C</div>
+            <div class="info">
+                <div class="name" id="sidebarName">Creator</div>
+                <div class="email" id="sidebarEmail">creator@paypoint.com</div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="main-content">
+        <header class="top-bar">
+            <h1>Dashboard <span>· Overview</span></h1>
+            <div class="top-bar-actions">
+                <span class="date" id="currentDate"></span>
+                <button class="btn-primary" id="openModalBtn">+ New Deal</button>
+            </div>
+        </header>
+
+        <section class="metrics-grid" id="metricsGrid">
+            <div class="metric-card">
+                <div class="label">Total Revenue</div>
+                <div class="value blue" id="totalRevenue">$0</div>
+                <div class="sub">↑ 12% this month</div>
+            </div>
+            <div class="metric-card">
+                <div class="label">Total Expenses</div>
+                <div class="value white" id="totalExpenses">$0</div>
+                <div class="sub">↓ 3% from last month</div>
+            </div>
+            <div class="metric-card">
+                <div class="label">Taxes Set Aside</div>
+                <div class="value gold" id="totalTaxes">$0</div>
+                <div class="sub">30% of net profit</div>
+            </div>
+            <div class="metric-card">
+                <div class="label">Real Take-Home</div>
+                <div class="value green" id="takeHome">$0</div>
+                <div class="sub">What you actually keep</div>
+            </div>
+        </section>
+
+        <section class="split-panel">
+            <div class="panel">
+                <div class="panel-header">
+                    <h3>📋 Active Deals</h3>
+                    <a href="deals.html">View all →</a>
+                </div>
+                <div id="dealsList">
+                    <div style="color:#8A9AAB; font-size:14px; padding:12px 0;">No deals yet. Add your first one!</div>
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-header">
+                    <h3>🧾 Recent Expenses</h3>
+                    <a href="expense.html">View all →</a>
+                </div>
+                <div id="expensesList">
+                    <div style="color:#8A9AAB; font-size:14px; padding:12px 0;">No expenses logged yet.</div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <div class="modal-overlay" id="dealModal">
+        <div class="modal">
+            <h2>💰 New Brand Deal</h2>
+            <p>Log a new deal to start tracking your income.</p>
+
+            <label for="brandName">Brand Name</label>
+            <input type="text" id="brandName" placeholder="e.g. Nike, Glossier, Samsung">
+
+            <label for="dealAmount">Amount ($)</label>
+            <input type="number" id="dealAmount" placeholder="e.g. 5000">
+
+            <label for="dealDeliverable">Deliverable</label>
+            <input type="text" id="dealDeliverable" placeholder="e.g. 1 TikTok video">
+
+            <label for="dealDueDate">Due Date</label>
+            <input type="date" id="dealDueDate">
+
+            <div class="modal-actions">
+                <button class="btn-cancel" id="closeModalBtn">Cancel</button>
+                <button class="btn-save" id="saveDealBtn">Save Deal</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ============================================
+        // CONFIGURATION
+        // ============================================
+        const API_URL = 'https://paypoint-backend-9m63.onrender.com/api';
+
+        function getAuthHeaders() {
+            const token = localStorage.getItem('paypoint_session');
+            return {
+                'Content-Type': 'application/json',
+                ...(token ? { Authorization: `Bearer ${token}` } : {})
+            };
+        }
+
+        // ============================================
+        // SIDEBAR
+        // ============================================
+        const menuToggle = document.getElementById('menuToggle');
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('sidebarOverlay');
+
+        function toggleSidebar() {
+            sidebar.classList.toggle('open');
+            overlay.classList.toggle('active');
+        }
+
+        menuToggle.addEventListener('click', toggleSidebar);
+        overlay.addEventListener('click', toggleSidebar);
+
+        // ============================================
+        // DATE
+        // ============================================
+        document.getElementById('currentDate').textContent = new Date().toLocaleDateString('en-US', {
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric'
+        });
+
+        // ============================================
+        // DOM REFERENCES
+        // ============================================
+        const dealsList = document.getElementById('dealsList');
+        const expensesList = document.getElementById('expensesList');
+        const totalRevenueEl = document.getElementById('totalRevenue');
+        const totalExpensesEl = document.getElementById('totalExpenses');
+        const totalTaxesEl = document.getElementById('totalTaxes');
+        const takeHomeEl = document.getElementById('takeHome');
+
+        const modal = document.getElementById('dealModal');
+        const openModalBtn = document.getElementById('openModalBtn');
+        const closeModalBtn = document.getElementById('closeModalBtn');
+        const saveDealBtn = document.getElementById('saveDealBtn');
+
+        // ============================================
+        // CHECK AUTHENTICATION
+        // ============================================
+        function checkAuth() {
+    const user = localStorage.getItem('paypoint_user');
+    console.log('🔍 checkAuth - user from localStorage:', user);
+
+    if (!user) {
+        console.log('❌ No user found, redirecting to login...');
+        window.location.replace('login.html');
+        return false;
+    }
+
+    try {
+        const userData = JSON.parse(user);
+        console.log('✅ Parsed userData:', userData);
+
+        // Ensure the user object has an id (to confirm it's valid)
+        if (!userData.id) {
+            console.warn('⚠️ User object missing id, clearing storage...');
+            throw new Error('Invalid user - missing id');
+        }
+
+        // Update UI with user info
+        const name = userData?.user_metadata?.name || userData?.name || 'Creator';
+        const email = userData?.email || 'creator@paypoint.com';
+        
+        // Update sidebar
+        document.getElementById('sidebarName').textContent = name;
+        document.getElementById('sidebarEmail').textContent = email;
+        document.getElementById('sidebarAvatar').textContent = name.charAt(0).toUpperCase();
+        
+        // Update badge if exists
+        const badge = document.getElementById('userBadge');
+        if (badge) badge.textContent = '👤 ' + name;
+        
+        return true;
+    } catch (e) {
+        console.error('⚠️ checkAuth error:', e);
+        localStorage.removeItem('paypoint_user');
+        localStorage.removeItem('paypoint_session');
+        window.location.replace('login.html');
+        return false;
+    }
+}
+
+        // ============================================
+        // LOAD DEALS
+        // ============================================
+        async function loadDeals() {
+            try {
+                const res = await fetch(`${API_URL}/deals`, { headers: getAuthHeaders() });
+                const result = await res.json();
+
+                if (result.success && result.data.length > 0) {
+                    renderDeals(result.data);
+                    updateMetrics(result.data);
+                } else {
+                    dealsList.innerHTML =
+                        `<div style="color:#8A9AAB; font-size:14px; padding:12px 0;">No deals yet. Add your first one!</div>`;
+                }
+            } catch (err) {
+                console.error('Error loading deals:', err);
+                dealsList.innerHTML =
+                    `<div style="color:#FF3B30; font-size:14px; padding:12px 0;">⚠️ Could not connect to backend.</div>`;
+            }
+        }
+
+        function renderDeals(deals) {
+            dealsList.innerHTML = '';
+            deals.slice(0, 5).forEach(deal => {
+                const div = document.createElement('div');
+                div.className = 'deal-item';
+
+                let statusClass = 'pending';
+                if (deal.status === 'overdue') statusClass = 'overdue';
+                if (deal.status === 'paid') statusClass = 'paid';
+
+                div.innerHTML = `
+                    <div>
+                        <div class="deal-brand">${deal.brand_name}</div>
+                        <div style="font-size:12px; color:#8A9AAB;">${deal.deliverable || 'No deliverable'}</div>
+                    </div>
+                    <div style="text-align:right;">
+                        <div class="deal-amount">$${Number(deal.amount).toLocaleString()}</div>
+                        <span class="deal-status ${statusClass}">${deal.status || 'pending'}</span>
+                    </div>
+                `;
+                dealsList.appendChild(div);
+            });
+        }
+
+        // ============================================
+        // UPDATE METRICS
+        // ============================================
+        function updateMetrics(deals) {
+            const totalRevenue = deals.reduce((sum, d) => sum + Number(d.amount), 0);
+            const taxes = totalRevenue * 0.30;
+            const takeHome = totalRevenue - taxes;
+
+            totalRevenueEl.textContent = `$${totalRevenue.toLocaleString()}`;
+            totalTaxesEl.textContent = `$${taxes.toLocaleString()}`;
+            takeHomeEl.textContent = `$${takeHome.toLocaleString()}`;
+        }
+
+        // ============================================
+        // LOAD EXPENSES
+        // ============================================
+        async function loadExpenses() {
+            try {
+                const res = await fetch(`${API_URL}/expenses`, { headers: getAuthHeaders() });
+                const result = await res.json();
+
+                if (result.success && result.data.length > 0) {
+                    renderExpenses(result.data);
+                    const total = result.data.reduce((sum, e) => sum + Number(e.amount), 0);
+                    totalExpensesEl.textContent = `$${total.toLocaleString()}`;
+                } else {
+                    expensesList.innerHTML =
+                        `<div style="color:#8A9AAB; font-size:14px; padding:12px 0;">No expenses logged yet.</div>`;
+                }
+            } catch (err) {
+                console.error('Error loading expenses:', err);
+            }
+        }
+
+        function renderExpenses(expenses) {
+            expensesList.innerHTML = '';
+            expenses.slice(0, 5).forEach(exp => {
+                const div = document.createElement('div');
+                div.className = 'expense-item';
+                div.innerHTML = `
+                    <div class="expense-vendor">${exp.vendor}</div>
+                    <div>
+                        <span class="expense-category">${exp.category || 'Uncategorized'}</span>
+                        <span class="expense-amount">-$${Number(exp.amount).toLocaleString()}</span>
+                    </div>
+                `;
+                expensesList.appendChild(div);
+            });
+        }
+
+        // ============================================
+        // SAVE DEAL
+        // ============================================
+        async function saveDeal() {
+            const brand_name = document.getElementById('brandName').value.trim();
+            const amount = document.getElementById('dealAmount').value;
+            const deliverable = document.getElementById('dealDeliverable').value.trim();
+            const due_date = document.getElementById('dealDueDate').value;
+
+            if (!brand_name || !amount) {
+                alert('Brand Name and Amount are required!');
+                return;
+            }
+
+            const dealData = {
+                brand_name,
+                amount: parseFloat(amount),
+                deliverable: deliverable || '',
+                due_date: due_date || null,
+                status: 'pending'
+            };
+
+            try {
+                const res = await fetch(`${API_URL}/deals`, {
+                    method: 'POST',
+                    headers: getAuthHeaders(),
+                    body: JSON.stringify(dealData)
+                });
+
+                const result = await res.json();
+                if (result.success) {
+                    alert('✅ Deal added successfully!');
+                    modal.classList.remove('active');
+                    document.getElementById('brandName').value = '';
+                    document.getElementById('dealAmount').value = '';
+                    document.getElementById('dealDeliverable').value = '';
+                    document.getElementById('dealDueDate').value = '';
+                    loadDeals();
+                } else {
+                    alert('❌ Error: ' + (result.error || 'Unknown error'));
+                }
+            } catch (err) {
+                alert('❌ Could not connect to backend.');
+                console.error(err);
+            }
+        }
+
+        // ============================================
+        // MODAL CONTROLS
+        // ============================================
+        openModalBtn.addEventListener('click', () => modal.classList.add('active'));
+        closeModalBtn.addEventListener('click', () => modal.classList.remove('active'));
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) modal.classList.remove('active');
+        });
+        saveDealBtn.addEventListener('click', saveDeal);
+
+        // ============================================
+        // LOGOUT
+        // ============================================
+        document.getElementById('navLogout')?.addEventListener('click', async (e) => {
+            e.preventDefault();
+            try {
+                await fetch(`${API_URL}/auth/logout`, { method: 'POST', headers: getAuthHeaders() });
+            } catch (err) {}
+            localStorage.removeItem('paypoint_user');
+            localStorage.removeItem('paypoint_session');
+            window.location.replace('login.html');
+        });
+
+        // ============================================
+        // LOAD EVERYTHING
+        // ============================================
+        if (checkAuth()) {
+            loadDeals();
+            loadExpenses();
+        }
+
+        console.log('🚀 PayPoint Dashboard loaded');
+        console.log('📡 Connected to:', API_URL);
+    </script>
+</body>
+</html>

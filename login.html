@@ -326,7 +326,7 @@
                     if (data.session?.access_token) {
                         localStorage.setItem('paypoint_session', data.session.access_token);
                     }
-                    window.location.replace('index.html');
+                    window.location.replace('dashboard.html');
                 } else {
                     loginError.textContent = data.error || 'Invalid credentials';
                     loginError.style.display = 'block';
@@ -382,7 +382,7 @@ async function demoLoginHandler() {
             if (data.session?.access_token) {
                 localStorage.setItem('paypoint_session', data.session.access_token);
             }
-            window.location.replace('index.html');
+            window.location.replace('dashboard.html');
         } else {
             alert('Demo login failed. Please try again.');
         }
