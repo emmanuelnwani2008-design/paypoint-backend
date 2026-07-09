@@ -411,7 +411,7 @@ async function demoLoginHandler() {
             try {
                 const userData = JSON.parse(user);
                 if (userData && userData.id) {
-                    window.location.replace('index.html');
+                    window.location.replace('dashboard.html');
                 }
             } catch (e) {
                 localStorage.removeItem('paypoint_user');
