@@ -281,64 +281,112 @@ app.put('/api/auth/update', authenticate, async (req, res) => {
 // ============================================
 // DEALS ROUTES
 // ============================================
-app.get('/api/deals', authenticate, async (req, res) => {
+// ============================================
+// UPDATE DEAL (Edit)
+// ============================================
+app.put('/api/deals/:id', authenticate, async (req, res) => {
     try {
-        const userId = req.userId;
-        const { data, error } = await supabase
-            .from('deals')
-            .select('*')
-            .eq('user_id', userId)
-            .order('created_at', { ascending: false });
-        if (error) {
-            console.error('Supabase error:', error);
-            return res.status(500).json({ error: error.message });
-        }
-        res.json({ success: true, data: data || [] });
-    } catch (err) {
-        console.error('Deals GET error:', err);
-        res.status(500).json({ error: 'Internal server error' });
-    }
-});
-
-app.post('/api/deals', authenticate, async (req, res) => {
-    try {
+        const dealId = req.params.id;
         const userId = req.userId;
         const { brand_name, amount, due_date, deliverable, status } = req.body;
+
+        // Validate required fields
         if (!brand_name || !amount) {
             return res.status(400).json({ error: 'brand_name and amount required' });
         }
+
+        // Sanitize and validate
         const sanitizedBrand = sanitizeInput(brand_name.trim());
         if (sanitizedBrand.length < 2 || sanitizedBrand.length > 100) {
             return res.status(400).json({ error: 'Brand name must be between 2 and 100 characters' });
         }
+
         if (!isValidAmount(amount)) {
             return res.status(400).json({ error: 'Invalid amount' });
         }
+
         const sanitizedDeliverable = deliverable ? sanitizeInput(deliverable.trim()) : '';
         if (sanitizedDeliverable.length > 500) {
             return res.status(400).json({ error: 'Deliverable too long (max 500 characters)' });
         }
+
         if (due_date && isNaN(Date.parse(due_date))) {
             return res.status(400).json({ error: 'Invalid due date format' });
         }
+
+        // First verify the deal belongs to this user
+        const { data: existing, error: findError } = await supabase
+            .from('deals')
+            .select('id')
+            .eq('id', dealId)
+            .eq('user_id', userId)
+            .single();
+
+        if (findError || !existing) {
+            return res.status(404).json({ error: 'Deal not found or you do not own it' });
+        }
+
+        // Update the deal
         const { data, error } = await supabase
             .from('deals')
-            .insert([{
-                user_id: userId,
+            .update({
                 brand_name: sanitizedBrand,
                 amount: parseFloat(amount),
                 due_date: due_date || null,
                 deliverable: sanitizedDeliverable || '',
                 status: status || 'pending'
-            }])
+            })
+            .eq('id', dealId)
+            .eq('user_id', userId)
             .select();
+
         if (error) {
-            console.error('Supabase error:', error);
+            console.error('Supabase update error:', error);
             return res.status(500).json({ error: error.message });
         }
-        res.status(201).json({ success: true, data: data[0] });
+
+        res.json({ success: true, data: data[0] });
     } catch (err) {
-        console.error('Deals POST error:', err);
+        console.error('Deals PUT error:', err);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// ============================================
+// DELETE DEAL
+// ============================================
+app.delete('/api/deals/:id', authenticate, async (req, res) => {
+    try {
+        const dealId = req.params.id;
+        const userId = req.userId;
+
+        // Verify the deal belongs to this user
+        const { data: existing, error: findError } = await supabase
+            .from('deals')
+            .select('id')
+            .eq('id', dealId)
+            .eq('user_id', userId)
+            .single();
+
+        if (findError || !existing) {
+            return res.status(404).json({ error: 'Deal not found or you do not own it' });
+        }
+
+        // Delete the deal
+        const { error } = await supabase
+            .from('deals')
+            .delete()
+            .eq('id', dealId)
+            .eq('user_id', userId);
+
+        if (error) {
+            console.error('Supabase delete error:', error);
+            return res.status(500).json({ error: error.message });
+        }
+
+        res.json({ success: true, message: 'Deal deleted successfully' });
+    } catch (err) {
+        console.error('Deals DELETE error:', err);
         res.status(500).json({ error: 'Internal server error' });
     }
 });
