@@ -164,84 +164,44 @@ app.get('/health', (req, res) => {
 // ============================================
 // AUTH ROUTES
 // ============================================
-app.post('/api/auth/signup', authLimiter, async (req, res) => {
+// ============================================
+// UPDATE PROFILE
+// ============================================
+app.put('/api/auth/update', authenticate, async (req, res) => {
     try {
-        const { name, email, password } = req.body || {};
-        if (!email || !password) {
-            return res.status(400).json({ error: 'Email and password required' });
+        const { name, bio } = req.body;
+        const userId = req.userId;
+
+        if (!name) {
+            return res.status(400).json({ error: 'Name is required' });
         }
-        if (!isValidEmail(email)) {
-            return res.status(400).json({ error: 'Invalid email format' });
+
+        const sanitizedName = sanitizeInput(name.trim());
+        if (sanitizedName.length < 2 || sanitizedName.length > 50) {
+            return res.status(400).json({ error: 'Name must be between 2 and 50 characters' });
         }
-        if (password.length < 8) {
-            return res.status(400).json({ error: 'Password must be at least 8 characters' });
-        }
-        if (password.length > 100) {
-            return res.status(400).json({ error: 'Password too long' });
-        }
-        const suspiciousPatterns = ['admin', 'root', 'test', 'password', '123456'];
-        if (suspiciousPatterns.some(p => password.toLowerCase().includes(p))) {
-            return res.status(400).json({ error: 'Password is too common' });
-        }
-        const sanitizedName = name ? sanitizeInput(name.trim()) : '';
-        const { data, error } = await supabase.auth.signUp({
-            email: email.toLowerCase().trim(),
-            password,
-            options: { data: { name: sanitizedName || '' } }
+
+        // Update user metadata in Supabase
+        const { data, error } = await supabase.auth.updateUser({
+            data: { 
+                name: sanitizedName,
+                bio: bio ? sanitizeInput(bio.trim()) : ''
+            }
         });
+
         if (error) {
-            console.error('Signup error:', error);
+            console.error('Update profile error:', error);
             return res.status(400).json({ error: error.message });
         }
-        res.json({ success: true, user: data.user });
-    } catch (err) {
-        console.error('Signup server error:', err);
-        res.status(500).json({ error: 'Internal server error' });
-    }
-});
 
-app.post('/api/auth/login', authLimiter, async (req, res) => {
-    try {
-        const { email, password } = req.body || {};
-        if (!email || !password) {
-            return res.status(400).json({ error: 'Email and password required' });
-        }
-        if (!isValidEmail(email)) {
-            return res.status(400).json({ error: 'Invalid email format' });
-        }
-        const { data, error } = await supabase.auth.signInWithPassword({
-            email: email.toLowerCase().trim(),
-            password
+        res.json({ 
+            success: true, 
+            user: data.user,
+            message: 'Profile updated successfully'
         });
-        if (error) {
-            console.error('Login error:', error);
-            return res.status(401).json({ error: 'Invalid credentials' });
-        }
-        res.json({ success: true, user: data.user, session: data.session });
-    } catch (err) {
-        console.error('Login server error:', err);
-        res.status(500).json({ error: 'Internal server error' });
-    }
-});
 
-app.post('/api/auth/logout', authenticate, async (req, res) => {
-    try {
-        const { error } = await supabase.auth.signOut();
-        if (error) {
-            return res.status(400).json({ error: error.message });
-        }
-        res.json({ success: true, message: 'Logged out successfully' });
     } catch (err) {
-        console.error('Logout error:', err);
-        res.status(500).json({ error: 'Internal server error' });
-    }
-});
-
-app.get('/api/auth/user', authenticate, async (req, res) => {
-    try {
-        res.json({ success: true, user: req.user });
-    } catch (err) {
-        console.error('Get user error:', err);
+        console.error('Update profile server error:', err);
         res.status(500).json({ error: 'Internal server error' });
     }
 });
