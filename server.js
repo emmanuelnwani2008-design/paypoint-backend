@@ -282,6 +282,73 @@ app.put('/api/auth/update', authenticate, async (req, res) => {
 // DEALS ROUTES
 // ============================================
 // ============================================
+// GET DEALS (list all deals)
+// ============================================
+app.get('/api/deals', authenticate, async (req, res) => {
+    try {
+        const userId = req.userId;
+        const { data, error } = await supabase
+            .from('deals')
+            .select('*')
+            .eq('user_id', userId)
+            .order('created_at', { ascending: false });
+        if (error) {
+            console.error('Supabase error:', error);
+            return res.status(500).json({ error: error.message });
+        }
+        res.json({ success: true, data: data || [] });
+    } catch (err) {
+        console.error('Deals GET error:', err);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// ============================================
+// CREATE DEAL (POST)
+// ============================================
+app.post('/api/deals', authenticate, async (req, res) => {
+    try {
+        const userId = req.userId;
+        const { brand_name, amount, due_date, deliverable, status } = req.body;
+        if (!brand_name || !amount) {
+            return res.status(400).json({ error: 'brand_name and amount required' });
+        }
+        const sanitizedBrand = sanitizeInput(brand_name.trim());
+        if (sanitizedBrand.length < 2 || sanitizedBrand.length > 100) {
+            return res.status(400).json({ error: 'Brand name must be between 2 and 100 characters' });
+        }
+        if (!isValidAmount(amount)) {
+            return res.status(400).json({ error: 'Invalid amount' });
+        }
+        const sanitizedDeliverable = deliverable ? sanitizeInput(deliverable.trim()) : '';
+        if (sanitizedDeliverable.length > 500) {
+            return res.status(400).json({ error: 'Deliverable too long (max 500 characters)' });
+        }
+        if (due_date && isNaN(Date.parse(due_date))) {
+            return res.status(400).json({ error: 'Invalid due date format' });
+        }
+        const { data, error } = await supabase
+            .from('deals')
+            .insert([{
+                user_id: userId,
+                brand_name: sanitizedBrand,
+                amount: parseFloat(amount),
+                due_date: due_date || null,
+                deliverable: sanitizedDeliverable || '',
+                status: status || 'pending'
+            }])
+            .select();
+        if (error) {
+            console.error('Supabase error:', error);
+            return res.status(500).json({ error: error.message });
+        }
+        res.status(201).json({ success: true, data: data[0] });
+    } catch (err) {
+        console.error('Deals POST error:', err);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+// ============================================
 // UPDATE DEAL (Edit)
 // ============================================
 app.put('/api/deals/:id', authenticate, async (req, res) => {
