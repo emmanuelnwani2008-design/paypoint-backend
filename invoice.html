@@ -466,11 +466,14 @@
         // SEND INVOICE
         // ============================================
         async function sendInvoice(id) {
-    const deal = allDeals.find(d => String(d.id) === String(id)); // <-- type coercion
+    const deal = allDeals.find(d => String(d.id) === String(id));
     if (!deal) return;
 
     const brandEmail = prompt(`📧 Enter email to send invoice to ${deal.brand_name}:`, 'finance@brand.com');
-    if (!brandEmail) return;
+    if (!brandEmail || !brandEmail.includes('@')) {
+        alert('❌ A valid email is required to send the invoice.');
+        return;
+    }
 
     try {
         const payRes = await fetch(`${API_URL}/payments/initialize`, {
@@ -483,9 +486,9 @@
 
         if (payResult && payResult.authorization_url) {
             window.open(payResult.authorization_url, '_blank');
-            alert(`✅ Invoice sent to ${brandEmail}!`);
+            alert(`✅ Payment link opened for ${brandEmail}!`);
         } else {
-            alert('❌ Payment initialization failed');
+            alert('❌ Payment initialization failed: ' + (payResult.error || ''));
         }
     } catch (err) {
         alert('❌ Could not initialize payment');
