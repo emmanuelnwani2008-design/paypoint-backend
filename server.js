@@ -562,24 +562,33 @@ app.post('/api/payments/initialize', authenticate, async (req, res) => {
         const totalAmount = Math.round(deal.amount * (1 + PLATFORM_FEE_PERCENT / 100) * 100);
         const callbackUrl = 'https://paypoint-backend.vercel.app/success.html';
 
-        const response = await fetch('https://api.paystack.co/transaction/initialize', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                Authorization: `Bearer ${PAYSTACK_SECRET_KEY}`
-            },
-            body: JSON.stringify({
-                email: customerEmail,
-                amount: totalAmount,
-                callback_url: callbackUrl,
-                metadata: {
-                    deal_id: dealId,
-                    brand_name: deal.brand_name,
-                    user_id: userId,
-                    platform_fee: (totalAmount / 100) - deal.amount
-                }
-            })
-        });
+        // Get the subaccount code from the user's metadata
+const subaccountCode = req.user?.user_metadata?.subaccount_code;
+
+// If the creator hasn't added their bank account, block the payment
+if (!subaccountCode) {
+    return res.status(400).json({ error: 'Please add your bank account in the Profile page first.' });
+}
+
+const response = await fetch('https://api.paystack.co/transaction/initialize', {
+    method: 'POST',
+    headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${PAYSTACK_SECRET_KEY}`
+    },
+    body: JSON.stringify({
+        email: customerEmail,
+        amount: totalAmount,
+        callback_url: callbackUrl,
+        subaccount: subaccountCode, // <-- THIS IS THE ONLY NEW LINE
+        metadata: {
+            deal_id: dealId,
+            brand_name: deal.brand_name,
+            user_id: userId,
+            platform_fee: (totalAmount / 100) - deal.amount
+        }
+    })
+});
 
         const result = await response.json();
 
@@ -864,6 +873,65 @@ app.post('/api/invoices/generate', authenticate, async (req, res) => {
     } catch (err) {
         console.error('Invoice generation error:', err);
         res.status(500).json({ error: 'Failed to generate invoice: ' + err.message });
+    }
+});
+// ============================================
+// CREATE SUBACCOUNT (Creator adds their bank)
+// ============================================
+app.post('/api/payments/create-subaccount', authenticate, async (req, res) => {
+    try {
+        const userId = req.userId;
+        const { bank_code, account_number, business_name } = req.body;
+
+        // Validate inputs
+        if (!bank_code || !account_number) {
+            return res.status(400).json({ error: 'Bank code and account number are required' });
+        }
+
+        // Call Paystack to create subaccount
+        const response = await fetch('https://api.paystack.co/subaccount', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${PAYSTACK_SECRET_KEY}`
+            },
+            body: JSON.stringify({
+                business_name: business_name || req.user?.user_metadata?.name || 'Creator',
+                bank_code: bank_code,
+                account_number: account_number,
+                percentage_charge: 0 // We handle our 5% fee separately
+            })
+        });
+
+        const result = await response.json();
+
+        if (!result.status) {
+            console.error('Paystack subaccount error:', result);
+            return res.status(400).json({ error: result.message || 'Failed to create subaccount' });
+        }
+
+        // Save the subaccount code to the user's metadata in Supabase
+        const { error: updateError } = await supabase.auth.updateUser({
+            data: { 
+                subaccount_code: result.data.subaccount_code,
+                bank_name: result.data.bank_name || 'Unknown'
+            }
+        });
+
+        if (updateError) {
+            console.error('Error saving subaccount code:', updateError);
+            return res.status(500).json({ error: 'Failed to save subaccount' });
+        }
+
+        res.json({ 
+            success: true, 
+            message: 'Bank account added successfully! You can now receive payments.',
+            subaccount_code: result.data.subaccount_code
+        });
+
+    } catch (err) {
+        console.error('Create subaccount error:', err);
+        res.status(500).json({ error: 'Internal server error' });
     }
 });
 
