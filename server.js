@@ -883,35 +883,76 @@ app.post('/api/invoices/generate', authenticate, async (req, res) => {
     }
 });
 // ============================================
-// CREATE SUBACCOUNT (Creator adds their bank)
+// VERIFY BANK ACCOUNT (Preview account name)
+// ============================================
+app.post('/api/payments/verify-account', authenticate, async (req, res) => {
+    try {
+        const { bank_code, account_number } = req.body;
+
+        if (!bank_code || !account_number) {
+            return res.status(400).json({ error: 'Bank code and account number are required' });
+        }
+
+        if (!/^\d{10}$/.test(account_number)) {
+            return res.status(400).json({ error: 'Account number must be exactly 10 digits' });
+        }
+
+        const response = await fetch(
+            `https://api.paystack.co/bank/resolve?account_number=${account_number}&bank_code=${bank_code}`,
+            {
+                headers: { 'Authorization': `Bearer ${PAYSTACK_SECRET_KEY}` }
+            }
+        );
+
+        const result = await response.json();
+        console.log('📊 Account verification response:', JSON.stringify(result, null, 2));
+
+        if (!result.status) {
+            let errorMsg = result.message || 'Account verification failed';
+            if (result.data?.message) errorMsg = result.data.message;
+            if (errorMsg.toLowerCase().includes('invalid')) {
+                errorMsg = 'The account number could not be found. Please check and try again.';
+            }
+            return res.status(400).json({ error: errorMsg });
+        }
+
+        res.json({
+            success: true,
+            account_name: result.data.account_name,
+            bank_name: result.data.bank_name
+        });
+
+    } catch (err) {
+        console.error('Account verification error:', err);
+        res.status(500).json({ error: 'Internal server error. Please try again.' });
+    }
+});
+// ============================================
+// CREATE SUBACCOUNT (After verification)
 // ============================================
 app.post('/api/payments/create-subaccount', authenticate, async (req, res) => {
     try {
         const userId = req.userId;
         const { bank_code, account_number, business_name } = req.body;
 
-        // 1. Required fields
         if (!bank_code || !account_number) {
             return res.status(400).json({ error: 'Bank code and account number are required' });
         }
 
-        // 2. Validate account number format (exactly 10 digits)
         if (!/^\d{10}$/.test(account_number)) {
             return res.status(400).json({ error: 'Account number must be exactly 10 digits' });
         }
 
-        // 3. Ensure business name is not empty
         const businessName = (business_name || req.user?.user_metadata?.name || 'Creator').trim();
         if (!businessName) {
             return res.status(400).json({ error: 'Business name is required' });
         }
 
-        // 4. Call Paystack
         const response = await fetch('https://api.paystack.co/subaccount', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                Authorization: `Bearer ${PAYSTACK_SECRET_KEY}`
+                'Authorization': `Bearer ${PAYSTACK_SECRET_KEY}`
             },
             body: JSON.stringify({
                 business_name: businessName,
@@ -922,26 +963,31 @@ app.post('/api/payments/create-subaccount', authenticate, async (req, res) => {
         });
 
         const result = await response.json();
-        console.log('Paystack subaccount response:', JSON.stringify(result, null, 2));
+        console.log('📊 Subaccount creation response:', JSON.stringify(result, null, 2));
 
-        // 5. Handle Paystack errors with specific messages
         if (!result.status) {
             let errorMsg = result.message || 'Failed to create subaccount';
-            if (result.data && result.data.message) errorMsg = result.data.message;
+            if (result.data?.message) errorMsg = result.data.message;
+            if (errorMsg.toLowerCase().includes('duplicate')) {
+                errorMsg = 'This account is already registered. Please use a different account.';
+            } else if (errorMsg.toLowerCase().includes('invalid')) {
+                errorMsg = 'The account could not be validated. Please ensure the account is active and verified with BVN.';
+            }
             return res.status(400).json({ error: errorMsg });
         }
 
-        // 6. Save subaccount code to user metadata
+        // ✅ Save subaccount code to user metadata (no schema change)
         const { error: updateError } = await supabase.auth.updateUser({
             data: {
                 subaccount_code: result.data.subaccount_code,
-                bank_name: result.data.bank_name || 'Unknown'
+                bank_name: result.data.bank_name || 'Unknown',
+                account_verified: true
             }
         });
 
         if (updateError) {
             console.error('Error saving subaccount code:', updateError);
-            return res.status(500).json({ error: 'Failed to save subaccount' });
+            return res.status(500).json({ error: 'Failed to save subaccount. Please contact support.' });
         }
 
         res.json({
@@ -952,7 +998,7 @@ app.post('/api/payments/create-subaccount', authenticate, async (req, res) => {
 
     } catch (err) {
         console.error('Create subaccount error:', err);
-        res.status(500).json({ error: 'Internal server error' });
+        res.status(500).json({ error: 'Internal server error. Please try again.' });
     }
 });
 
