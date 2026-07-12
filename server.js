@@ -60,9 +60,16 @@ const limiter = rateLimit({
 app.use(limiter);
 
 const authLimiter = rateLimit({
-    windowMs: 15 * 60 * 1000,
-    max: 20,
-    message: { error: 'Too many authentication attempts. Please try again later.' },
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 5, // Only 5 FAILED attempts per email per 15 minutes
+    keyGenerator: function (req) {
+        // Rate limit by IP + email address (combines both for safety)
+        const email = req.body?.email || '';
+        const ip = req.ip || req.connection.remoteAddress;
+        return `${ip}-${email}`;
+    },
+    skipSuccessfulRequests: true, // This is the secret sauce! ✅
+    message: { error: 'Too many failed attempts for this account. Please try again later.' },
     standardHeaders: true,
     legacyHeaders: false,
 });
