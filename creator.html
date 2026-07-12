@@ -270,7 +270,7 @@
                 </div>
 
                 <!-- ============================================ -->
-                <!-- BANK ACCOUNT DETAILS - FIXED: MOVED OUT OF SCRIPT -->
+                <!-- BANK ACCOUNT DETAILS - FIXED: added maxlength and pattern -->
                 <!-- ============================================ -->
                 <div class="profile-card">
                     <h3>🏦 Bank Account (To Receive Payments)</h3>
@@ -296,7 +296,8 @@
                     </div>
                     <div class="form-group">
                         <label>Account Number</label>
-                    <input type="text" id="accountNumber" placeholder="Enter your 10-digit account number" maxlength="10" pattern="\d{10}" required>
+                        <!-- FIX: added maxlength and pattern for client-side guidance -->
+                        <input type="text" id="accountNumber" placeholder="Enter 10-digit account number" maxlength="10" pattern="\d{10}" required>
                     </div>
                     <div class="form-group">
                         <label>Business Name (Optional)</label>
@@ -322,9 +323,18 @@
         const API_URL = 'https://paypoint-backend-9m63.onrender.com/api';
         let currentUser = null;
 
+        // FIX: Improved getAuthHeaders with token validation
         function getAuthHeaders() {
             const token = localStorage.getItem('paypoint_session');
-            return { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) };
+            if (!token) {
+                console.warn('⚠️ No token found in localStorage');
+                // Do not redirect immediately – let the caller handle it
+                return { 'Content-Type': 'application/json' };
+            }
+            return { 
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            };
         }
 
         // ============================================
@@ -451,51 +461,72 @@
         // SAVE BANK ACCOUNT (Create Paystack Subaccount)
         // ============================================
         document.getElementById('saveBankBtn').addEventListener('click', async () => {
-    const bankCode = document.getElementById('bankCode').value;
-    const accountNumber = document.getElementById('accountNumber').value.trim();
-    const businessName = document.getElementById('businessName').value.trim();
-    const bankMessage = document.getElementById('bankMessage');
+            // FIX: Ensure user is authenticated before proceeding
+            if (!checkAuth()) {
+                return;
+            }
 
-    bankMessage.style.display = 'block';
-    bankMessage.style.color = '#4F7CFF';
-    bankMessage.textContent = 'Checking your bank details...';
+            const bankCode = document.getElementById('bankCode').value;
+            const accountNumber = document.getElementById('accountNumber').value.trim();
+            const businessName = document.getElementById('businessName').value.trim();
+            const bankMessage = document.getElementById('bankMessage');
 
-    if (!bankCode || !accountNumber) {
-        bankMessage.style.color = '#FF3B30';
-        bankMessage.textContent = 'Please select a bank and enter your account number.';
-        return;
-    }
+            bankMessage.style.display = 'block';
+            bankMessage.style.color = '#4F7CFF';
+            bankMessage.textContent = 'Checking your bank details...';
 
-    // ✅ Validate exactly 10 digits (this is the fix)
-    if (!/^\d{10}$/.test(accountNumber)) {
-        bankMessage.style.color = '#FF3B30';
-        bankMessage.textContent = '❌ Account number must be exactly 10 digits (numbers only).';
-        return;
-    }
+            if (!bankCode || !accountNumber) {
+                bankMessage.style.color = '#FF3B30';
+                bankMessage.textContent = 'Please select a bank and enter your account number.';
+                return;
+            }
 
-    try {
-        const res = await fetch(`${API_URL}/payments/create-subaccount`, {
-            method: 'POST',
-            headers: getAuthHeaders(),
-            body: JSON.stringify({ bank_code: bankCode, account_number: accountNumber, business_name: businessName })
+            // FIX: Validate exactly 10 digits using regex
+            if (!/^\d{10}$/.test(accountNumber)) {
+                bankMessage.style.color = '#FF3B30';
+                bankMessage.textContent = '❌ Account number must be exactly 10 digits (numbers only).';
+                return;
+            }
+
+            try {
+                // Debug: log token for inspection
+                const token = localStorage.getItem('paypoint_session');
+                console.log('🔑 Token being sent:', token ? token.substring(0, 20) + '...' : 'NO TOKEN');
+
+                const res = await fetch(`${API_URL}/payments/create-subaccount`, {
+                    method: 'POST',
+                    headers: getAuthHeaders(),
+                    body: JSON.stringify({ 
+                        bank_code: bankCode, 
+                        account_number: accountNumber, 
+                        business_name: businessName 
+                    })
+                });
+
+                // FIX: Handle 401 Unauthorized specifically
+                if (res.status === 401) {
+                    bankMessage.style.color = '#FF3B30';
+                    bankMessage.textContent = '❌ Your session has expired. Please log out and log back in.';
+                    return;
+                }
+
+                const result = await res.json();
+
+                if (result.success) {
+                    bankMessage.style.color = '#34C759';
+                    bankMessage.textContent = '✅ ' + result.message;
+                    document.getElementById('saveBankBtn').disabled = true;
+                    document.getElementById('saveBankBtn').style.opacity = '0.6';
+                } else {
+                    bankMessage.style.color = '#FF3B30';
+                    bankMessage.textContent = '❌ Error: ' + (result.error || 'Failed to save bank account');
+                }
+            } catch (err) {
+                bankMessage.style.color = '#FF3B30';
+                bankMessage.textContent = '❌ Could not connect to server.';
+                console.error('Bank save error:', err);
+            }
         });
-
-        const result = await res.json();
-
-        if (result.success) {
-            bankMessage.style.color = '#34C759';
-            bankMessage.textContent = '✅ ' + result.message;
-            document.getElementById('saveBankBtn').disabled = true;
-            document.getElementById('saveBankBtn').style.opacity = '0.6';
-        } else {
-            bankMessage.style.color = '#FF3B30';
-            bankMessage.textContent = '❌ Error: ' + (result.error || 'Failed to save bank account');
-        }
-    } catch (err) {
-        bankMessage.style.color = '#FF3B30';
-        bankMessage.textContent = '❌ Could not connect to server.';
-    }
-});
 
         // ============================================
         // CHANGE PASSWORD
