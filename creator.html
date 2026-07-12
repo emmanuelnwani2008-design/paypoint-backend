@@ -4,14 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PayPoint · Creator Profile</title>
-    <!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-HFJ9JM358E"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-  gtag('config', 'G-HFJ9JM358E');
-</script>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-HFJ9JM358E"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-HFJ9JM358E');
+    </script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -30,6 +29,8 @@
             padding: 12px 0 28px 0;
             border-bottom: 1px solid #E8EDF2;
             margin-bottom: 32px;
+            flex-wrap: wrap;
+            gap: 12px;
         }
         .logo {
             font-size: 24px;
@@ -47,6 +48,7 @@
             display: flex;
             gap: 28px;
             align-items: center;
+            flex-wrap: wrap;
         }
         .nav-links a {
             color: #5E6F82;
@@ -137,7 +139,7 @@
             color: #5E6F82;
             margin-bottom: 4px;
         }
-        .form-group input, .form-group textarea {
+        .form-group input, .form-group textarea, .form-group select {
             width: 100%;
             padding: 12px 16px;
             background: #F8FAFC;
@@ -148,9 +150,11 @@
             transition: border 0.2s ease;
             font-family: 'Inter', sans-serif;
         }
-        .form-group input:focus, .form-group textarea:focus { outline: none; border-color: #4F7CFF; }
+        .form-group input:focus, .form-group textarea:focus, .form-group select:focus {
+            outline: none;
+            border-color: #4F7CFF;
+        }
         .form-group textarea { resize: vertical; min-height: 80px; }
-        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
         .btn-primary {
             background: #4F7CFF;
             border: none;
@@ -164,7 +168,21 @@
             font-family: 'Inter', sans-serif;
             box-shadow: 0 2px 8px rgba(79, 124, 255, 0.25);
         }
-        .btn-primary:hover { background: #3A5FD9; transform: translateY(-1px); box-shadow: 0 4px 16px rgba(79, 124, 255, 0.35); }
+        .btn-primary:hover { background: #3A5FD9; transform: translateY(-1px); }
+        .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+        .btn-success {
+            background: #34C759;
+            border: none;
+            padding: 10px 24px;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 14px;
+            color: #FFFFFF;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-family: 'Inter', sans-serif;
+        }
+        .btn-success:hover { background: #2DB84D; transform: translateY(-1px); }
         .btn-danger {
             background: rgba(255, 59, 48, 0.1);
             border: 1px solid rgba(255, 59, 48, 0.2);
@@ -178,7 +196,7 @@
             font-family: 'Inter', sans-serif;
         }
         .btn-danger:hover { background: rgba(255, 59, 48, 0.2); }
-        .form-actions { display: flex; gap: 12px; margin-top: 8px; }
+        .form-actions { display: flex; gap: 12px; margin-top: 8px; flex-wrap: wrap; }
         .message-success {
             display: none;
             background: rgba(52, 199, 89, 0.1);
@@ -201,11 +219,30 @@
             margin-bottom: 16px;
         }
         .message-error.show { display: block; }
+        .account-preview {
+            margin-top: 8px;
+            padding: 12px 16px;
+            background: #F0F7FF;
+            border-radius: 8px;
+            border-left: 4px solid #4F7CFF;
+            display: none;
+        }
+        .account-preview.show { display: block; }
+        .account-preview strong { color: #4F7CFF; }
+        .bank-status {
+            display: inline-block;
+            padding: 2px 12px;
+            border-radius: 40px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .bank-status.verified { background: #E8F9EF; color: #34C759; }
+        .bank-status.unverified { background: #FFF5E6; color: #FF9500; }
+        .bank-status.saved { background: #E8F9EF; color: #34C759; }
         @media (max-width: 768px) {
-            .navbar { flex-direction: column; gap: 12px; align-items: flex-start; }
-            .nav-links { flex-wrap: wrap; gap: 14px; }
+            .navbar { flex-direction: column; align-items: stretch; }
+            .nav-links { justify-content: center; }
             .profile-grid { grid-template-columns: 1fr; }
-            .form-row { grid-template-columns: 1fr; }
             .profile-card { padding: 20px; }
             .form-actions { flex-direction: column; }
             .form-actions button { width: 100%; }
@@ -215,27 +252,31 @@
 <body>
 
     <div class="app-container">
+        <!-- Navbar -->
         <nav class="navbar">
             <a href="dashboard.html" class="logo">
-    <img src="logo.png" alt="PayPoint" onerror="this.style.display='none'">
-    PayPoint <span>· Profile</span>
-</a>
-<div class="nav-links">
-    <a href="dashboard.html">Dashboard</a>
-    <a href="deals.html">Deals</a>
-    <a href="expense.html">Expenses</a>
-    <a href="invoice.html">Invoices</a>
-    <a href="creator.html" class="active">Creator</a>
-    <span class="user-badge" id="userBadge">👤 Creator</span>
-    <a href="#" class="logout" id="navLogout">Logout</a>
-</div>
+                <img src="logo.png" alt="PayPoint" onerror="this.style.display='none'">
+                PayPoint <span>· Profile</span>
+            </a>
+            <div class="nav-links">
+                <a href="dashboard.html">Dashboard</a>
+                <a href="deals.html">Deals</a>
+                <a href="expense.html">Expenses</a>
+                <a href="invoice.html">Invoices</a>
+                <a href="creator.html" class="active">Creator</a>
+                <span class="user-badge" id="userBadge">👤 Creator</span>
+                <a href="#" class="logout" id="navLogout">Logout</a>
+            </div>
         </nav>
 
+        <!-- Page Header -->
         <div class="page-header">
             <h1>Profile <span>· Manage your account</span></h1>
         </div>
 
+        <!-- Profile Grid -->
         <div class="profile-grid">
+            <!-- Sidebar -->
             <div class="profile-sidebar">
                 <div class="profile-avatar" id="profileAvatar">👤</div>
                 <div class="profile-name" id="profileName">Creator</div>
@@ -249,7 +290,9 @@
                 </div>
             </div>
 
+            <!-- Main Content -->
             <div class="profile-main">
+                <!-- Edit Profile -->
                 <div class="profile-card">
                     <h3>✏️ Edit Profile</h3>
                     <div class="message-success" id="profileSuccess">✅ Profile updated successfully!</div>
@@ -259,6 +302,7 @@
                     <div class="form-actions"><button class="btn-primary" id="updateProfileBtn">💾 Save Profile</button></div>
                 </div>
 
+                <!-- Change Password -->
                 <div class="profile-card">
                     <h3>🔑 Change Password</h3>
                     <div class="message-success" id="passwordSuccess">✅ Password updated successfully!</div>
@@ -270,16 +314,19 @@
                 </div>
 
                 <!-- ============================================ -->
-                <!-- BANK ACCOUNT DETAILS - FIXED: added maxlength and pattern -->
+                <!-- BANK ACCOUNT - VERIFY THEN SAVE (FIXED) -->
                 <!-- ============================================ -->
                 <div class="profile-card">
                     <h3>🏦 Bank Account (To Receive Payments)</h3>
-                    <p style="color: #8A9AAB; font-size: 14px; margin-bottom: 16px;">Add your bank details so brands can pay you directly.</p>
+                    <p style="color: #8A9AAB; font-size: 14px; margin-bottom: 16px;">
+                        Add your bank details so brands can pay you directly.
+                        <span class="bank-status unverified" id="bankStatus">⚠️ Not Set</span>
+                    </p>
                     
                     <div class="form-group">
-                        <label>Bank</label>
-                        <select id="bankCode" style="width:100%; padding:12px 16px; background:#F8FAFC; border:1px solid #E8EDF2; border-radius:10px; font-family: 'Inter', sans-serif;">
-                            <option value="">Select your bank</option>
+                        <label>Select Bank</label>
+                        <select id="bankCode">
+                            <option value="">— Select your bank —</option>
                             <option value="058">GTBank</option>
                             <option value="063">Access Bank</option>
                             <option value="033">UBA</option>
@@ -292,21 +339,38 @@
                             <option value="032">Fidelity Bank</option>
                             <option value="050">Ecobank</option>
                             <option value="070">Sterling Bank</option>
+                            <option value="035">Wema Bank</option>
+                            <option value="070">Providus Bank</option>
                         </select>
                     </div>
+                    
                     <div class="form-group">
                         <label>Account Number</label>
-                        <!-- FIX: added maxlength and pattern for client-side guidance -->
                         <input type="text" id="accountNumber" placeholder="Enter 10-digit account number" maxlength="10" pattern="\d{10}" required>
+                        <small style="color: #8A9AAB; font-size: 12px; display: block; margin-top: 4px;">
+                            💡 Enter the 10-digit account number exactly as it appears on your bank statement.
+                        </small>
                     </div>
+                    
+                    <!-- Account preview after verification -->
+                    <div class="account-preview" id="accountPreview">
+                        ✅ Verified: <strong id="accountHolderName"></strong>
+                    </div>
+                    
                     <div class="form-group">
                         <label>Business Name (Optional)</label>
-                        <input type="text" id="businessName" placeholder="Your brand or full name">
+                        <input type="text" id="businessName" placeholder="Your brand or full name (e.g., 'John Doe Creative')">
                     </div>
-                    <button class="btn-primary" id="saveBankBtn">💳 Save Bank Account</button>
-                    <div id="bankMessage" style="margin-top:12px; display:none;"></div>
+                    
+                    <div class="form-actions">
+                        <button class="btn-primary" id="verifyBankBtn">🔍 Verify Account</button>
+                        <button class="btn-success" id="saveBankBtn" style="display:none;">💳 Save Bank Account</button>
+                    </div>
+                    
+                    <div id="bankMessage" style="margin-top:12px; display:none; padding:12px 16px; border-radius:8px;"></div>
                 </div>
 
+                <!-- Danger Zone -->
                 <div class="profile-card" style="border-color: rgba(255, 59, 48, 0.2);">
                     <h3 style="color: #FF3B30;">⚠️ Danger Zone</h3>
                     <p style="color: #8A9AAB; font-size: 14px; margin-bottom: 16px;">Delete your account and all data. This cannot be undone.</p>
@@ -321,14 +385,13 @@
         // CONFIGURATION
         // ============================================
         const API_URL = 'https://paypoint-backend-9m63.onrender.com/api';
-        let currentUser = null;
 
-        // FIX: Improved getAuthHeaders with token validation
+        // ============================================
+        // AUTH HELPERS
+        // ============================================
         function getAuthHeaders() {
             const token = localStorage.getItem('paypoint_session');
             if (!token) {
-                console.warn('⚠️ No token found in localStorage');
-                // Do not redirect immediately – let the caller handle it
                 return { 'Content-Type': 'application/json' };
             }
             return { 
@@ -337,30 +400,6 @@
             };
         }
 
-        // ============================================
-        // DOM REFERENCES
-        // ============================================
-        const profileName = document.getElementById('profileName');
-        const profileEmail = document.getElementById('profileEmail');
-        const profileAvatar = document.getElementById('profileAvatar');
-        const profileJoined = document.getElementById('profileJoined');
-        const editName = document.getElementById('editName');
-        const editBio = document.getElementById('editBio');
-        const statDeals = document.getElementById('statDeals');
-        const statRevenue = document.getElementById('statRevenue');
-        const statExpenses = document.getElementById('statExpenses');
-        const statSpent = document.getElementById('statSpent');
-        const profileSuccess = document.getElementById('profileSuccess');
-        const profileError = document.getElementById('profileError');
-        const passwordSuccess = document.getElementById('passwordSuccess');
-        const passwordError = document.getElementById('passwordError');
-        const currentPassword = document.getElementById('currentPassword');
-        const newPassword = document.getElementById('newPassword');
-        const confirmPassword = document.getElementById('confirmPassword');
-
-        // ============================================
-        // CHECK AUTHENTICATION
-        // ============================================
         function checkAuth() {
             const user = localStorage.getItem('paypoint_user');
             if (!user) {
@@ -374,10 +413,21 @@
                 const email = userData?.email || 'creator@example.com';
 
                 document.getElementById('userBadge').textContent = `👤 ${name}`;
-                profileName.textContent = name;
-                profileEmail.textContent = email;
-                profileAvatar.textContent = name.charAt(0).toUpperCase();
-                editName.value = name;
+                document.getElementById('profileName').textContent = name;
+                document.getElementById('profileEmail').textContent = email;
+                document.getElementById('profileAvatar').textContent = name.charAt(0).toUpperCase();
+                document.getElementById('editName').value = name;
+
+                // Check if user already has a subaccount
+                if (userData?.user_metadata?.subaccount_code) {
+                    document.getElementById('bankStatus').textContent = '✅ Active';
+                    document.getElementById('bankStatus').className = 'bank-status saved';
+                    document.getElementById('verifyBankBtn').style.display = 'none';
+                    document.getElementById('saveBankBtn').style.display = 'none';
+                    document.getElementById('bankCode').disabled = true;
+                    document.getElementById('accountNumber').disabled = true;
+                }
+
                 return true;
             } catch (e) {
                 localStorage.removeItem('paypoint_user');
@@ -400,14 +450,14 @@
                 if (dealsResult.success) {
                     const deals = dealsResult.data || [];
                     const totalRevenue = deals.reduce((sum, d) => sum + Number(d.amount), 0);
-                    statDeals.textContent = deals.length;
-                    statRevenue.textContent = `$${totalRevenue.toLocaleString()}`;
+                    document.getElementById('statDeals').textContent = deals.length;
+                    document.getElementById('statRevenue').textContent = `$${totalRevenue.toLocaleString()}`;
                 }
                 if (expensesResult.success) {
                     const expenses = expensesResult.data || [];
                     const totalSpent = expenses.reduce((sum, e) => sum + Number(e.amount), 0);
-                    statExpenses.textContent = expenses.length;
-                    statSpent.textContent = `$${totalSpent.toLocaleString()}`;
+                    document.getElementById('statExpenses').textContent = expenses.length;
+                    document.getElementById('statSpent').textContent = `$${totalSpent.toLocaleString()}`;
                 }
             } catch (err) {
                 console.error('Error loading stats:', err);
@@ -418,11 +468,11 @@
         // UPDATE PROFILE
         // ============================================
         document.getElementById('updateProfileBtn').addEventListener('click', async () => {
-            const name = editName.value.trim();
-            const bio = editBio.value.trim();
+            const name = document.getElementById('editName').value.trim();
+            const bio = document.getElementById('editBio').value.trim();
 
             if (!name) {
-                showMessage(profileError, 'Name is required');
+                showMessage('profileError', 'Name is required');
                 return;
             }
 
@@ -441,70 +491,148 @@
                     user.user_metadata.bio = bio;
                     localStorage.setItem('paypoint_user', JSON.stringify(user));
 
-                    profileName.textContent = name;
-                    profileAvatar.textContent = name.charAt(0).toUpperCase();
+                    document.getElementById('profileName').textContent = name;
+                    document.getElementById('profileAvatar').textContent = name.charAt(0).toUpperCase();
                     document.getElementById('userBadge').textContent = `👤 ${name}`;
-                    showMessage(profileSuccess, '✅ Profile updated successfully!');
-                    hideMessage(profileError);
+                    showMessage('profileSuccess', '✅ Profile updated successfully!');
+                    hideMessage('profileError');
                 } else {
-                    showMessage(profileError, result.error || 'Failed to update profile');
-                    hideMessage(profileSuccess);
+                    showMessage('profileError', result.error || 'Failed to update profile');
+                    hideMessage('profileSuccess');
                 }
             } catch (err) {
-                showMessage(profileError, 'Could not connect to server');
-                hideMessage(profileSuccess);
+                showMessage('profileError', 'Could not connect to server');
+                hideMessage('profileSuccess');
                 console.error(err);
             }
         });
 
         // ============================================
-        // SAVE BANK ACCOUNT (Create Paystack Subaccount)
+        // VERIFY BANK ACCOUNT (Step 1)
+        // ============================================
+        document.getElementById('verifyBankBtn').addEventListener('click', async () => {
+    if (!checkAuth()) return;
+
+    const bankCode = document.getElementById('bankCode').value;
+    const accountNumber = document.getElementById('accountNumber').value.trim();
+    const bankMessage = document.getElementById('bankMessage');
+    const accountPreview = document.getElementById('accountPreview');
+    const accountHolderName = document.getElementById('accountHolderName');
+
+    // Reset
+    bankMessage.style.display = 'block';
+    bankMessage.style.background = 'rgba(79, 124, 255, 0.1)';
+    bankMessage.style.color = '#4F7CFF';
+    bankMessage.textContent = '🔍 Verifying account details...';
+
+    // Validate
+    if (!bankCode) {
+        bankMessage.style.background = 'rgba(255, 59, 48, 0.1)';
+        bankMessage.style.color = '#FF3B30';
+        bankMessage.textContent = '❌ Please select a bank.';
+        return;
+    }
+
+    if (!accountNumber) {
+        bankMessage.style.background = 'rgba(255, 59, 48, 0.1)';
+        bankMessage.style.color = '#FF3B30';
+        bankMessage.textContent = '❌ Please enter your account number.';
+        return;
+    }
+
+    if (!/^\d{10}$/.test(accountNumber)) {
+        bankMessage.style.background = 'rgba(255, 59, 48, 0.1)';
+        bankMessage.style.color = '#FF3B30';
+        bankMessage.textContent = '❌ Account number must be exactly 10 digits (numbers only).';
+        return;
+    }
+
+    try {
+        const verifyRes = await fetch(`${API_URL}/payments/verify-account`, {
+            method: 'POST',
+            headers: getAuthHeaders(),
+            body: JSON.stringify({ 
+                bank_code: bankCode, 
+                account_number: accountNumber 
+            })
+        });
+
+        const result = await verifyRes.json();
+
+        if (result.success) {
+            // ✅ Account is valid!
+            accountHolderName.textContent = result.account_name;
+            accountPreview.classList.add('show');
+            
+            bankMessage.style.background = 'rgba(52, 199, 89, 0.1)';
+            bankMessage.style.color = '#34C759';
+            bankMessage.textContent = '✅ Account verified! Account holder: ' + result.account_name;
+            
+            document.getElementById('verifyBankBtn').style.display = 'none';
+            document.getElementById('saveBankBtn').style.display = 'inline-block';
+            
+            document.getElementById('saveBankBtn').dataset.bankCode = bankCode;
+            document.getElementById('saveBankBtn').dataset.accountNumber = accountNumber;
+            
+        } else {
+            // ❌ Account is invalid - Generic error handling
+            let errorMsg = result.error || 'Account verification failed.';
+            
+            // Get the selected bank name
+            const bankSelect = document.getElementById('bankCode');
+            const bankName = bankSelect.options[bankSelect.selectedIndex]?.text || 'bank';
+            
+            // 🔥 Helpful, generic error messages
+            if (errorMsg.toLowerCase().includes('bvn') || errorMsg.toLowerCase().includes('verify')) {
+                errorMsg = `This ${bankName} account needs BVN verification. Please ensure your account is fully KYC verified (Tier 2 or higher), then try again.`;
+            } else if (errorMsg.toLowerCase().includes('not found') || errorMsg.toLowerCase().includes('invalid')) {
+                errorMsg = `The account number could not be found. Please check the ${bankName} account number and try again.`;
+            } else if (errorMsg.toLowerCase().includes('bank')) {
+                errorMsg = `The selected bank could not be matched. Please check your bank selection.`;
+            }
+            
+            bankMessage.style.background = 'rgba(255, 59, 48, 0.1)';
+            bankMessage.style.color = '#FF3B30';
+            bankMessage.textContent = '❌ ' + errorMsg;
+            accountPreview.classList.remove('show');
+        }
+    } catch (err) {
+        bankMessage.style.background = 'rgba(255, 59, 48, 0.1)';
+        bankMessage.style.color = '#FF3B30';
+        bankMessage.textContent = '❌ Could not connect to server. Please check your internet connection.';
+        console.error('Verification error:', err);
+    }
+});
+
+        // ============================================
+        // SAVE BANK ACCOUNT (Step 2 - Create Subaccount)
         // ============================================
         document.getElementById('saveBankBtn').addEventListener('click', async () => {
-            // FIX: Ensure user is authenticated before proceeding
-            if (!checkAuth()) {
-                return;
-            }
+            if (!checkAuth()) return;
 
-            const bankCode = document.getElementById('bankCode').value;
-            const accountNumber = document.getElementById('accountNumber').value.trim();
+            const bankCode = document.getElementById('saveBankBtn').dataset.bankCode;
+            const accountNumber = document.getElementById('saveBankBtn').dataset.accountNumber;
             const businessName = document.getElementById('businessName').value.trim();
             const bankMessage = document.getElementById('bankMessage');
 
             bankMessage.style.display = 'block';
+            bankMessage.style.background = 'rgba(79, 124, 255, 0.1)';
             bankMessage.style.color = '#4F7CFF';
-            bankMessage.textContent = 'Checking your bank details...';
-
-            if (!bankCode || !accountNumber) {
-                bankMessage.style.color = '#FF3B30';
-                bankMessage.textContent = 'Please select a bank and enter your account number.';
-                return;
-            }
-
-            // FIX: Validate exactly 10 digits using regex
-            if (!/^\d{10}$/.test(accountNumber)) {
-                bankMessage.style.color = '#FF3B30';
-                bankMessage.textContent = '❌ Account number must be exactly 10 digits (numbers only).';
-                return;
-            }
+            bankMessage.textContent = '💳 Creating your payment subaccount...';
 
             try {
-                // Debug: log token for inspection
-                const token = localStorage.getItem('paypoint_session');
-                console.log('🔑 Token being sent:', token ? token.substring(0, 20) + '...' : 'NO TOKEN');
-
                 const res = await fetch(`${API_URL}/payments/create-subaccount`, {
                     method: 'POST',
                     headers: getAuthHeaders(),
                     body: JSON.stringify({ 
                         bank_code: bankCode, 
                         account_number: accountNumber, 
-                        business_name: businessName 
+                        business_name: businessName || 'Creator'
                     })
                 });
 
-                // FIX: Handle 401 Unauthorized specifically
                 if (res.status === 401) {
+                    bankMessage.style.background = 'rgba(255, 59, 48, 0.1)';
                     bankMessage.style.color = '#FF3B30';
                     bankMessage.textContent = '❌ Your session has expired. Please log out and log back in.';
                     return;
@@ -513,17 +641,33 @@
                 const result = await res.json();
 
                 if (result.success) {
+                    // ✅ Subaccount created!
+                    bankMessage.style.background = 'rgba(52, 199, 89, 0.1)';
                     bankMessage.style.color = '#34C759';
-                    bankMessage.textContent = '✅ ' + result.message;
+                    bankMessage.textContent = '✅ ' + result.message + ' You can now receive payments from brands!';
+                    
+                    // Update UI
                     document.getElementById('saveBankBtn').disabled = true;
                     document.getElementById('saveBankBtn').style.opacity = '0.6';
+                    document.getElementById('bankStatus').textContent = '✅ Active';
+                    document.getElementById('bankStatus').className = 'bank-status saved';
+                    
+                    // Update user data in localStorage
+                    const user = JSON.parse(localStorage.getItem('paypoint_user'));
+                    user.user_metadata.subaccount_code = result.subaccount_code;
+                    localStorage.setItem('paypoint_user', JSON.stringify(user));
+                    
                 } else {
+                    // ❌ Subaccount creation failed
+                    let errorMsg = result.error || 'Failed to save bank account.';
+                    bankMessage.style.background = 'rgba(255, 59, 48, 0.1)';
                     bankMessage.style.color = '#FF3B30';
-                    bankMessage.textContent = '❌ Error: ' + (result.error || 'Failed to save bank account');
+                    bankMessage.textContent = '❌ ' + errorMsg;
                 }
             } catch (err) {
+                bankMessage.style.background = 'rgba(255, 59, 48, 0.1)';
                 bankMessage.style.color = '#FF3B30';
-                bankMessage.textContent = '❌ Could not connect to server.';
+                bankMessage.textContent = '❌ Could not connect to server. Please try again.';
                 console.error('Bank save error:', err);
             }
         });
@@ -532,25 +676,25 @@
         // CHANGE PASSWORD
         // ============================================
         document.getElementById('changePasswordBtn').addEventListener('click', async () => {
-            const oldPassword = currentPassword.value;
-            const newPass = newPassword.value;
-            const confirmPass = confirmPassword.value;
+            const oldPassword = document.getElementById('currentPassword').value;
+            const newPass = document.getElementById('newPassword').value;
+            const confirmPass = document.getElementById('confirmPassword').value;
 
             if (!oldPassword || !newPass || !confirmPass) {
-                showMessage(passwordError, 'Please fill in all fields');
-                hideMessage(passwordSuccess);
+                showMessage('passwordError', 'Please fill in all fields');
+                hideMessage('passwordSuccess');
                 return;
             }
 
             if (newPass.length < 6) {
-                showMessage(passwordError, 'New password must be at least 6 characters');
-                hideMessage(passwordSuccess);
+                showMessage('passwordError', 'New password must be at least 6 characters');
+                hideMessage('passwordSuccess');
                 return;
             }
 
             if (newPass !== confirmPass) {
-                showMessage(passwordError, 'Passwords do not match');
-                hideMessage(passwordSuccess);
+                showMessage('passwordError', 'Passwords do not match');
+                hideMessage('passwordSuccess');
                 return;
             }
 
@@ -564,18 +708,18 @@
                 const result = await res.json();
 
                 if (result.success) {
-                    showMessage(passwordSuccess, '✅ Password updated successfully!');
-                    hideMessage(passwordError);
-                    currentPassword.value = '';
-                    newPassword.value = '';
-                    confirmPassword.value = '';
+                    showMessage('passwordSuccess', '✅ Password updated successfully!');
+                    hideMessage('passwordError');
+                    document.getElementById('currentPassword').value = '';
+                    document.getElementById('newPassword').value = '';
+                    document.getElementById('confirmPassword').value = '';
                 } else {
-                    showMessage(passwordError, result.error || 'Failed to update password');
-                    hideMessage(passwordSuccess);
+                    showMessage('passwordError', result.error || 'Failed to update password');
+                    hideMessage('passwordSuccess');
                 }
             } catch (err) {
-                showMessage(passwordError, 'Could not connect to server');
-                hideMessage(passwordSuccess);
+                showMessage('passwordError', 'Could not connect to server');
+                hideMessage('passwordSuccess');
                 console.error(err);
             }
         });
@@ -598,6 +742,7 @@
                 if (result.success) {
                     alert('🗑️ Account deleted successfully.');
                     localStorage.removeItem('paypoint_user');
+                    localStorage.removeItem('paypoint_session');
                     window.location.replace('login.html');
                 } else {
                     alert('❌ Error: ' + (result.error || 'Failed to delete account'));
@@ -611,13 +756,14 @@
         // ============================================
         // HELPER FUNCTIONS
         // ============================================
-        function showMessage(el, text) {
+        function showMessage(id, text) {
+            const el = document.getElementById(id);
             el.textContent = text;
             el.classList.add('show');
         }
 
-        function hideMessage(el) {
-            el.classList.remove('show');
+        function hideMessage(id) {
+            document.getElementById(id).classList.remove('show');
         }
 
         // ============================================
