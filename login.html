@@ -149,6 +149,43 @@
             font-weight: 500;
         }
         .demo-note span:hover { text-decoration: underline; }
+
+        /* ============================================
+           EMAIL CONFIRMATION NOTIFICATION (NEW)
+        ============================================ */
+        .confirm-banner {
+            background: #FFF5E6;
+            border: 1px solid #FFE4B3;
+            border-radius: 10px;
+            padding: 16px 20px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        .confirm-banner.show {
+            display: block;
+        }
+        .confirm-banner h4 {
+            color: #B97300;
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+        .confirm-banner p {
+            color: #8A6D00;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+        .confirm-banner .email-highlight {
+            font-weight: 600;
+            color: #B97300;
+            word-break: break-all;
+        }
+        .confirm-banner .check-spam {
+            font-size: 12px;
+            color: #8A9AAB;
+            margin-top: 6px;
+            display: block;
+        }
     </style>
 </head>
 <body>
@@ -158,6 +195,18 @@
             PayPoint
         </div>
         <div class="subtitle">Finance OS for Creators</div>
+
+        <!-- ============================================
+        EMAIL CONFIRMATION BANNER
+        ============================================ -->
+        <div class="confirm-banner" id="confirmBanner">
+            <h4>📧 Confirm Your Email</h4>
+            <p>
+                We sent a confirmation link to <span class="email-highlight" id="confirmEmail"></span>.
+                Please check your inbox (and <strong>spam folder</strong>) and click the link to verify your account.
+            </p>
+            <span class="check-spam">💡 If you don't see the email, check your spam or junk folder.</span>
+        </div>
 
         <div class="tab-switch">
             <button class="tab-btn active" id="loginTab">Log In</button>
@@ -225,6 +274,10 @@
         const signupSuccess = document.getElementById('signupSuccess');
         const demoLogin = document.getElementById('demoLogin');
 
+        // Email confirmation banner
+        const confirmBanner = document.getElementById('confirmBanner');
+        const confirmEmail = document.getElementById('confirmEmail');
+
         // ============================================
         // TAB SWITCHING
         // ============================================
@@ -236,6 +289,7 @@
             loginError.style.display = 'none';
             signupError.style.display = 'none';
             signupSuccess.style.display = 'none';
+            confirmBanner.classList.remove('show'); // Hide banner when switching
         });
 
         signupTab.addEventListener('click', () => {
@@ -246,6 +300,7 @@
             loginError.style.display = 'none';
             signupError.style.display = 'none';
             signupSuccess.style.display = 'none';
+            confirmBanner.classList.remove('show'); // Hide banner when switching
         });
 
         // ============================================
@@ -258,6 +313,7 @@
 
             signupError.style.display = 'none';
             signupSuccess.style.display = 'none';
+            confirmBanner.classList.remove('show');
 
             if (!name || !email || !password) {
                 signupError.textContent = 'Please fill in all fields';
@@ -281,12 +337,18 @@
                 const data = await res.json();
 
                 if (data.success) {
-                    signupSuccess.style.display = 'block';
-                    signupError.style.display = 'none';
+                    // Show email confirmation banner
+                    confirmEmail.textContent = email;
+                    confirmBanner.classList.add('show');
+
+                    // Clear form
                     signupName.value = '';
                     signupEmail.value = '';
                     signupPassword.value = '';
-                    setTimeout(() => loginTab.click(), 1500);
+                    signupError.style.display = 'none';
+
+                    // Optional: stay on signup tab so they can see the banner
+                    // Don't auto-switch to login – let them read the confirmation message first
                 } else {
                     signupError.textContent = data.error || 'Signup failed';
                     signupError.style.display = 'block';
@@ -305,6 +367,7 @@
             const password = loginPassword.value;
 
             loginError.style.display = 'none';
+            confirmBanner.classList.remove('show');
 
             if (!email || !password) {
                 loginError.textContent = 'Please enter email and password';
@@ -339,58 +402,56 @@
         });
 
         // ============================================
-// DEMO LOGIN – auto-creates demo account if missing
-// ============================================
-async function demoLoginHandler() {
-    const DEMO_EMAIL = 'demo@paypoint.com';
-    const DEMO_PASSWORD = 'DemoSecure2026!'; // stronger password
+        // DEMO LOGIN – auto-creates demo account if missing
+        // ============================================
+        async function demoLoginHandler() {
+            const DEMO_EMAIL = 'demo@paypoint.com';
+            const DEMO_PASSWORD = 'DemoSecure2026!';
 
-    try {
-        // 1. Try to log in
-        let res = await fetch(`${API_URL}/auth/login`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email: DEMO_EMAIL, password: DEMO_PASSWORD })
-        });
-        let data = await res.json();
+            try {
+                let res = await fetch(`${API_URL}/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: DEMO_EMAIL, password: DEMO_PASSWORD })
+                });
+                let data = await res.json();
 
-        // 2. If login fails (account doesn't exist), create it
-        if (!data.success) {
-            console.log('Demo account not found – creating...');
-            const signupRes = await fetch(`${API_URL}/auth/signup`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name: 'Demo User', email: DEMO_EMAIL, password: DEMO_PASSWORD })
-            });
-            const signupData = await signupRes.json();
-            if (!signupData.success) {
-                alert('Demo account creation failed: ' + (signupData.error || 'Unknown error'));
-                return;
+                if (!data.success) {
+                    console.log('Demo account not found – creating...');
+                    const signupRes = await fetch(`${API_URL}/auth/signup`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ name: 'Demo User', email: DEMO_EMAIL, password: DEMO_PASSWORD })
+                    });
+                    const signupData = await signupRes.json();
+                    if (!signupData.success) {
+                        alert('Demo account creation failed: ' + (signupData.error || 'Unknown error'));
+                        return;
+                    }
+                    res = await fetch(`${API_URL}/auth/login`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email: DEMO_EMAIL, password: DEMO_PASSWORD })
+                    });
+                    data = await res.json();
+                }
+
+                if (data.success && data.user) {
+                    localStorage.setItem('paypoint_user', JSON.stringify(data.user));
+                    if (data.session?.access_token) {
+                        localStorage.setItem('paypoint_session', data.session.access_token);
+                    }
+                    window.location.replace('dashboard.html');
+                } else {
+                    alert('Demo login failed. Please try again.');
+                }
+            } catch (err) {
+                alert('Demo login could not connect to server.');
+                console.error('Demo error:', err);
             }
-            // Now login again
-            res = await fetch(`${API_URL}/auth/login`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email: DEMO_EMAIL, password: DEMO_PASSWORD })
-            });
-            data = await res.json();
         }
 
-        // 3. If login succeeded
-        if (data.success && data.user) {
-            localStorage.setItem('paypoint_user', JSON.stringify(data.user));
-            if (data.session?.access_token) {
-                localStorage.setItem('paypoint_session', data.session.access_token);
-            }
-            window.location.replace('dashboard.html');
-        } else {
-            alert('Demo login failed. Please try again.');
-        }
-    } catch (err) {
-        alert('Demo login could not connect to server.');
-        console.error('Demo error:', err);
-    }
-}
+        demoLogin.addEventListener('click', demoLoginHandler);
 
         // ============================================
         // ENTER KEY SUPPORT
@@ -422,5 +483,6 @@ async function demoLoginHandler() {
         console.log('🔐 PayPoint Login page loaded');
         console.log('📡 Connected to:', API_URL);
     </script>
+
 </body>
 </html>
