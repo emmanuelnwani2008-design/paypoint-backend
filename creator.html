@@ -296,7 +296,7 @@
                     </div>
                     <div class="form-group">
                         <label>Account Number</label>
-                        <input type="text" id="accountNumber" placeholder="Enter your 10-digit account number" maxlength="10">
+                    <input type="text" id="accountNumber" placeholder="Enter your 10-digit account number" maxlength="10" pattern="\d{10}" required>
                     </div>
                     <div class="form-group">
                         <label>Business Name (Optional)</label>
@@ -451,50 +451,51 @@
         // SAVE BANK ACCOUNT (Create Paystack Subaccount)
         // ============================================
         document.getElementById('saveBankBtn').addEventListener('click', async () => {
-            const bankCode = document.getElementById('bankCode').value;
-            const accountNumber = document.getElementById('accountNumber').value.trim();
-            const businessName = document.getElementById('businessName').value.trim();
-            const bankMessage = document.getElementById('bankMessage');
+    const bankCode = document.getElementById('bankCode').value;
+    const accountNumber = document.getElementById('accountNumber').value.trim();
+    const businessName = document.getElementById('businessName').value.trim();
+    const bankMessage = document.getElementById('bankMessage');
 
-            bankMessage.style.display = 'block';
-            bankMessage.style.color = '#4F7CFF';
-            bankMessage.textContent = 'Checking your bank details...';
+    bankMessage.style.display = 'block';
+    bankMessage.style.color = '#4F7CFF';
+    bankMessage.textContent = 'Checking your bank details...';
 
-            if (!bankCode || !accountNumber) {
-                bankMessage.style.color = '#FF3B30';
-                bankMessage.textContent = 'Please select a bank and enter your account number.';
-                return;
-            }
+    if (!bankCode || !accountNumber) {
+        bankMessage.style.color = '#FF3B30';
+        bankMessage.textContent = 'Please select a bank and enter your account number.';
+        return;
+    }
 
-            if (accountNumber.length < 10) {
-                bankMessage.style.color = '#FF3B30';
-                bankMessage.textContent = 'Please enter a valid 10-digit account number.';
-                return;
-            }
+    // ✅ Validate exactly 10 digits (this is the fix)
+    if (!/^\d{10}$/.test(accountNumber)) {
+        bankMessage.style.color = '#FF3B30';
+        bankMessage.textContent = '❌ Account number must be exactly 10 digits (numbers only).';
+        return;
+    }
 
-            try {
-                const res = await fetch(`${API_URL}/payments/create-subaccount`, {
-                    method: 'POST',
-                    headers: getAuthHeaders(),
-                    body: JSON.stringify({ bank_code: bankCode, account_number: accountNumber, business_name: businessName })
-                });
-
-                const result = await res.json();
-
-                if (result.success) {
-                    bankMessage.style.color = '#34C759';
-                    bankMessage.textContent = '✅ ' + result.message;
-                    document.getElementById('saveBankBtn').disabled = true;
-                    document.getElementById('saveBankBtn').style.opacity = '0.6';
-                } else {
-                    bankMessage.style.color = '#FF3B30';
-                    bankMessage.textContent = '❌ Error: ' + (result.error || 'Failed to save bank account');
-                }
-            } catch (err) {
-                bankMessage.style.color = '#FF3B30';
-                bankMessage.textContent = '❌ Could not connect to server.';
-            }
+    try {
+        const res = await fetch(`${API_URL}/payments/create-subaccount`, {
+            method: 'POST',
+            headers: getAuthHeaders(),
+            body: JSON.stringify({ bank_code: bankCode, account_number: accountNumber, business_name: businessName })
         });
+
+        const result = await res.json();
+
+        if (result.success) {
+            bankMessage.style.color = '#34C759';
+            bankMessage.textContent = '✅ ' + result.message;
+            document.getElementById('saveBankBtn').disabled = true;
+            document.getElementById('saveBankBtn').style.opacity = '0.6';
+        } else {
+            bankMessage.style.color = '#FF3B30';
+            bankMessage.textContent = '❌ Error: ' + (result.error || 'Failed to save bank account');
+        }
+    } catch (err) {
+        bankMessage.style.color = '#FF3B30';
+        bankMessage.textContent = '❌ Could not connect to server.';
+    }
+});
 
         // ============================================
         // CHANGE PASSWORD

@@ -890,12 +890,23 @@ app.post('/api/payments/create-subaccount', authenticate, async (req, res) => {
         const userId = req.userId;
         const { bank_code, account_number, business_name } = req.body;
 
-        // Validate inputs
+        // 1. Required fields
         if (!bank_code || !account_number) {
             return res.status(400).json({ error: 'Bank code and account number are required' });
         }
 
-        // Call Paystack to create subaccount
+        // 2. Validate account number format (exactly 10 digits)
+        if (!/^\d{10}$/.test(account_number)) {
+            return res.status(400).json({ error: 'Account number must be exactly 10 digits' });
+        }
+
+        // 3. Ensure business name is not empty
+        const businessName = (business_name || req.user?.user_metadata?.name || 'Creator').trim();
+        if (!businessName) {
+            return res.status(400).json({ error: 'Business name is required' });
+        }
+
+        // 4. Call Paystack
         const response = await fetch('https://api.paystack.co/subaccount', {
             method: 'POST',
             headers: {
@@ -903,23 +914,26 @@ app.post('/api/payments/create-subaccount', authenticate, async (req, res) => {
                 Authorization: `Bearer ${PAYSTACK_SECRET_KEY}`
             },
             body: JSON.stringify({
-                business_name: business_name || req.user?.user_metadata?.name || 'Creator',
+                business_name: businessName,
                 bank_code: bank_code,
                 account_number: account_number,
-                percentage_charge: 0 // We handle our 5% fee separately
+                percentage_charge: 0
             })
         });
 
         const result = await response.json();
+        console.log('Paystack subaccount response:', JSON.stringify(result, null, 2));
 
+        // 5. Handle Paystack errors with specific messages
         if (!result.status) {
-            console.error('Paystack subaccount error:', result);
-            return res.status(400).json({ error: result.message || 'Failed to create subaccount' });
+            let errorMsg = result.message || 'Failed to create subaccount';
+            if (result.data && result.data.message) errorMsg = result.data.message;
+            return res.status(400).json({ error: errorMsg });
         }
 
-        // Save the subaccount code to the user's metadata in Supabase
+        // 6. Save subaccount code to user metadata
         const { error: updateError } = await supabase.auth.updateUser({
-            data: { 
+            data: {
                 subaccount_code: result.data.subaccount_code,
                 bank_name: result.data.bank_name || 'Unknown'
             }
@@ -930,8 +944,8 @@ app.post('/api/payments/create-subaccount', authenticate, async (req, res) => {
             return res.status(500).json({ error: 'Failed to save subaccount' });
         }
 
-        res.json({ 
-            success: true, 
+        res.json({
+            success: true,
             message: 'Bank account added successfully! You can now receive payments.',
             subaccount_code: result.data.subaccount_code
         });
