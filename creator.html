@@ -13,6 +13,9 @@
         gtag('config', 'G-HFJ9JM358E');
     </script>
     <style>
+        /* ============================================
+           EXACT NAVBAR STYLES FROM EXPENSES.HTML
+        ============================================ */
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -23,10 +26,7 @@
             -webkit-font-smoothing: antialiased;
         }
         .app-container { max-width: 1280px; margin: 0 auto; }
-        
-        /* ============================================
-           NAVBAR - EXACT COPY FROM EXPENSES.HTML
-        ============================================ */
+
         .navbar {
             display: flex;
             justify-content: space-between;
@@ -71,11 +71,14 @@
             color: #000000;
             border: 1px solid #E8EDF2;
         }
-        
+
+        /* ============================================
+           REST OF THE STYLES
+        ============================================ */
         .page-header { margin-bottom: 32px; }
         .page-header h1 { font-size: 28px; font-weight: 700; color: #000000; }
         .page-header h1 span { color: #8A9AAB; font-weight: 400; }
-        
+
         .profile-grid {
             display: grid;
             grid-template-columns: 280px 1fr;
@@ -126,7 +129,7 @@
         }
         .sidebar-stat .num { font-size: 18px; font-weight: 700; color: #4F7CFF; }
         .sidebar-stat .label { font-size: 11px; color: #8A9AAB; margin-top: 2px; }
-        
+
         .profile-main { display: flex; flex-direction: column; gap: 24px; }
         .profile-card {
             background: #FFFFFF;
@@ -160,6 +163,7 @@
             border-color: #4F7CFF;
         }
         .form-group textarea { resize: vertical; min-height: 80px; }
+
         .btn-primary {
             background: #4F7CFF;
             border: none;
@@ -175,6 +179,7 @@
         }
         .btn-primary:hover { background: #3A5FD9; transform: translateY(-1px); }
         .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
         .btn-success {
             background: #34C759;
             border: none;
@@ -188,6 +193,7 @@
             font-family: 'Inter', sans-serif;
         }
         .btn-success:hover { background: #2DB84D; transform: translateY(-1px); }
+
         .btn-danger {
             background: rgba(255, 59, 48, 0.1);
             border: 1px solid rgba(255, 59, 48, 0.2);
@@ -201,7 +207,9 @@
             font-family: 'Inter', sans-serif;
         }
         .btn-danger:hover { background: rgba(255, 59, 48, 0.2); }
+
         .form-actions { display: flex; gap: 12px; margin-top: 8px; flex-wrap: wrap; }
+
         .message-success {
             display: none;
             background: rgba(52, 199, 89, 0.1);
@@ -213,6 +221,7 @@
             margin-bottom: 16px;
         }
         .message-success.show { display: block; }
+
         .message-error {
             display: none;
             background: rgba(255, 59, 48, 0.1);
@@ -224,6 +233,7 @@
             margin-bottom: 16px;
         }
         .message-error.show { display: block; }
+
         .account-preview {
             margin-top: 8px;
             padding: 12px 16px;
@@ -234,6 +244,7 @@
         }
         .account-preview.show { display: block; }
         .account-preview strong { color: #4F7CFF; }
+
         .bank-status {
             display: inline-block;
             padding: 2px 12px;
@@ -244,7 +255,7 @@
         .bank-status.verified { background: #E8F9EF; color: #34C759; }
         .bank-status.unverified { background: #FFF5E6; color: #FF9500; }
         .bank-status.saved { background: #E8F9EF; color: #34C759; }
-        
+
         @media (max-width: 768px) {
             .navbar { flex-direction: column; gap: 12px; align-items: flex-start; }
             .nav-links { flex-wrap: wrap; gap: 14px; }
@@ -325,14 +336,14 @@
                     <div class="form-actions"><button class="btn-primary" id="changePasswordBtn">🔒 Change Password</button></div>
                 </div>
 
-                <!-- Bank Account - With Verification -->
+                <!-- Bank Account -->
                 <div class="profile-card">
                     <h3>🏦 Bank Account (To Receive Payments)</h3>
                     <p style="color: #8A9AAB; font-size: 14px; margin-bottom: 16px;">
                         Add your bank details so brands can pay you directly.
                         <span class="bank-status unverified" id="bankStatus">⚠️ Not Set</span>
                     </p>
-                    
+
                     <div class="form-group">
                         <label>Select Bank</label>
                         <select id="bankCode">
@@ -353,7 +364,7 @@
                             <option value="070">Providus Bank</option>
                         </select>
                     </div>
-                    
+
                     <div class="form-group">
                         <label>Account Number</label>
                         <input type="text" id="accountNumber" placeholder="Enter 10-digit account number" maxlength="10" pattern="\d{10}" required>
@@ -361,22 +372,21 @@
                             💡 Enter the 10-digit account number exactly as it appears on your bank statement.
                         </small>
                     </div>
-                    
-                    <!-- Account preview after verification -->
+
                     <div class="account-preview" id="accountPreview">
                         ✅ Verified: <strong id="accountHolderName"></strong>
                     </div>
-                    
+
                     <div class="form-group">
                         <label>Business Name (Optional)</label>
                         <input type="text" id="businessName" placeholder="Your brand or full name">
                     </div>
-                    
+
                     <div class="form-actions">
                         <button class="btn-primary" id="verifyBankBtn">🔍 Verify Account</button>
                         <button class="btn-success" id="saveBankBtn" style="display:none;">💳 Save Bank Account</button>
                     </div>
-                    
+
                     <div id="bankMessage" style="margin-top:12px; display:none; padding:12px 16px; border-radius:8px;"></div>
                 </div>
 
@@ -404,15 +414,19 @@
             if (!token) {
                 return { 'Content-Type': 'application/json' };
             }
-            return { 
+            return {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${token}`
             };
         }
 
         function checkAuth() {
+            const token = localStorage.getItem('paypoint_session');
             const user = localStorage.getItem('paypoint_user');
-            if (!user) {
+
+            if (!token || !user) {
+                localStorage.removeItem('paypoint_user');
+                localStorage.removeItem('paypoint_session');
                 window.location.replace('login.html');
                 return false;
             }
@@ -421,12 +435,14 @@
                 const userData = JSON.parse(user);
                 const name = userData?.user_metadata?.name || userData?.name || 'Creator';
                 const email = userData?.email || 'creator@example.com';
+                const bio = userData?.user_metadata?.bio || '';
 
                 document.getElementById('userBadge').textContent = `👤 ${name}`;
                 document.getElementById('profileName').textContent = name;
                 document.getElementById('profileEmail').textContent = email;
                 document.getElementById('profileAvatar').textContent = name.charAt(0).toUpperCase();
                 document.getElementById('editName').value = name;
+                document.getElementById('editBio').value = bio;
 
                 // Check if user already has a subaccount
                 if (userData?.user_metadata?.subaccount_code) {
@@ -478,61 +494,50 @@
         // UPDATE PROFILE
         // ============================================
         document.getElementById('updateProfileBtn').addEventListener('click', async () => {
-    const name = document.getElementById('editName').value.trim();
-    const bio = document.getElementById('editBio').value.trim();
+            const name = document.getElementById('editName').value.trim();
+            const bio = document.getElementById('editBio').value.trim();
 
-    if (!name) {
-        showMessage('profileError', 'Name is required');
-        return;
-    }
-
-    try {
-        const res = await fetch(`${API_URL}/auth/update`, {
-            method: 'PUT',
-            headers: getAuthHeaders(),
-            body: JSON.stringify({ name, bio })
-        });
-
-        const result = await res.json();
-
-        if (result.success) {
-            // ✅ Fetch fresh user data from server
-            const userRes = await fetch(`${API_URL}/auth/user`, {
-                headers: getAuthHeaders()
-            });
-            const userResult = await userRes.json();
-            
-            if (userResult.success) {
-                // ✅ Update localStorage with fresh data
-                localStorage.setItem('paypoint_user', JSON.stringify(userResult.user));
-                
-                // ✅ Update UI
-                const userData = userResult.user;
-                const displayName = userData?.user_metadata?.name || name || 'Creator';
-                const displayBio = userData?.user_metadata?.bio || '';
-                
-                document.getElementById('profileName').textContent = displayName;
-                document.getElementById('profileAvatar').textContent = displayName.charAt(0).toUpperCase();
-                document.getElementById('userBadge').textContent = `👤 ${displayName}`;
-                document.getElementById('editName').value = displayName;
-                document.getElementById('editBio').value = displayBio;
-                
-                showMessage('profileSuccess', '✅ Profile updated successfully!');
-                hideMessage('profileError');
-            } else {
-                showMessage('profileError', 'Profile saved but failed to refresh data');
-                hideMessage('profileSuccess');
+            if (!name) {
+                showMessage('profileError', 'Name is required');
+                return;
             }
-        } else {
-            showMessage('profileError', result.error || 'Failed to update profile');
-            hideMessage('profileSuccess');
-        }
-    } catch (err) {
-        showMessage('profileError', 'Could not connect to server');
-        hideMessage('profileSuccess');
-        console.error(err);
-    }
-});
+
+            try {
+                const res = await fetch(`${API_URL}/auth/update`, {
+                    method: 'PUT',
+                    headers: getAuthHeaders(),
+                    body: JSON.stringify({ name, bio })
+                });
+
+                const result = await res.json();
+
+                if (result.success) {
+                    // ✅ Immediately update localStorage with the new data
+                    const user = JSON.parse(localStorage.getItem('paypoint_user'));
+                    if (!user.user_metadata) user.user_metadata = {};
+                    user.user_metadata.name = name;
+                    user.user_metadata.bio = bio;
+                    localStorage.setItem('paypoint_user', JSON.stringify(user));
+
+                    // ✅ Update UI
+                    document.getElementById('profileName').textContent = name;
+                    document.getElementById('profileAvatar').textContent = name.charAt(0).toUpperCase();
+                    document.getElementById('userBadge').textContent = `👤 ${name}`;
+                    document.getElementById('editName').value = name;
+                    document.getElementById('editBio').value = bio;
+
+                    showMessage('profileSuccess', '✅ Profile updated successfully!');
+                    hideMessage('profileError');
+                } else {
+                    showMessage('profileError', result.error || 'Failed to update profile');
+                    hideMessage('profileSuccess');
+                }
+            } catch (err) {
+                showMessage('profileError', 'Could not connect to server');
+                hideMessage('profileSuccess');
+                console.error(err);
+            }
+        });
 
         // ============================================
         // VERIFY BANK ACCOUNT
@@ -584,28 +589,28 @@
                 if (result.success) {
                     accountHolderName.textContent = result.account_name;
                     accountPreview.classList.add('show');
-                    
+
                     bankMessage.style.background = 'rgba(52, 199, 89, 0.1)';
                     bankMessage.style.color = '#34C759';
                     bankMessage.textContent = '✅ Account verified! Account holder: ' + result.account_name;
-                    
+
                     document.getElementById('verifyBankBtn').style.display = 'none';
                     document.getElementById('saveBankBtn').style.display = 'inline-block';
-                    
+
                     document.getElementById('saveBankBtn').dataset.bankCode = bankCode;
                     document.getElementById('saveBankBtn').dataset.accountNumber = accountNumber;
-                    
+
                 } else {
                     let errorMsg = result.error || 'Account verification failed.';
                     const bankSelect = document.getElementById('bankCode');
                     const bankName = bankSelect.options[bankSelect.selectedIndex]?.text || 'bank';
-                    
+
                     if (errorMsg.toLowerCase().includes('bvn') || errorMsg.toLowerCase().includes('verify')) {
                         errorMsg = `This ${bankName} account needs BVN verification. Please ensure your account is fully KYC verified (Tier 2 or higher), then try again.`;
                     } else if (errorMsg.toLowerCase().includes('not found') || errorMsg.toLowerCase().includes('invalid')) {
                         errorMsg = `The account number could not be found. Please check the ${bankName} account number and try again.`;
                     }
-                    
+
                     bankMessage.style.background = 'rgba(255, 59, 48, 0.1)';
                     bankMessage.style.color = '#FF3B30';
                     bankMessage.textContent = '❌ ' + errorMsg;
@@ -639,9 +644,9 @@
                 const res = await fetch(`${API_URL}/payments/create-subaccount`, {
                     method: 'POST',
                     headers: getAuthHeaders(),
-                    body: JSON.stringify({ 
-                        bank_code: bankCode, 
-                        account_number: accountNumber, 
+                    body: JSON.stringify({
+                        bank_code: bankCode,
+                        account_number: accountNumber,
                         business_name: businessName || 'Creator'
                     })
                 });
@@ -659,16 +664,16 @@
                     bankMessage.style.background = 'rgba(52, 199, 89, 0.1)';
                     bankMessage.style.color = '#34C759';
                     bankMessage.textContent = '✅ ' + result.message + ' You can now receive payments from brands!';
-                    
+
                     document.getElementById('saveBankBtn').disabled = true;
                     document.getElementById('saveBankBtn').style.opacity = '0.6';
                     document.getElementById('bankStatus').textContent = '✅ Active';
                     document.getElementById('bankStatus').className = 'bank-status saved';
-                    
+
                     const user = JSON.parse(localStorage.getItem('paypoint_user'));
                     user.user_metadata.subaccount_code = result.subaccount_code;
                     localStorage.setItem('paypoint_user', JSON.stringify(user));
-                    
+
                 } else {
                     let errorMsg = result.error || 'Failed to save bank account.';
                     bankMessage.style.background = 'rgba(255, 59, 48, 0.1)';
