@@ -478,44 +478,61 @@
         // UPDATE PROFILE
         // ============================================
         document.getElementById('updateProfileBtn').addEventListener('click', async () => {
-            const name = document.getElementById('editName').value.trim();
-            const bio = document.getElementById('editBio').value.trim();
+    const name = document.getElementById('editName').value.trim();
+    const bio = document.getElementById('editBio').value.trim();
 
-            if (!name) {
-                showMessage('profileError', 'Name is required');
-                return;
-            }
+    if (!name) {
+        showMessage('profileError', 'Name is required');
+        return;
+    }
 
-            try {
-                const res = await fetch(`${API_URL}/auth/update`, {
-                    method: 'PUT',
-                    headers: getAuthHeaders(),
-                    body: JSON.stringify({ name, bio })
-                });
-
-                const result = await res.json();
-
-                if (result.success) {
-                    const user = JSON.parse(localStorage.getItem('paypoint_user'));
-                    user.user_metadata.name = name;
-                    user.user_metadata.bio = bio;
-                    localStorage.setItem('paypoint_user', JSON.stringify(user));
-
-                    document.getElementById('profileName').textContent = name;
-                    document.getElementById('profileAvatar').textContent = name.charAt(0).toUpperCase();
-                    document.getElementById('userBadge').textContent = `👤 ${name}`;
-                    showMessage('profileSuccess', '✅ Profile updated successfully!');
-                    hideMessage('profileError');
-                } else {
-                    showMessage('profileError', result.error || 'Failed to update profile');
-                    hideMessage('profileSuccess');
-                }
-            } catch (err) {
-                showMessage('profileError', 'Could not connect to server');
-                hideMessage('profileSuccess');
-                console.error(err);
-            }
+    try {
+        const res = await fetch(`${API_URL}/auth/update`, {
+            method: 'PUT',
+            headers: getAuthHeaders(),
+            body: JSON.stringify({ name, bio })
         });
+
+        const result = await res.json();
+
+        if (result.success) {
+            // ✅ Fetch fresh user data from server
+            const userRes = await fetch(`${API_URL}/auth/user`, {
+                headers: getAuthHeaders()
+            });
+            const userResult = await userRes.json();
+            
+            if (userResult.success) {
+                // ✅ Update localStorage with fresh data
+                localStorage.setItem('paypoint_user', JSON.stringify(userResult.user));
+                
+                // ✅ Update UI
+                const userData = userResult.user;
+                const displayName = userData?.user_metadata?.name || name || 'Creator';
+                const displayBio = userData?.user_metadata?.bio || '';
+                
+                document.getElementById('profileName').textContent = displayName;
+                document.getElementById('profileAvatar').textContent = displayName.charAt(0).toUpperCase();
+                document.getElementById('userBadge').textContent = `👤 ${displayName}`;
+                document.getElementById('editName').value = displayName;
+                document.getElementById('editBio').value = displayBio;
+                
+                showMessage('profileSuccess', '✅ Profile updated successfully!');
+                hideMessage('profileError');
+            } else {
+                showMessage('profileError', 'Profile saved but failed to refresh data');
+                hideMessage('profileSuccess');
+            }
+        } else {
+            showMessage('profileError', result.error || 'Failed to update profile');
+            hideMessage('profileSuccess');
+        }
+    } catch (err) {
+        showMessage('profileError', 'Could not connect to server');
+        hideMessage('profileSuccess');
+        console.error(err);
+    }
+});
 
         // ============================================
         // VERIFY BANK ACCOUNT
