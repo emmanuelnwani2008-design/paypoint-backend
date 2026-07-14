@@ -6,6 +6,7 @@ const rateLimit = require('express-rate-limit');
 const { createClient } = require('@supabase/supabase-js');
 const PDFDocument = require('pdfkit');
 const nodemailer = require('nodemailer');
+const crypto = require('crypto');   // ✅ ADDED for webhook verification
 
 const app = express();
 app.set('trust proxy', 1);
@@ -60,15 +61,14 @@ const limiter = rateLimit({
 app.use(limiter);
 
 const authLimiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 5, // Only 5 FAILED attempts per email per 15 minutes
+    windowMs: 15 * 60 * 1000,
+    max: 5,
     keyGenerator: function (req) {
-        // Rate limit by IP + email address (combines both for safety)
         const email = req.body?.email || '';
         const ip = req.ip || req.connection.remoteAddress;
         return `${ip}-${email}`;
     },
-    skipSuccessfulRequests: true, // This is the secret sauce! ✅
+    skipSuccessfulRequests: true,
     message: { error: 'Too many failed attempts for this account. Please try again later.' },
     standardHeaders: true,
     legacyHeaders: false,
@@ -89,17 +89,22 @@ app.use((req, res, next) => {
 });
 
 // ============================================
-// SUPABASE
+// SUPABASE CLIENTS
 // ============================================
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseAnonKey = process.env.SUPABASE_ANON_KEY;
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-if (!supabaseUrl || !supabaseAnonKey) {
-    console.error('❌ Missing SUPABASE_URL or SUPABASE_ANON_KEY in environment variables.');
+if (!supabaseUrl || !supabaseAnonKey || !supabaseServiceKey) {
+    console.error('❌ Missing required Supabase environment variables.');
     process.exit(1);
 }
 
+// Regular client (for user‑scoped operations)
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
+// Admin client (for webhook – can update any user's profile)
+const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
 
 // ============================================
 // HELPERS
@@ -202,6 +207,16 @@ app.post('/api/auth/signup', authLimiter, async (req, res) => {
             console.error('Signup error:', error);
             return res.status(400).json({ error: error.message });
         }
+
+        // ✅ Create a profile entry for the new user
+        if (data.user) {
+            await supabaseAdmin
+                .from('profiles')
+                .insert([{ id: data.user.id }])
+                .onConflict('id')
+                .ignore();
+        }
+
         res.json({ success: true, user: data.user });
     } catch (err) {
         console.error('Signup server error:', err);
@@ -248,7 +263,27 @@ app.post('/api/auth/logout', authenticate, async (req, res) => {
 
 app.get('/api/auth/user', authenticate, async (req, res) => {
     try {
-        res.json({ success: true, user: req.user });
+        // Optionally fetch the user's profile to include subscription info
+        const { data: profile, error } = await supabase
+            .from('profiles')
+            .select('subscription_tier, subscription_status, subscription_expires_at')
+            .eq('id', req.userId)
+            .single();
+
+        if (error && error.code !== 'PGRST116') { // PGRST116 = no rows
+            console.error('Profile fetch error:', error);
+        }
+
+        const user = req.user;
+        if (profile) {
+            user.user_metadata = {
+                ...user.user_metadata,
+                subscription_tier: profile.subscription_tier,
+                subscription_status: profile.subscription_status,
+                subscription_expires_at: profile.subscription_expires_at
+            };
+        }
+        res.json({ success: true, user });
     } catch (err) {
         console.error('Get user error:', err);
         res.status(500).json({ error: 'Internal server error' });
@@ -288,9 +323,6 @@ app.put('/api/auth/update', authenticate, async (req, res) => {
 // ============================================
 // DEALS ROUTES
 // ============================================
-// ============================================
-// GET DEALS (list all deals)
-// ============================================
 app.get('/api/deals', authenticate, async (req, res) => {
     try {
         const userId = req.userId;
@@ -310,9 +342,6 @@ app.get('/api/deals', authenticate, async (req, res) => {
     }
 });
 
-// ============================================
-// CREATE DEAL (POST)
-// ============================================
 app.post('/api/deals', authenticate, async (req, res) => {
     try {
         const userId = req.userId;
@@ -355,21 +384,17 @@ app.post('/api/deals', authenticate, async (req, res) => {
         res.status(500).json({ error: 'Internal server error' });
     }
 });
-// ============================================
-// UPDATE DEAL (Edit)
-// ============================================
+
 app.put('/api/deals/:id', authenticate, async (req, res) => {
     try {
         const dealId = req.params.id;
         const userId = req.userId;
         const { brand_name, amount, due_date, deliverable, status } = req.body;
 
-        // Validate required fields
         if (!brand_name || !amount) {
             return res.status(400).json({ error: 'brand_name and amount required' });
         }
 
-        // Sanitize and validate
         const sanitizedBrand = sanitizeInput(brand_name.trim());
         if (sanitizedBrand.length < 2 || sanitizedBrand.length > 100) {
             return res.status(400).json({ error: 'Brand name must be between 2 and 100 characters' });
@@ -388,7 +413,6 @@ app.put('/api/deals/:id', authenticate, async (req, res) => {
             return res.status(400).json({ error: 'Invalid due date format' });
         }
 
-        // First verify the deal belongs to this user
         const { data: existing, error: findError } = await supabase
             .from('deals')
             .select('id')
@@ -400,7 +424,6 @@ app.put('/api/deals/:id', authenticate, async (req, res) => {
             return res.status(404).json({ error: 'Deal not found or you do not own it' });
         }
 
-        // Update the deal
         const { data, error } = await supabase
             .from('deals')
             .update({
@@ -426,15 +449,11 @@ app.put('/api/deals/:id', authenticate, async (req, res) => {
     }
 });
 
-// ============================================
-// DELETE DEAL
-// ============================================
 app.delete('/api/deals/:id', authenticate, async (req, res) => {
     try {
         const dealId = req.params.id;
         const userId = req.userId;
 
-        // Verify the deal belongs to this user
         const { data: existing, error: findError } = await supabase
             .from('deals')
             .select('id')
@@ -446,7 +465,6 @@ app.delete('/api/deals/:id', authenticate, async (req, res) => {
             return res.status(404).json({ error: 'Deal not found or you do not own it' });
         }
 
-        // Delete the deal
         const { error } = await supabase
             .from('deals')
             .delete()
@@ -528,7 +546,7 @@ app.post('/api/expenses', authenticate, async (req, res) => {
 });
 
 // ============================================
-// PAYSTACK ROUTES
+// PAYSTACK ROUTES - NO 5% FEE
 // ============================================
 const PAYSTACK_SECRET_KEY = process.env.PAYSTACK_SECRET_KEY;
 if (!PAYSTACK_SECRET_KEY) {
@@ -565,37 +583,34 @@ app.post('/api/payments/initialize', authenticate, async (req, res) => {
             customerEmail = 'customer@paypoint.com';
         }
 
-        const PLATFORM_FEE_PERCENT = 5;
-        const totalAmount = Math.round(deal.amount * (1 + PLATFORM_FEE_PERCENT / 100) * 100);
+        // ✅ No 5% fee – creator receives the full amount
+        const totalAmount = Math.round(deal.amount * 100);
         const callbackUrl = 'https://paypoint-backend.vercel.app/success.html';
 
-        // Get the subaccount code from the user's metadata
-const subaccountCode = req.user?.user_metadata?.subaccount_code;
-
-// If the creator hasn't added their bank account, block the payment
-if (!subaccountCode) {
-    return res.status(400).json({ error: 'Please add your bank account in the Profile page first.' });
-}
-
-const response = await fetch('https://api.paystack.co/transaction/initialize', {
-    method: 'POST',
-    headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${PAYSTACK_SECRET_KEY}`
-    },
-    body: JSON.stringify({
-        email: customerEmail,
-        amount: totalAmount,
-        callback_url: callbackUrl,
-        subaccount: subaccountCode, // <-- THIS IS THE ONLY NEW LINE
-        metadata: {
-            deal_id: dealId,
-            brand_name: deal.brand_name,
-            user_id: userId,
-            platform_fee: (totalAmount / 100) - deal.amount
+        const subaccountCode = req.user?.user_metadata?.subaccount_code;
+        if (!subaccountCode) {
+            return res.status(400).json({ error: 'Please add your bank account in the Profile page first.' });
         }
-    })
-});
+
+        const response = await fetch('https://api.paystack.co/transaction/initialize', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${PAYSTACK_SECRET_KEY}`
+            },
+            body: JSON.stringify({
+                email: customerEmail,
+                amount: totalAmount,
+                callback_url: callbackUrl,
+                subaccount: subaccountCode,
+                metadata: {
+                    deal_id: dealId,
+                    brand_name: deal.brand_name,
+                    user_id: userId
+                    // platform_fee removed
+                }
+            })
+        });
 
         const result = await response.json();
 
@@ -695,8 +710,6 @@ app.get('/api/payments/verify/:reference', authenticate, async (req, res) => {
 // ============================================
 // INVOICE ROUTES
 // ============================================
-
-// CREATE INVOICE (saves to database and sends email)
 app.post('/api/invoices/create', authenticate, async (req, res) => {
     try {
         const { dealId, invoiceNumber, brandEmail } = req.body;
@@ -738,7 +751,6 @@ app.post('/api/invoices/create', authenticate, async (req, res) => {
             return res.status(500).json({ error: error.message });
         }
 
-        // Try to send email if credentials are set
         if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
             try {
                 const transporter = nodemailer.createTransport({
@@ -789,7 +801,6 @@ app.post('/api/invoices/create', authenticate, async (req, res) => {
     }
 });
 
-// GENERATE INVOICE PDF (Preview & Download)
 app.post('/api/invoices/generate', authenticate, async (req, res) => {
     try {
         const { dealId } = req.body;
@@ -823,25 +834,21 @@ app.post('/api/invoices/generate', authenticate, async (req, res) => {
 
         doc.pipe(res);
 
-        // Header
         doc.fontSize(24).font('Helvetica-Bold').text('PayPoint', { align: 'center' });
         doc.fontSize(12).font('Helvetica').text('Finance OS for Creators', { align: 'center' });
         doc.moveDown(0.5);
         doc.moveTo(50, doc.y).lineTo(550, doc.y).stroke('#CCCCCC');
         doc.moveDown(1);
 
-        // Title
         doc.fontSize(20).font('Helvetica-Bold').text('INVOICE', { align: 'center' });
         doc.moveDown(0.5);
 
-        // Metadata
         doc.fontSize(10).font('Helvetica');
         doc.text(`Invoice #: ${invoiceNumber}`, 50, doc.y);
         doc.text(`Date: ${date}`, 400, doc.y - 12);
         doc.text(`Status: ${(deal.status || 'pending').toUpperCase()}`, 50, doc.y + 12);
         doc.moveDown(2);
 
-        // Brand Details
         doc.fontSize(14).font('Helvetica-Bold').text('Brand Details', { underline: true });
         doc.moveDown(0.3);
         doc.fontSize(12).font('Helvetica');
@@ -849,7 +856,6 @@ app.post('/api/invoices/generate', authenticate, async (req, res) => {
         doc.text(`Email: ${req.user.email || 'Not provided'}`);
         doc.moveDown(1);
 
-        // Deal Details
         doc.fontSize(14).font('Helvetica-Bold').text('Deal Details', { underline: true });
         doc.moveDown(0.3);
         doc.fontSize(12).font('Helvetica');
@@ -860,12 +866,10 @@ app.post('/api/invoices/generate', authenticate, async (req, res) => {
         doc.moveTo(50, doc.y).lineTo(550, doc.y).stroke('#CCCCCC');
         doc.moveDown(0.5);
 
-        // Amount
         doc.fontSize(16).font('Helvetica-Bold');
         doc.text(`Total Amount: $${Number(deal.amount).toLocaleString()}`, { align: 'right' });
         doc.moveDown(2);
 
-        // Footer
         doc.fontSize(10).font('Helvetica');
         doc.text('Thank you for your business!', { align: 'center' });
         doc.text('Payment is due within 30 days of invoice date.', { align: 'center' });
@@ -882,8 +886,9 @@ app.post('/api/invoices/generate', authenticate, async (req, res) => {
         res.status(500).json({ error: 'Failed to generate invoice: ' + err.message });
     }
 });
+
 // ============================================
-// VERIFY BANK ACCOUNT (Preview account name)
+// VERIFY BANK ACCOUNT
 // ============================================
 app.post('/api/payments/verify-account', authenticate, async (req, res) => {
     try {
@@ -927,8 +932,9 @@ app.post('/api/payments/verify-account', authenticate, async (req, res) => {
         res.status(500).json({ error: 'Internal server error. Please try again.' });
     }
 });
+
 // ============================================
-// CREATE SUBACCOUNT (After verification)
+// CREATE SUBACCOUNT
 // ============================================
 app.post('/api/payments/create-subaccount', authenticate, async (req, res) => {
     try {
@@ -976,7 +982,6 @@ app.post('/api/payments/create-subaccount', authenticate, async (req, res) => {
             return res.status(400).json({ error: errorMsg });
         }
 
-        // ✅ Save subaccount code to user metadata (no schema change)
         const { error: updateError } = await supabase.auth.updateUser({
             data: {
                 subaccount_code: result.data.subaccount_code,
@@ -1003,15 +1008,150 @@ app.post('/api/payments/create-subaccount', authenticate, async (req, res) => {
 });
 
 // ============================================
-// PAYSTACK WEBHOOK
+// ✅ NEW: SUBSCRIPTION SYSTEM (Pro/Free)
 // ============================================
+
+// 📌 1. Initialize Pro subscription
+app.post('/api/subscribe', authenticate, async (req, res) => {
+    try {
+        const userId = req.userId;
+        const userEmail = req.user?.email;
+
+        if (!userEmail) {
+            return res.status(400).json({ error: 'User email required' });
+        }
+
+        // Check current subscription from profiles table
+        const { data: profile, error } = await supabase
+            .from('profiles')
+            .select('subscription_tier, subscription_status, subscription_expires_at')
+            .eq('id', userId)
+            .single();
+
+        if (error && error.code !== 'PGRST116') {
+            console.error('Profile fetch error:', error);
+        }
+
+        if (profile?.subscription_tier === 'pro' && profile?.subscription_status === 'active') {
+            if (profile.subscription_expires_at && new Date(profile.subscription_expires_at) > new Date()) {
+                return res.status(400).json({ 
+                    error: 'You already have an active Pro subscription',
+                    already_pro: true 
+                });
+            }
+        }
+
+        // Call Paystack
+        const response = await fetch('https://api.paystack.co/transaction/initialize', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${PAYSTACK_SECRET_KEY}`
+            },
+            body: JSON.stringify({
+                email: userEmail,
+                amount: 300000, // ₦3,000 in kobo
+                plan: process.env.PAYSTACK_PLAN_CODE,
+                metadata: { user_id: userId },
+                callback_url: `${process.env.FRONTEND_URL || 'https://paypoint-app.netlify.app'}/dashboard.html?subscription=success`
+            })
+        });
+
+        const result = await response.json();
+
+        if (!result.status) {
+            return res.status(502).json({ error: result.message || 'Payment provider error' });
+        }
+
+        res.json({
+            success: true,
+            authorization_url: result.data.authorization_url,
+            reference: result.data.reference
+        });
+
+    } catch (err) {
+        console.error('Subscription error:', err);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// 📌 2. Webhook – secure & updates profiles table
 app.post('/api/webhooks/paystack',
     express.raw({ type: 'application/json' }),
     async (req, res) => {
         try {
+            // 🔒 HMAC-SHA512 verification
             const signature = req.headers['x-paystack-signature'];
-            const crypto = require('crypto');
+            if (!signature) {
+                return res.status(401).send('Missing signature');
+            }
 
+            const hash = crypto
+                .createHmac('sha512', PAYSTACK_SECRET_KEY)
+                .update(req.body)
+                .digest('hex');
+
+            if (hash !== signature) {
+                return res.status(401).send('Invalid signature');
+            }
+
+            const event = JSON.parse(req.body.toString());
+            console.log('📨 Webhook received:', event.event);
+
+            if (event.event === 'charge.success' || event.event === 'subscription.create') {
+                const userId = event.data.metadata?.user_id;
+                if (!userId) {
+                    console.error('❌ No user_id in webhook');
+                    return res.status(400).send('Missing user_id');
+                }
+
+                // Also handle deal payment webhook? We'll separate them.
+                // This webhook is only for subscription.
+                // If you want to keep the old webhook for deals, rename it to /api/webhooks/paystack-deal
+                // and keep the original route.
+
+                // Upgrade user to Pro for 30 days
+                const expiresAt = new Date();
+                expiresAt.setDate(expiresAt.getDate() + 30);
+
+                // Upsert profile (if no profile exists, create one)
+                const { error: upsertError } = await supabaseAdmin
+                    .from('profiles')
+                    .upsert({
+                        id: userId,
+                        subscription_tier: 'pro',
+                        subscription_status: 'active',
+                        subscription_expires_at: expiresAt.toISOString(),
+                        paystack_subscription_code: event.data.subscription?.subscription_code || null,
+                        paystack_customer_code: event.data.customer?.customer_code || null,
+                        updated_at: new Date().toISOString()
+                    }, { onConflict: 'id' });
+
+                if (upsertError) {
+                    console.error('❌ Error updating profile:', upsertError);
+                    return res.status(500).send('Database update failed');
+                }
+
+                console.log(`✅ User ${userId} upgraded to Pro (expires: ${expiresAt.toISOString()})`);
+            }
+
+            res.sendStatus(200);
+
+        } catch (err) {
+            console.error('Webhook error:', err);
+            res.sendStatus(500);
+        }
+    }
+);
+
+// ============================================
+// ORIGINAL WEBHOOK (for deal payments – keep it)
+// ============================================
+app.post('/api/webhooks/paystack-deal',
+    express.raw({ type: 'application/json' }),
+    async (req, res) => {
+        try {
+            const signature = req.headers['x-paystack-signature'];
             if (!signature) {
                 console.error('Missing webhook signature');
                 return res.status(401).send('Missing signature');
@@ -1028,7 +1168,7 @@ app.post('/api/webhooks/paystack',
             }
 
             const event = JSON.parse(req.body.toString());
-            console.log('📨 Webhook event:', event.event);
+            console.log('📨 Deal webhook event:', event.event);
 
             if (event.event === 'charge.success') {
                 const dealId = event.data.metadata?.deal_id;
@@ -1076,7 +1216,7 @@ app.post('/api/webhooks/paystack',
             res.sendStatus(200);
 
         } catch (err) {
-            console.error('Webhook error:', err);
+            console.error('Deal webhook error:', err);
             res.sendStatus(500);
         }
     }

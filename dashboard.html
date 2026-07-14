@@ -802,6 +802,29 @@
         // LOAD EVERYTHING
         // ============================================
         if (checkAuth()) {
+            async function fetchUserWithSubscription() {
+    const token = localStorage.getItem('paypoint_session');
+    if (!token) return;
+    try {
+        const res = await fetch(`${API_URL}/auth/user`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+        if (data.success && data.user) {
+            const tier = data.user.user_metadata?.subscription_tier || 'free';
+            localStorage.setItem('user_subscription_tier', tier);
+            localStorage.setItem('paypoint_user', JSON.stringify(data.user));
+        }
+    } catch (err) {
+        console.error('Failed to fetch subscription:', err);
+    }
+}
+
+if (checkAuth()) {
+    fetchUserWithSubscription();
+    loadDeals();
+    loadExpenses();
+}
             loadDeals();
             loadExpenses();
         }
