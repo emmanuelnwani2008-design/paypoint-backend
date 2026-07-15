@@ -5,8 +5,9 @@ const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const { createClient } = require('@supabase/supabase-js');
 const PDFDocument = require('pdfkit');
-const nodemailer = require('nodemailer');
-const crypto = require('crypto');
+const nodemailer = require('nodemailer');   // ✅ declared once
+const crypto = require('crypto');           // ✅ declared once
+const cron = require('node-cron');          // ✅ added here – used later
 
 const app = express();
 app.set('trust proxy', 1);
@@ -101,10 +102,11 @@ if (!supabaseUrl || !supabaseAnonKey || !supabaseServiceKey) {
 }
 
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
-const cron = require('node-cron');   // or const { CronJob } = require('cron');
-const nodemailer = require('nodemailer');
+const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
 
-// Email transporter – uses your existing EMAIL_USER/EMAIL_PASS from .env
+// ============================================
+// Email Transporter (used by cron job)
+// ============================================
 const transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {
@@ -113,12 +115,13 @@ const transporter = nodemailer.createTransport({
     }
 });
 
-// Schedule: runs every day at 9 AM
+// ============================================
+// CRON JOB – Automated Invoice Chasing (Pro)
+// ============================================
 cron.schedule('0 9 * * *', async () => {
     console.log('🔔 Running overdue invoice check...');
 
     try {
-        // Only process invoices from Pro users
         const { data: overdueInvoices, error } = await supabase
             .from('invoices')
             .select(`
@@ -127,7 +130,7 @@ cron.schedule('0 9 * * *', async () => {
                     id,
                     brand_name,
                     amount,
-                    due_date,          -- ✅ due_date from deals
+                    due_date,
                     user_id,
                     users!inner(
                         email,
@@ -138,8 +141,8 @@ cron.schedule('0 9 * * *', async () => {
             `)
             .eq('status', 'sent')
             .eq('paid', false)
-            .lt('reminder_count', 3)        // max 3 reminders
-            .eq('deals.users.subscription_tier', 'pro');   // ✅ Pro only
+            .lt('reminder_count', 3)
+            .eq('deals.users.subscription_tier', 'pro');
 
         if (error) {
             console.error('Error fetching overdue invoices:', error);
@@ -154,9 +157,8 @@ cron.schedule('0 9 * * *', async () => {
         console.log(`📨 Found ${overdueInvoices.length} overdue invoices.`);
 
         for (const invoice of overdueInvoices) {
-            // ✅ Use due_date from the joined deals
             const dueDate = invoice.deals.due_date;
-            if (!dueDate) continue; // skip if no due date
+            if (!dueDate) continue;
 
             const daysOverdue = Math.floor(
                 (Date.now() - new Date(dueDate).getTime()) / (1000 * 60 * 60 * 24)
@@ -181,7 +183,6 @@ cron.schedule('0 9 * * *', async () => {
             const creatorName = invoice.deals.users?.user_metadata?.name || 'Creator';
             const paymentLink = `${process.env.FRONTEND_URL}/pay-invoice.html?deal=${invoice.deals.id}`;
 
-            // Send reminder email
             try {
                 await transporter.sendMail({
                     from: process.env.EMAIL_USER,
@@ -206,7 +207,6 @@ cron.schedule('0 9 * * *', async () => {
                     `
                 });
 
-                // Update reminder count
                 await supabase
                     .from('invoices')
                     .update({
@@ -231,7 +231,6 @@ cron.schedule('0 9 * * *', async () => {
 setTimeout(() => {
     console.log('🔄 Running initial overdue check on startup...');
 }, 5000);
-const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
 
 // ============================================
 // HELPERS
@@ -680,7 +679,6 @@ if (!PAYSTACK_SECRET_KEY) {
     process.exit(1);
 }
 
-// Initialize payment for a deal (NO 5% FEE)
 app.post('/api/payments/initialize', authenticate, async (req, res) => {
     try {
         const { dealId, email } = req.body;
@@ -710,7 +708,6 @@ app.post('/api/payments/initialize', authenticate, async (req, res) => {
             customerEmail = 'customer@paypoint.com';
         }
 
-        // No 5% fee – creator receives full amount
         const totalAmount = Math.round(deal.amount * 100);
         const callbackUrl = 'https://paypoint-backend.vercel.app/success.html';
 
@@ -878,18 +875,15 @@ app.post('/api/invoices/create', authenticate, async (req, res) => {
             return res.status(500).json({ error: error.message });
         }
 
-        // ============================================
-// Generate portal token for this invoice
-// ============================================
-const crypto = require('crypto');
-const portalToken = crypto.randomBytes(32).toString('hex');
+        // Generate portal token – uses global crypto (no re-declaration)
+        const portalToken = crypto.randomBytes(32).toString('hex');
 
-await supabase
-    .from('invoices')
-    .update({ portal_token: portalToken })
-    .eq('id', data[0].id);
+        await supabase
+            .from('invoices')
+            .update({ portal_token: portalToken })
+            .eq('id', data[0].id);
 
-const portalLink = `${process.env.FRONTEND_URL}/portal/${portalToken}`;
+        const portalLink = `${process.env.FRONTEND_URL}/portal/${portalToken}`;
 
         if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
             try {
@@ -1149,7 +1143,6 @@ app.post('/api/payments/create-subaccount', authenticate, async (req, res) => {
 // ✅ SUBSCRIPTION SYSTEM (Pro/Free)
 // ============================================
 
-// 1. Initialize subscription payment
 app.post('/api/subscribe', authenticate, async (req, res) => {
     try {
         const userId = req.userId;
@@ -1159,7 +1152,6 @@ app.post('/api/subscribe', authenticate, async (req, res) => {
             return res.status(400).json({ error: 'User email required' });
         }
 
-        // Check current subscription
         const { data: profile, error } = await supabase
             .from('profiles')
             .select('subscription_tier, subscription_status, subscription_expires_at')
@@ -1212,7 +1204,6 @@ app.post('/api/subscribe', authenticate, async (req, res) => {
     }
 });
 
-// 2. Webhook - secure & updates profiles
 app.post('/api/webhooks/paystack',
     express.raw({ type: 'application/json' }),
     async (req, res) => {
@@ -1273,7 +1264,6 @@ app.post('/api/webhooks/paystack',
     }
 );
 
-// 3. Original deal webhook – still needed
 app.post('/api/webhooks/paystack-deal',
     express.raw({ type: 'application/json' }),
     async (req, res) => {
@@ -1337,14 +1327,15 @@ app.post('/api/webhooks/paystack-deal',
                     }
 
                     console.log(`✅ Deal ${dealId} marked as paid via webhook`);
+
                     // Also mark the invoice as paid
-await supabase
-    .from('invoices')
-    .update({
-        paid: true,
-        paid_at: new Date().toISOString()
-    })
-    .eq('deal_id', dealId);
+                    await supabase
+                        .from('invoices')
+                        .update({
+                            paid: true,
+                            paid_at: new Date().toISOString()
+                        })
+                        .eq('deal_id', dealId);
                 }
             }
 
@@ -1356,6 +1347,7 @@ await supabase
         }
     }
 );
+
 // ============================================
 // PUBLIC PORTAL - View Invoice
 // ============================================
@@ -1395,7 +1387,6 @@ app.get('/portal/:token', async (req, res) => {
         const creator = deal.users;
         const isPaid = invoice.paid || false;
 
-        // Render the portal HTML page
         res.send(`
             <!DOCTYPE html>
             <html lang="en">
