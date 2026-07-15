@@ -6,7 +6,7 @@ const rateLimit = require('express-rate-limit');
 const { createClient } = require('@supabase/supabase-js');
 const PDFDocument = require('pdfkit');
 const nodemailer = require('nodemailer');
-const crypto = require('crypto');   // ✅ ADDED for webhook verification
+const crypto = require('crypto');
 
 const app = express();
 app.set('trust proxy', 1);
@@ -100,10 +100,7 @@ if (!supabaseUrl || !supabaseAnonKey || !supabaseServiceKey) {
     process.exit(1);
 }
 
-// Regular client (for user‑scoped operations)
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
-
-// Admin client (for webhook – can update any user's profile)
 const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
 
 // ============================================
@@ -208,7 +205,7 @@ app.post('/api/auth/signup', authLimiter, async (req, res) => {
             return res.status(400).json({ error: error.message });
         }
 
-        // ✅ Create a profile entry for the new user
+        // Create profile entry for new user
         if (data.user) {
             await supabaseAdmin
                 .from('profiles')
@@ -263,14 +260,13 @@ app.post('/api/auth/logout', authenticate, async (req, res) => {
 
 app.get('/api/auth/user', authenticate, async (req, res) => {
     try {
-        // Optionally fetch the user's profile to include subscription info
         const { data: profile, error } = await supabase
             .from('profiles')
             .select('subscription_tier, subscription_status, subscription_expires_at')
             .eq('id', req.userId)
             .single();
 
-        if (error && error.code !== 'PGRST116') { // PGRST116 = no rows
+        if (error && error.code !== 'PGRST116') {
             console.error('Profile fetch error:', error);
         }
 
@@ -546,7 +542,7 @@ app.post('/api/expenses', authenticate, async (req, res) => {
 });
 
 // ============================================
-// PAYSTACK ROUTES - NO 5% FEE
+// PAYSTACK ROUTES
 // ============================================
 const PAYSTACK_SECRET_KEY = process.env.PAYSTACK_SECRET_KEY;
 if (!PAYSTACK_SECRET_KEY) {
@@ -554,6 +550,7 @@ if (!PAYSTACK_SECRET_KEY) {
     process.exit(1);
 }
 
+// Initialize payment for a deal (NO 5% FEE)
 app.post('/api/payments/initialize', authenticate, async (req, res) => {
     try {
         const { dealId, email } = req.body;
@@ -583,7 +580,7 @@ app.post('/api/payments/initialize', authenticate, async (req, res) => {
             customerEmail = 'customer@paypoint.com';
         }
 
-        // ✅ No 5% fee – creator receives the full amount
+        // No 5% fee – creator receives full amount
         const totalAmount = Math.round(deal.amount * 100);
         const callbackUrl = 'https://paypoint-backend.vercel.app/success.html';
 
@@ -607,7 +604,6 @@ app.post('/api/payments/initialize', authenticate, async (req, res) => {
                     deal_id: dealId,
                     brand_name: deal.brand_name,
                     user_id: userId
-                    // platform_fee removed
                 }
             })
         });
@@ -710,6 +706,7 @@ app.get('/api/payments/verify/:reference', authenticate, async (req, res) => {
 // ============================================
 // INVOICE ROUTES
 // ============================================
+
 app.post('/api/invoices/create', authenticate, async (req, res) => {
     try {
         const { dealId, invoiceNumber, brandEmail } = req.body;
@@ -888,8 +885,9 @@ app.post('/api/invoices/generate', authenticate, async (req, res) => {
 });
 
 // ============================================
-// VERIFY BANK ACCOUNT
+// BANK ACCOUNT VERIFICATION & SUBACCOUNT
 // ============================================
+
 app.post('/api/payments/verify-account', authenticate, async (req, res) => {
     try {
         const { bank_code, account_number } = req.body;
@@ -933,9 +931,6 @@ app.post('/api/payments/verify-account', authenticate, async (req, res) => {
     }
 });
 
-// ============================================
-// CREATE SUBACCOUNT
-// ============================================
 app.post('/api/payments/create-subaccount', authenticate, async (req, res) => {
     try {
         const userId = req.userId;
@@ -1008,10 +1003,10 @@ app.post('/api/payments/create-subaccount', authenticate, async (req, res) => {
 });
 
 // ============================================
-// ✅ NEW: SUBSCRIPTION SYSTEM (Pro/Free)
+// ✅ SUBSCRIPTION SYSTEM (Pro/Free)
 // ============================================
 
-// 📌 1. Initialize Pro subscription
+// 1. Initialize subscription payment
 app.post('/api/subscribe', authenticate, async (req, res) => {
     try {
         const userId = req.userId;
@@ -1021,7 +1016,7 @@ app.post('/api/subscribe', authenticate, async (req, res) => {
             return res.status(400).json({ error: 'User email required' });
         }
 
-        // Check current subscription from profiles table
+        // Check current subscription
         const { data: profile, error } = await supabase
             .from('profiles')
             .select('subscription_tier, subscription_status, subscription_expires_at')
@@ -1041,7 +1036,6 @@ app.post('/api/subscribe', authenticate, async (req, res) => {
             }
         }
 
-        // Call Paystack
         const response = await fetch('https://api.paystack.co/transaction/initialize', {
             method: 'POST',
             headers: {
@@ -1050,7 +1044,7 @@ app.post('/api/subscribe', authenticate, async (req, res) => {
             },
             body: JSON.stringify({
                 email: userEmail,
-                amount: 300000, // ₦3,000 in kobo
+                amount: 300000,
                 plan: process.env.PAYSTACK_PLAN_CODE,
                 metadata: { user_id: userId },
                 callback_url: `${process.env.FRONTEND_URL || 'https://paypoint-app.netlify.app'}/dashboard.html?subscription=success`
@@ -1075,12 +1069,11 @@ app.post('/api/subscribe', authenticate, async (req, res) => {
     }
 });
 
-// 📌 2. Webhook – secure & updates profiles table
+// 2. Webhook - secure & updates profiles
 app.post('/api/webhooks/paystack',
     express.raw({ type: 'application/json' }),
     async (req, res) => {
         try {
-            // 🔒 HMAC-SHA512 verification
             const signature = req.headers['x-paystack-signature'];
             if (!signature) {
                 return res.status(401).send('Missing signature');
@@ -1105,16 +1098,9 @@ app.post('/api/webhooks/paystack',
                     return res.status(400).send('Missing user_id');
                 }
 
-                // Also handle deal payment webhook? We'll separate them.
-                // This webhook is only for subscription.
-                // If you want to keep the old webhook for deals, rename it to /api/webhooks/paystack-deal
-                // and keep the original route.
-
-                // Upgrade user to Pro for 30 days
                 const expiresAt = new Date();
                 expiresAt.setDate(expiresAt.getDate() + 30);
 
-                // Upsert profile (if no profile exists, create one)
                 const { error: upsertError } = await supabaseAdmin
                     .from('profiles')
                     .upsert({
@@ -1144,9 +1130,7 @@ app.post('/api/webhooks/paystack',
     }
 );
 
-// ============================================
-// ORIGINAL WEBHOOK (for deal payments – keep it)
-// ============================================
+// 3. Original deal webhook – still needed
 app.post('/api/webhooks/paystack-deal',
     express.raw({ type: 'application/json' }),
     async (req, res) => {
