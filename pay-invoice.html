@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pay Invoice · PayPoint</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: #F8FAFC;
+            color: #000000;
+            padding: 24px;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .payment-container {
+            max-width: 480px;
+            width: 100%;
+            background: #FFFFFF;
+            border-radius: 16px;
+            border: 1px solid #E8EDF2;
+            padding: 36px 32px;
+            text-align: center;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.06);
+        }
+        .payment-container h1 { font-size: 24px; font-weight: 700; color: #000000; }
+        .payment-container p { color: #8A9AAB; font-size: 14px; margin: 8px 0 24px; }
+        .btn-primary {
+            background: #4F7CFF;
+            border: none;
+            padding: 14px 32px;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 16px;
+            color: #FFFFFF;
+            cursor: pointer;
+            width: 100%;
+            box-shadow: 0 2px 8px rgba(79, 124, 255, 0.25);
+            transition: all 0.2s ease;
+        }
+        .btn-primary:hover { background: #3A5FD9; transform: translateY(-1px); }
+        .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+        .loading { color: #4F7CFF; font-weight: 500; margin: 12px 0; }
+        .error { color: #FF3B30; margin: 12px 0; }
+    </style>
+</head>
+<body>
+    <div class="payment-container">
+        <h1>💰 Pay Invoice</h1>
+        <p id="invoiceInfo">Loading invoice details...</p>
+        <div id="loadingIndicator" class="loading">⏳ Loading...</div>
+        <div id="errorMessage" class="error" style="display:none;"></div>
+        <button class="btn-primary" id="payNowBtn" style="display:none;">
+            💳 Proceed to Pay
+        </button>
+    </div>
+
+    <script>
+        const API_URL = 'https://paypoint-backend-9m63.onrender.com/api';
+        const params = new URLSearchParams(window.location.search);
+        const dealId = params.get('deal');
+
+        if (!dealId) {
+            document.getElementById('errorMessage').textContent = '❌ Invalid invoice link.';
+            document.getElementById('errorMessage').style.display = 'block';
+            document.getElementById('loadingIndicator').style.display = 'none';
+        }
+
+        document.getElementById('payNowBtn').addEventListener('click', async () => {
+            try {
+                document.getElementById('payNowBtn').disabled = true;
+                document.getElementById('payNowBtn').textContent = '⏳ Processing...';
+
+                const token = localStorage.getItem('paypoint_session');
+                const res = await fetch(`${API_URL}/payments/initialize`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+                    },
+                    body: JSON.stringify({
+                        dealId: dealId,
+                        email: 'customer@paypoint.com'
+                    })
+                });
+
+                const data = await res.json();
+
+                if (data.success && data.authorization_url) {
+                    window.location.href = data.authorization_url;
+                } else {
+                    document.getElementById('errorMessage').textContent = '❌ ' + (data.error || 'Payment initialization failed');
+                    document.getElementById('errorMessage').style.display = 'block';
+                    document.getElementById('payNowBtn').disabled = false;
+                    document.getElementById('payNowBtn').textContent = '💳 Proceed to Pay';
+                }
+            } catch (err) {
+                document.getElementById('errorMessage').textContent = '❌ Could not connect to server.';
+                document.getElementById('errorMessage').style.display = 'block';
+                document.getElementById('payNowBtn').disabled = false;
+                document.getElementById('payNowBtn').textContent = '💳 Proceed to Pay';
+            }
+        });
+    </script>
+</body>
+</html>

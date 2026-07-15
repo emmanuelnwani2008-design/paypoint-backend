@@ -239,6 +239,20 @@
     </style>
 </head>
 <body>
+    <!-- Pro Feature: Auto-Chasing Toggle -->
+<div id="autoChaseContainer" style="margin-bottom: 20px;">
+    <div style="background: #FFFFFF; border: 1px solid #E8EDF2; border-radius: 12px; padding: 20px;">
+        <h3 style="font-size: 16px; font-weight: 600; margin-bottom: 8px;">🚀 Automated Invoice Chasing</h3>
+        <p style="color: #8A9AAB; font-size: 14px;">Automatically send reminder emails to brands when invoices are overdue.</p>
+        <div style="margin-top: 12px;">
+            <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                <input type="checkbox" id="autoChaseToggle" style="width: 20px; height: 20px; accent-color: #4F7CFF;">
+                <span id="autoChaseLabel" style="font-weight: 500;">Enable Auto-Chasing</span>
+            </label>
+            <span id="autoChaseStatus" style="font-size: 12px; color: #8A9AAB; margin-left: 30px;"></span>
+        </div>
+    </div>
+</div>
 
     <div class="app-container">
         <nav class="navbar">
@@ -586,6 +600,32 @@
         if (checkAuth()) {
             loadDealsForInvoices();
         }
+// ============================================
+// Auto-Chasing Toggle (Pro feature)
+// ============================================
+const tier = localStorage.getItem('user_subscription_tier') || 'free';
+const autoChaseToggle = document.getElementById('autoChaseToggle');
+const autoChaseLabel = document.getElementById('autoChaseLabel');
+const autoChaseStatus = document.getElementById('autoChaseStatus');
+
+if (tier === 'pro') {
+    autoChaseToggle.disabled = false;
+    autoChaseLabel.textContent = 'Enable Auto-Chasing';
+    autoChaseStatus.textContent = '✅ Pro feature – active';
+    autoChaseStatus.style.color = '#34C759';
+
+    const enabled = localStorage.getItem('auto_chase_enabled') === 'true';
+    autoChaseToggle.checked = enabled;
+
+    autoChaseToggle.addEventListener('change', function() {
+        localStorage.setItem('auto_chase_enabled', this.checked);
+        autoChaseStatus.textContent = this.checked ? '✅ Auto-chasing enabled' : '⏸️ Auto-chasing paused';
+    });
+} else {
+    autoChaseToggle.disabled = true;
+    autoChaseLabel.textContent = '🔒 Pro Feature – Upgrade to Enable';
+    autoChaseStatus.innerHTML = '<span style="color: #FF9500;">⚠️ Upgrade to Pro to unlock auto-chasing</span>';
+}
 
         console.log('📄 PayPoint Invoices Page loaded');
         console.log('📡 Connected to:', API_URL);

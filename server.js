@@ -101,6 +101,136 @@ if (!supabaseUrl || !supabaseAnonKey || !supabaseServiceKey) {
 }
 
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
+const cron = require('node-cron');   // or const { CronJob } = require('cron');
+const nodemailer = require('nodemailer');
+
+// Email transporter – uses your existing EMAIL_USER/EMAIL_PASS from .env
+const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS
+    }
+});
+
+// Schedule: runs every day at 9 AM
+cron.schedule('0 9 * * *', async () => {
+    console.log('🔔 Running overdue invoice check...');
+
+    try {
+        // Only process invoices from Pro users
+        const { data: overdueInvoices, error } = await supabase
+            .from('invoices')
+            .select(`
+                *,
+                deals!inner(
+                    id,
+                    brand_name,
+                    amount,
+                    due_date,          -- ✅ due_date from deals
+                    user_id,
+                    users!inner(
+                        email,
+                        user_metadata->name,
+                        subscription_tier
+                    )
+                )
+            `)
+            .eq('status', 'sent')
+            .eq('paid', false)
+            .lt('reminder_count', 3)        // max 3 reminders
+            .eq('deals.users.subscription_tier', 'pro');   // ✅ Pro only
+
+        if (error) {
+            console.error('Error fetching overdue invoices:', error);
+            return;
+        }
+
+        if (!overdueInvoices || overdueInvoices.length === 0) {
+            console.log('✅ No overdue invoices to chase.');
+            return;
+        }
+
+        console.log(`📨 Found ${overdueInvoices.length} overdue invoices.`);
+
+        for (const invoice of overdueInvoices) {
+            // ✅ Use due_date from the joined deals
+            const dueDate = invoice.deals.due_date;
+            if (!dueDate) continue; // skip if no due date
+
+            const daysOverdue = Math.floor(
+                (Date.now() - new Date(dueDate).getTime()) / (1000 * 60 * 60 * 24)
+            );
+
+            let reminderType = 'first';
+            let subject = '🔔 Friendly Reminder: Invoice Overdue';
+            let urgency = 'gentle';
+
+            if (daysOverdue >= 14) {
+                reminderType = 'final';
+                subject = '⚠️ URGENT: Invoice Final Notice';
+                urgency = 'urgent';
+            } else if (daysOverdue >= 7) {
+                reminderType = 'second';
+                subject = '⏰ Second Reminder: Invoice Overdue';
+                urgency = 'moderate';
+            }
+
+            const brandEmail = invoice.deals.users?.email || 'brand@example.com';
+            const brandName = invoice.deals.users?.user_metadata?.name || 'Brand';
+            const creatorName = invoice.deals.users?.user_metadata?.name || 'Creator';
+            const paymentLink = `${process.env.FRONTEND_URL}/pay-invoice.html?deal=${invoice.deals.id}`;
+
+            // Send reminder email
+            try {
+                await transporter.sendMail({
+                    from: process.env.EMAIL_USER,
+                    to: brandEmail,
+                    subject: subject,
+                    html: `
+                        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #E8EDF2; border-radius: 12px;">
+                            <h1 style="color: #4F7CFF; text-align: center;">PayPoint</h1>
+                            <hr>
+                            <p>Dear ${brandName},</p>
+                            <p>This is a <strong>${reminderType}</strong> reminder that invoice <strong>#${invoice.invoice_number}</strong> of <strong>₦${Number(invoice.deals.amount).toLocaleString()}</strong> is now <strong style="color: #FF3B30;">${daysOverdue} days overdue</strong>.</p>
+                            ${urgency === 'urgent' ? '<p style="color: #FF3B30; font-weight: bold;">Please make payment immediately to avoid further escalation.</p>' : ''}
+                            <div style="text-align: center; margin: 24px 0;">
+                                <a href="${paymentLink}" style="background: #4F7CFF; color: white; padding: 12px 32px; border-radius: 8px; text-decoration: none; font-weight: 600;">
+                                    💳 Pay Now
+                                </a>
+                            </div>
+                            <p style="font-size: 12px; color: #8A9AAB;">If you have already paid, please ignore this message. For questions, contact ${creatorName}.</p>
+                            <hr>
+                            <p style="text-align: center; color: #8A9AAB; font-size: 12px;">PayPoint · Finance OS for Creators</p>
+                        </div>
+                    `
+                });
+
+                // Update reminder count
+                await supabase
+                    .from('invoices')
+                    .update({
+                        reminder_count: invoice.reminder_count + 1,
+                        last_reminder_sent_at: new Date().toISOString()
+                    })
+                    .eq('id', invoice.id);
+
+                console.log(`✅ Reminder sent for invoice ${invoice.invoice_number} (${reminderType})`);
+
+            } catch (emailErr) {
+                console.error(`❌ Failed to send reminder for invoice ${invoice.invoice_number}:`, emailErr);
+            }
+        }
+
+    } catch (err) {
+        console.error('Cron job error:', err);
+    }
+});
+
+// Optional: run once on startup (for testing)
+setTimeout(() => {
+    console.log('🔄 Running initial overdue check on startup...');
+}, 5000);
 const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
 
 // ============================================
@@ -748,6 +878,19 @@ app.post('/api/invoices/create', authenticate, async (req, res) => {
             return res.status(500).json({ error: error.message });
         }
 
+        // ============================================
+// Generate portal token for this invoice
+// ============================================
+const crypto = require('crypto');
+const portalToken = crypto.randomBytes(32).toString('hex');
+
+await supabase
+    .from('invoices')
+    .update({ portal_token: portalToken })
+    .eq('id', data[0].id);
+
+const portalLink = `${process.env.FRONTEND_URL}/portal/${portalToken}`;
+
         if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
             try {
                 const transporter = nodemailer.createTransport({
@@ -776,7 +919,7 @@ app.post('/api/invoices/create', authenticate, async (req, res) => {
                             <p><strong>Due Date:</strong> ${dueDate}</p>
                             <hr style="border: none; border-top: 1px solid #E8EDF2;">
                             <p style="text-align: center; color: #8A9AAB; font-size: 14px;">
-                                <a href="https://paypoint-backend.vercel.app/invoice.html" style="color: #4F7CFF; text-decoration: none;">View Invoice</a> · 
+                                <a href="${portalLink}" style="color: #4F7CFF; text-decoration: none;">📄 View Invoice Portal</a>
                                 PayPoint · Finance OS for Creators
                             </p>
                         </div>
@@ -1194,6 +1337,14 @@ app.post('/api/webhooks/paystack-deal',
                     }
 
                     console.log(`✅ Deal ${dealId} marked as paid via webhook`);
+                    // Also mark the invoice as paid
+await supabase
+    .from('invoices')
+    .update({
+        paid: true,
+        paid_at: new Date().toISOString()
+    })
+    .eq('deal_id', dealId);
                 }
             }
 
@@ -1205,6 +1356,188 @@ app.post('/api/webhooks/paystack-deal',
         }
     }
 );
+// ============================================
+// PUBLIC PORTAL - View Invoice
+// ============================================
+app.get('/portal/:token', async (req, res) => {
+    try {
+        const { token } = req.params;
+
+        if (!token) {
+            return res.status(400).send('Invalid portal link');
+        }
+
+        const { data: invoice, error } = await supabase
+            .from('invoices')
+            .select(`
+                *,
+                deals(
+                    id,
+                    brand_name,
+                    amount,
+                    deliverable,
+                    due_date,
+                    user_id,
+                    users(
+                        email,
+                        user_metadata->name
+                    )
+                )
+            `)
+            .eq('portal_token', token)
+            .single();
+
+        if (error || !invoice) {
+            return res.status(404).send('Invoice not found');
+        }
+
+        const deal = invoice.deals;
+        const creator = deal.users;
+        const isPaid = invoice.paid || false;
+
+        // Render the portal HTML page
+        res.send(`
+            <!DOCTYPE html>
+            <html lang="en">
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <title>Invoice · ${deal.brand_name}</title>
+                <style>
+                    * { margin: 0; padding: 0; box-sizing: border-box; }
+                    body {
+                        font-family: 'Inter', -apple-system, sans-serif;
+                        background: #F8FAFC;
+                        color: #000000;
+                        padding: 24px;
+                        min-height: 100vh;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                    }
+                    .portal-container {
+                        max-width: 600px;
+                        width: 100%;
+                        background: #FFFFFF;
+                        border-radius: 16px;
+                        border: 1px solid #E8EDF2;
+                        padding: 40px 36px;
+                        box-shadow: 0 4px 24px rgba(0,0,0,0.06);
+                    }
+                    .header { text-align: center; margin-bottom: 32px; }
+                    .header h1 { font-size: 28px; font-weight: 700; color: #4F7CFF; }
+                    .header p { color: #8A9AAB; font-size: 14px; }
+                    .divider { border: none; border-top: 1px solid #E8EDF2; margin: 24px 0; }
+                    .detail-row {
+                        display: flex;
+                        justify-content: space-between;
+                        padding: 12px 0;
+                        border-bottom: 1px solid #F0F2F5;
+                    }
+                    .detail-label { color: #8A9AAB; font-size: 14px; }
+                    .detail-value { font-weight: 500; font-size: 14px; }
+                    .amount {
+                        font-size: 32px;
+                        font-weight: 700;
+                        color: #4F7CFF;
+                        text-align: center;
+                        padding: 16px 0;
+                    }
+                    .status-badge {
+                        display: inline-block;
+                        padding: 4px 16px;
+                        border-radius: 40px;
+                        font-size: 13px;
+                        font-weight: 600;
+                    }
+                    .status-paid { background: #E8F9EF; color: #34C759; }
+                    .status-pending { background: #FFF5E6; color: #FF9500; }
+                    .btn-primary {
+                        display: block;
+                        width: 100%;
+                        background: #4F7CFF;
+                        border: none;
+                        padding: 14px;
+                        border-radius: 10px;
+                        font-weight: 600;
+                        font-size: 16px;
+                        color: #FFFFFF;
+                        cursor: pointer;
+                        text-align: center;
+                        text-decoration: none;
+                        margin-top: 16px;
+                        box-shadow: 0 2px 8px rgba(79, 124, 255, 0.25);
+                        transition: all 0.2s ease;
+                    }
+                    .btn-primary:hover { background: #3A5FD9; transform: translateY(-1px); }
+                    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+                    .footer {
+                        text-align: center;
+                        color: #8A9AAB;
+                        font-size: 12px;
+                        margin-top: 24px;
+                        padding-top: 16px;
+                        border-top: 1px solid #E8EDF2;
+                    }
+                </style>
+            </head>
+            <body>
+                <div class="portal-container">
+                    <div class="header">
+                        <h1>💼 ${deal.brand_name}</h1>
+                        <p>Invoice Portal · Powered by PayPoint</p>
+                    </div>
+
+                    <div class="amount">₦${Number(deal.amount).toLocaleString()}</div>
+
+                    <div style="text-align: center; margin-bottom: 16px;">
+                        <span class="status-badge ${isPaid ? 'status-paid' : 'status-pending'}">
+                            ${isPaid ? '✅ Paid' : '⏳ Pending'}
+                        </span>
+                    </div>
+
+                    <hr class="divider">
+
+                    <div class="detail-row">
+                        <span class="detail-label">Invoice #</span>
+                        <span class="detail-value">${invoice.invoice_number}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Deliverable</span>
+                        <span class="detail-value">${deal.deliverable || 'Not specified'}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Due Date</span>
+                        <span class="detail-value">${new Date(deal.due_date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Creator</span>
+                        <span class="detail-value">${creator?.user_metadata?.name || 'Creator'}</span>
+                    </div>
+
+                    ${!isPaid ? `
+                        <a href="${process.env.FRONTEND_URL}/pay-invoice.html?deal=${deal.id}" class="btn-primary">
+                            💳 Pay Now
+                        </a>
+                    ` : `
+                        <div style="text-align: center; color: #34C759; font-weight: 600; padding: 12px; background: #E8F9EF; border-radius: 8px; margin-top: 16px;">
+                            ✅ This invoice has been paid. Thank you!
+                        </div>
+                    `}
+
+                    <div class="footer">
+                        PayPoint · Finance OS for Creators
+                    </div>
+                </div>
+            </body>
+            </html>
+        `);
+
+    } catch (err) {
+        console.error('Portal error:', err);
+        res.status(500).send('Something went wrong');
+    }
+});
 
 // ============================================
 // ERROR HANDLERS
