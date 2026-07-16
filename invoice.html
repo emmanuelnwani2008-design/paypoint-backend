@@ -391,7 +391,7 @@
 
                 card.innerHTML = `
                     <div class="brand">${deal.brand_name}</div>
-                    <div class="amount">$${Number(deal.amount).toLocaleString()}</div>
+                    <div class="amount">${formatCurrency(deal.amount, deal.currency)}</div>
                     <div class="details">📅 Due: ${deal.due_date ? new Date(deal.due_date).toLocaleDateString() : 'Not set'}</div>
                     <div class="details">📋 ${deal.deliverable || 'No deliverable'}</div>
                     <span class="status ${status}">${status.toUpperCase()}</span>

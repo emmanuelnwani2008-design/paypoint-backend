@@ -670,7 +670,7 @@
                         <div style="font-size:12px; color:#8A9AAB;">${deal.deliverable || 'No deliverable'}</div>
                     </div>
                     <div style="text-align:right;">
-                        <div class="deal-amount">$${Number(deal.amount).toLocaleString()}</div>
+                        <div class="deal-amount">${formatCurrency(deal.amount, deal.currency)}</div>
                         <span class="deal-status ${statusClass}">${deal.status || 'pending'}</span>
                     </div>
                 `;
@@ -766,6 +766,15 @@
                     document.getElementById('dealDeliverable').value = '';
                     document.getElementById('dealDueDate').value = '';
                     loadDeals();
+                    const currency = document.getElementById('dealCurrency').value;
+const dealData = {
+    brand_name,
+    amount: parseFloat(amount),
+    deliverable: deliverable || '',
+    due_date: due_date || null,
+    status: 'pending',
+    currency: currency   // <-- add this
+};
                 } else {
                     alert('❌ Error: ' + (result.error || 'Unknown error'));
                 }
@@ -828,7 +837,11 @@ if (checkAuth()) {
             loadDeals();
             loadExpenses();
         }
-
+function formatCurrency(amount, currency) {
+    const symbols = { USD: '$', NGN: '₦' };
+    const symbol = symbols[currency] || '₦'; // default to NGN
+    return symbol + Number(amount).toLocaleString();
+}
         console.log('🚀 PayPoint Dashboard loaded');
         console.log('📡 Connected to:', API_URL);
     </script>
