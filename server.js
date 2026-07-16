@@ -63,14 +63,14 @@ app.use(limiter);
 
 const authLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
-    max: 5,
+    max: 10,  // Increased from 5
     keyGenerator: function (req) {
         const email = req.body?.email || '';
         const ip = req.ip || req.connection.remoteAddress;
         return `${ip}-${email}`;
     },
     skipSuccessfulRequests: true,
-    message: { error: 'Too many failed attempts for this account. Please try again later.' },
+    message: { error: 'Too many attempts. Please wait 15 minutes and try again.' },
     standardHeaders: true,
     legacyHeaders: false,
 });
@@ -304,7 +304,7 @@ app.get('/health', (req, res) => {
 // ============================================
 // AUTH ROUTES
 // ============================================
-app.post('/api/auth/signup', authLimiter, async (req, res) => {
+app.post('/api/auth/signup', async (req, res) => {  // <- Removed authLimiter
     try {
         const { name, email, password } = req.body || {};
         if (!email || !password) {
@@ -336,17 +336,25 @@ app.post('/api/auth/signup', authLimiter, async (req, res) => {
 
         // Create profile entry for new user
         if (data.user) {
-            await supabaseAdmin
-                .from('profiles')
-                .insert([{ id: data.user.id }])
-                .onConflict('id')
-                .ignore();
+            try {
+                await supabaseAdmin
+                    .from('profiles')
+                    .insert([{ id: data.user.id }])
+                    .onConflict('id')
+                    .ignore();
+            } catch (profileErr) {
+                console.error('Profile creation error (non-fatal):', profileErr);
+                // Do not fail the signup – just log it
+            }
         }
 
         res.json({ success: true, user: data.user });
     } catch (err) {
         console.error('Signup server error:', err);
-        res.status(500).json({ error: 'Internal server error' });
+        res.status(500).json({ 
+            error: 'Signup failed. Please try again.',
+            details: process.env.NODE_ENV === 'development' ? err.message : undefined
+        });
     }
 });
 
