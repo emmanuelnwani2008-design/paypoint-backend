@@ -838,8 +838,9 @@ if (checkAuth()) {
             loadExpenses();
         }
 function formatCurrency(amount, currency) {
+    if (!amount) return '₦0';
     const symbols = { USD: '$', NGN: '₦' };
-    const symbol = symbols[currency] || '₦'; // default to NGN
+    const symbol = symbols[currency] || '₦';
     return symbol + Number(amount).toLocaleString();
 }
         console.log('🚀 PayPoint Dashboard loaded');
