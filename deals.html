@@ -719,6 +719,12 @@
         function showError(msg) {
             alert(msg || 'Something went wrong');
         }
+        function formatCurrency(amount, currency) {
+    if (!amount) return '₦0';
+    const symbols = { USD: '$', NGN: '₦' };
+    const symbol = symbols[currency] || '₦';
+    return symbol + Number(amount).toLocaleString();
+}
 
         // ============================================
         // CHECK AUTH

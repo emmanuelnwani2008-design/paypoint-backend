@@ -313,7 +313,12 @@
             const token = localStorage.getItem('paypoint_session');
             return { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) };
         }
-
+function formatCurrency(amount, currency) {
+    if (!amount) return '₦0';
+    const symbols = { USD: '$', NGN: '₦' };
+    const symbol = symbols[currency] || '₦';
+    return symbol + Number(amount).toLocaleString();
+}
         // ============================================
         // DOM REFERENCES
         // ============================================
