@@ -280,12 +280,12 @@
             <!-- Sidebar -->
             <div class="profile-sidebar">
                 <div class="profile-avatar" id="profileAvatar" style="position: relative; cursor: pointer;">
-    <img id="avatarImg" src="" alt="Avatar" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover; display: none;">
-    <span id="avatarPlaceholder" style="font-size: 48px; color: #4F7CFF;">
-    <i class="fas fa-user-circle"></i>
-</span>
-    <input type="file" id="avatarInput" accept="image/*" style="display: none;">
-</div>
+                    <img id="avatarImg" src="" alt="Avatar" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover; display: none;">
+                    <span id="avatarPlaceholder" style="font-size: 48px; color: #4F7CFF;">
+                        <i class="fas fa-user-circle"></i>
+                    </span>
+                    <input type="file" id="avatarInput" accept="image/*" style="display: none;">
+                </div>
                 <div class="profile-name" id="profileName">Creator</div>
                 <div class="profile-email" id="profileEmail">creator@example.com</div>
                 <div class="profile-tier">
@@ -414,69 +414,73 @@
             };
         }
 
-
+        // ============================================
+        // CHECK AUTH (fixed – preserves avatar container)
+        // ============================================
         function checkAuth() {
-    const token = localStorage.getItem('paypoint_session');
-    const user = localStorage.getItem('paypoint_user');
-    if (!token || !user) {
-        localStorage.removeItem('paypoint_user');
-        localStorage.removeItem('paypoint_session');
-        window.location.replace('login.html');
-        return false;
-    }
+            const token = localStorage.getItem('paypoint_session');
+            const user = localStorage.getItem('paypoint_user');
+            if (!token || !user) {
+                localStorage.removeItem('paypoint_user');
+                localStorage.removeItem('paypoint_session');
+                window.location.replace('login.html');
+                return false;
+            }
 
-    try {
-        const userData = JSON.parse(user);
-        const name = userData?.user_metadata?.name || userData?.name || 'Creator';
-        const email = userData?.email || 'creator@example.com';
-        const bio = userData?.user_metadata?.bio || '';
-        const avatarUrl = userData?.user_metadata?.avatar_url;
+            try {
+                const userData = JSON.parse(user);
+                const name = userData?.user_metadata?.name || userData?.name || 'Creator';
+                const email = userData?.email || 'creator@example.com';
+                const bio = userData?.user_metadata?.bio || '';
+                const avatarUrl = userData?.user_metadata?.avatar_url;
 
-        // --- AVATAR LOADING (fixed) ---
-        const avatarImg = document.getElementById('avatarImg');
-        const avatarPlaceholder = document.getElementById('avatarPlaceholder');
+                // --- AVATAR LOADING (fixed) ---
+                const avatarImg = document.getElementById('avatarImg');
+                const avatarPlaceholder = document.getElementById('avatarPlaceholder');
 
-        if (avatarUrl) {
-            avatarImg.src = avatarUrl;
-            avatarImg.style.display = 'block';
-            avatarPlaceholder.style.display = 'none';
-        } else {
-            avatarImg.style.display = 'none';
-            avatarPlaceholder.style.display = 'flex';
-            avatarPlaceholder.style.alignItems = 'center';
-            avatarPlaceholder.style.justifyContent = 'center';
-            avatarPlaceholder.style.fontSize = '48px';
-            avatarPlaceholder.style.color = '#4F7CFF';
-            // Show the first letter as a fallback avatar (like the sidebar)
-            avatarPlaceholder.textContent = name.charAt(0).toUpperCase();
+                if (avatarUrl) {
+                    avatarImg.src = avatarUrl;
+                    avatarImg.style.display = 'block';
+                    avatarPlaceholder.style.display = 'none';
+                } else {
+                    avatarImg.style.display = 'none';
+                    avatarPlaceholder.style.display = 'flex';
+                    avatarPlaceholder.style.alignItems = 'center';
+                    avatarPlaceholder.style.justifyContent = 'center';
+                    avatarPlaceholder.style.fontSize = '48px';
+                    avatarPlaceholder.style.color = '#4F7CFF';
+                    // Show first letter as fallback (but keep the font-awesome icon?)
+                    // Actually we want to show the icon if no avatar, so we don't override textContent with the letter.
+                    // We'll set the placeholder to the icon.
+                    avatarPlaceholder.innerHTML = '<i class="fas fa-user-circle"></i>';
+                }
+
+                // --- Update UI (DO NOT touch profileAvatar's innerHTML) ---
+                document.getElementById('userBadge').textContent = `👤 ${name}`;
+                document.getElementById('profileName').textContent = name;
+                document.getElementById('profileEmail').textContent = email;
+                document.getElementById('editName').value = name;
+                document.getElementById('editBio').value = bio;
+
+                // Update bank status if subaccount exists
+                if (userData?.user_metadata?.subaccount_code) {
+                    document.getElementById('bankStatus').textContent = '✅ Active';
+                    document.getElementById('bankStatus').className = 'bank-status saved';
+                    document.getElementById('verifyBankBtn').style.display = 'none';
+                    document.getElementById('saveBankBtn').style.display = 'none';
+                    document.getElementById('bankCode').disabled = true;
+                    document.getElementById('accountNumber').disabled = true;
+                }
+
+                return true;
+            } catch (e) {
+                console.error('checkAuth error:', e);
+                localStorage.removeItem('paypoint_user');
+                localStorage.removeItem('paypoint_session');
+                window.location.replace('login.html');
+                return false;
+            }
         }
-
-        // --- Update UI (DO NOT touch profileAvatar's innerHTML) ---
-        document.getElementById('userBadge').textContent = `👤 ${name}`;
-        document.getElementById('profileName').textContent = name;
-        document.getElementById('profileEmail').textContent = email;
-        document.getElementById('editName').value = name;
-        document.getElementById('editBio').value = bio;
-
-        // Update bank status if subaccount exists
-        if (userData?.user_metadata?.subaccount_code) {
-            document.getElementById('bankStatus').textContent = '✅ Active';
-            document.getElementById('bankStatus').className = 'bank-status saved';
-            document.getElementById('verifyBankBtn').style.display = 'none';
-            document.getElementById('saveBankBtn').style.display = 'none';
-            document.getElementById('bankCode').disabled = true;
-            document.getElementById('accountNumber').disabled = true;
-        }
-
-        return true;
-    } catch (e) {
-        console.error('checkAuth error:', e);
-        localStorage.removeItem('paypoint_user');
-        localStorage.removeItem('paypoint_session');
-        window.location.replace('login.html');
-        return false;
-    }
-}
 
         // ============================================
         // FETCH SUBSCRIPTION TIER
@@ -573,7 +577,7 @@
         }
 
         // ============================================
-        // UPDATE PROFILE
+        // UPDATE PROFILE (FIXED – no avatar destruction)
         // ============================================
         document.getElementById('updateProfileBtn').addEventListener('click', async () => {
             const name = document.getElementById('editName').value.trim();
@@ -601,7 +605,7 @@
                     localStorage.setItem('paypoint_user', JSON.stringify(user));
 
                     document.getElementById('profileName').textContent = name;
-                    document.getElementById('profileAvatar').textContent = name.charAt(0).toUpperCase();
+                    // ✅ DO NOT TOUCH profileAvatar – keep the existing image/icon
                     document.getElementById('userBadge').textContent = `👤 ${name}`;
                     document.getElementById('editName').value = name;
                     document.getElementById('editBio').value = bio;
@@ -906,52 +910,53 @@
             localStorage.removeItem('paypoint_session');
             window.location.replace('login.html');
         });
-// ============================================
-// AVATAR UPLOAD HANDLER
-// ============================================
-const avatarInput = document.getElementById('avatarInput');
-const avatarImg = document.getElementById('avatarImg');
-const avatarPlaceholder = document.getElementById('avatarPlaceholder');
 
-// Click avatar to upload
-document.getElementById('profileAvatar').addEventListener('click', () => {
-    avatarInput.click();
-});
+        // ============================================
+        // AVATAR UPLOAD HANDLER
+        // ============================================
+        const avatarInput = document.getElementById('avatarInput');
+        const avatarImg = document.getElementById('avatarImg');
+        const avatarPlaceholder = document.getElementById('avatarPlaceholder');
 
-avatarInput.addEventListener('change', async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    const formData = new FormData();
-    formData.append('avatar', file);
-
-    try {
-        const token = localStorage.getItem('paypoint_session');
-        const res = await fetch(`${API_URL}/auth/upload-avatar`, {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${token}`
-            },
-            body: formData
+        // Click avatar to upload
+        document.getElementById('profileAvatar').addEventListener('click', () => {
+            avatarInput.click();
         });
 
-        const data = await res.json();
-        if (data.success) {
-            avatarImg.src = data.avatar_url;
-            avatarImg.style.display = 'block';
-            avatarPlaceholder.style.display = 'none';
-            // Update localStorage
-            const user = JSON.parse(localStorage.getItem('paypoint_user'));
-            user.user_metadata.avatar_url = data.avatar_url;
-            localStorage.setItem('paypoint_user', JSON.stringify(user));
-        } else {
-            alert('Failed to upload avatar');
-        }
-    } catch (err) {
-        console.error(err);
-        alert('Error uploading avatar');
-    }
-});
+        avatarInput.addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const formData = new FormData();
+            formData.append('avatar', file);
+
+            try {
+                const token = localStorage.getItem('paypoint_session');
+                const res = await fetch(`${API_URL}/auth/upload-avatar`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: formData
+                });
+
+                const data = await res.json();
+                if (data.success) {
+                    avatarImg.src = data.avatar_url;
+                    avatarImg.style.display = 'block';
+                    avatarPlaceholder.style.display = 'none';
+                    // Update localStorage
+                    const user = JSON.parse(localStorage.getItem('paypoint_user'));
+                    user.user_metadata.avatar_url = data.avatar_url;
+                    localStorage.setItem('paypoint_user', JSON.stringify(user));
+                } else {
+                    alert('Failed to upload avatar');
+                }
+            } catch (err) {
+                console.error(err);
+                alert('Error uploading avatar');
+            }
+        });
 
         // ============================================
         // INIT

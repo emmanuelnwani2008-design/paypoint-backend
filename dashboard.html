@@ -12,8 +12,6 @@
         gtag('js', new Date());
         gtag('config', 'G-HFJ9JM358E');
     </script>
-    <!-- Font Awesome (added to load the icons) -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <style>
         /* ============================================
            CLEAN WHITE/BLACK/GREY THEME
@@ -90,7 +88,18 @@
 
         .sidebar-nav a:hover { color: #000000; background: #F5F7FA; }
         .sidebar-nav a.active { color: #000000; background: #F0F4FF; font-weight: 600; }
-        .sidebar-nav a .icon { font-size: 18px; width: 24px; text-align: center; }
+        .sidebar-nav a .icon {
+            width: 24px;
+            height: 24px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .sidebar-nav a .icon img {
+            width: 20px;
+            height: 20px;
+            object-fit: contain;
+        }
         .sidebar-nav a .badge {
             margin-left: auto;
             background: #4F7CFF;
@@ -431,25 +440,42 @@
         </div>
 
         <div class="sidebar-nav">
-            <!-- FIXED: chart-pie -> fas fa-chart-pie -->
+            <!-- Dashboard -->
             <a href="dashboard.html" class="active">
-                <span class="icon"><i class="fas fa-chart-pie"></i></span> Dashboard
+                <span class="icon">
+                    <img src="icons/chart-pie.png" alt="Dashboard">
+                </span> Dashboard
             </a>
+            <!-- Deals -->
             <a href="deals.html">
-                <span class="icon"><i class="fas fa-handshake"></i></span> Deals
+                <span class="icon">
+                    <img src="icons/handshake.png" alt="Deals">
+                </span> Deals
                 <span class="badge">New</span>
             </a>
+            <!-- Expenses -->
             <a href="expense.html">
-                <span class="icon"><i class="fas fa-credit-card"></i></span> Expenses
+                <span class="icon">
+                    <img src="icons/credit-card.png" alt="Expenses">
+                </span> Expenses
             </a>
+            <!-- Invoices -->
             <a href="invoice.html">
-                <span class="icon"><i class="fas fa-file-invoice"></i></span> Invoices
+                <span class="icon">
+                    <img src="icons/file-invoice.png" alt="Invoices">
+                </span> Invoices
             </a>
+            <!-- Profile -->
             <a href="creator.html">
-                <span class="icon"><i class="fas fa-user"></i></span> Profile
+                <span class="icon">
+                    <img src="icons/user.png" alt="Profile">
+                </span> Profile
             </a>
+            <!-- Logout -->
             <a href="#" id="navLogout" class="logout">
-                <span class="icon"><i class="fas fa-sign-out-alt"></i></span> Logout
+                <span class="icon">
+                    <img src="icons/sign-out.png" alt="Logout">
+                </span> Logout
             </a>
         </div>
 
