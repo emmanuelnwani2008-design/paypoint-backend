@@ -87,16 +87,17 @@
         .sidebar-nav a:hover { color: #000000; background: #F5F7FA; }
         .sidebar-nav a.active { color: #000000; background: #F0F4FF; font-weight: 600; }
         .sidebar-nav a .icon {
-            width: 28px;
-            height: 28px;
+            width: 36px;  /* Increased */
+            height: 36px; /* Increased */
             display: inline-flex;
             align-items: center;
             justify-content: center;
             flex-shrink: 0;
+            font-size: 20px; /* For fallback emoji */
         }
         .sidebar-nav a .icon img {
-            width: 28px;
-            height: 28px;
+            width: 32px;  /* Increased */
+            height: 32px; /* Increased */
             object-fit: contain;
         }
         .sidebar-nav a .badge {
@@ -126,8 +127,8 @@
         }
 
         .sidebar-user .avatar {
-            width: 36px;
-            height: 36px;
+            width: 40px;  /* Increased */
+            height: 40px; /* Increased */
             border-radius: 50%;
             background: #4F7CFF;
             color: #FFFFFF;
@@ -135,7 +136,7 @@
             align-items: center;
             justify-content: center;
             font-weight: 700;
-            font-size: 14px;
+            font-size: 16px;
             overflow: hidden;
             flex-shrink: 0;
         }
@@ -450,37 +451,43 @@
             <a href="dashboard.html" class="active">
                 <span class="icon">
                     <img src="chart-pie.png" alt="Dashboard" onerror="this.style.display='none'">
+                    <span style="display:none;" class="fallback">📊</span>
                 </span> Dashboard
             </a>
             <!-- Deals -->
             <a href="deals.html">
                 <span class="icon">
                     <img src="handshake.png" alt="Deals" onerror="this.style.display='none'">
+                    <span style="display:none;" class="fallback">🤝</span>
                 </span> Deals
                 <span class="badge">New</span>
             </a>
             <!-- Expenses -->
             <a href="expense.html">
                 <span class="icon">
-                    <img src="credit-card.png" alt="Expenses" onerror="this.style.display='none'">
+                    <img src="credit-card.png" alt="Expenses" onerror="this.style.display='none'; this.parentElement.querySelector('.fallback').style.display='inline';">
+                    <span class="fallback" style="display:none;">💳</span>
                 </span> Expenses
             </a>
             <!-- Invoices -->
             <a href="invoice.html">
                 <span class="icon">
                     <img src="file-invoice.png" alt="Invoices" onerror="this.style.display='none'">
+                    <span style="display:none;" class="fallback">📄</span>
                 </span> Invoices
             </a>
             <!-- Profile -->
             <a href="creator.html">
                 <span class="icon">
                     <img src="user.png" alt="Profile" onerror="this.style.display='none'">
+                    <span style="display:none;" class="fallback">👤</span>
                 </span> Profile
             </a>
             <!-- Logout -->
             <a href="#" id="navLogout" class="logout">
                 <span class="icon">
                     <img src="sign-out.png" alt="Logout" onerror="this.style.display='none'">
+                    <span style="display:none;" class="fallback">🚪</span>
                 </span> Logout
             </a>
         </div>
@@ -670,7 +677,7 @@
                 document.getElementById('sidebarName').textContent = name;
                 document.getElementById('sidebarEmail').textContent = email;
                 
-                // ✅ FIX: Update sidebar avatar with custom image
+                // Update sidebar avatar with custom image
                 const sidebarAvatarImg = document.getElementById('sidebarAvatarImg');
                 if (avatarUrl) {
                     sidebarAvatarImg.src = avatarUrl;
@@ -704,7 +711,7 @@
                     localStorage.setItem('user_subscription_tier', tier);
                     localStorage.setItem('paypoint_user', JSON.stringify(data.user));
                     
-                    // ✅ Update avatar after fetching fresh user data
+                    // Update avatar after fetching fresh user data
                     const avatarUrl = data.user.user_metadata?.avatar_url;
                     const sidebarAvatarImg = document.getElementById('sidebarAvatarImg');
                     if (avatarUrl) {
