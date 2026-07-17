@@ -7,7 +7,7 @@ const { createClient } = require('@supabase/supabase-js');
 const PDFDocument = require('pdfkit');
 const nodemailer = require('nodemailer');   // ✅ declared once
 const crypto = require('crypto');           // ✅ declared once
-const cron = require('node-cron');          // ✅ added here – used later
+const cron = require('node-cron');          // ✅ declared once
 
 const app = express();
 app.set('trust proxy', 1);
@@ -63,14 +63,14 @@ app.use(limiter);
 
 const authLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
-    max: 10,  // Increased from 5
+    max: 5,
     keyGenerator: function (req) {
         const email = req.body?.email || '';
         const ip = req.ip || req.connection.remoteAddress;
         return `${ip}-${email}`;
     },
     skipSuccessfulRequests: true,
-    message: { error: 'Too many attempts. Please wait 15 minutes and try again.' },
+    message: { error: 'Too many failed attempts for this account. Please try again later.' },
     standardHeaders: true,
     legacyHeaders: false,
 });
@@ -240,15 +240,30 @@ function isValidEmail(email) {
     return emailRegex.test(email);
 }
 
+// ✅ FIX ReDoS vulnerability – safe, non‑backtracking replace
 function sanitizeInput(str) {
     if (!str || typeof str !== 'string') return str;
-    return str
+    if (str.length > 10000) return str.substring(0, 10000); // prevent long input abuse
+    const map = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#x27;',
+        '/': '&#x2F;'
+    };
+    return str.replace(/[&<>"'\/]/g, function(m) { return map[m]; });
+}
+
+// ✅ HTML escaping for portal route (XSS prevention)
+function escapeHtml(text) {
+    if (!text) return '';
+    return String(text)
         .replace(/&/g, '&amp;')
         .replace(/</g, '&lt;')
         .replace(/>/g, '&gt;')
         .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#x27;')
-        .replace(/\//g, '&#x2F;');
+        .replace(/'/g, '&#039;');
 }
 
 function isValidAmount(amount) {
@@ -304,7 +319,7 @@ app.get('/health', (req, res) => {
 // ============================================
 // AUTH ROUTES
 // ============================================
-app.post('/api/auth/signup', async (req, res) => {  // <- Removed authLimiter
+app.post('/api/auth/signup', authLimiter, async (req, res) => {
     try {
         const { name, email, password } = req.body || {};
         if (!email || !password) {
@@ -336,27 +351,15 @@ app.post('/api/auth/signup', async (req, res) => {  // <- Removed authLimiter
 
         // Create profile entry for new user
         if (data.user) {
-            try {
-            try {
-    await supabaseAdmin
-        .from('profiles')
-        .upsert({ id: data.user.id }, { onConflict: 'id' });
-} catch (e) {
-    console.error('Profile upsert error:', e);
-}
-            } catch (profileErr) {
-                console.error('Profile creation error (non-fatal):', profileErr);
-                // Do not fail the signup – just log it
-            }
+            await supabaseAdmin
+                .from('profiles')
+                .upsert({ id: data.user.id }, { onConflict: 'id' });
         }
 
         res.json({ success: true, user: data.user });
     } catch (err) {
         console.error('Signup server error:', err);
-        res.status(500).json({ 
-            error: 'Signup failed. Please try again.',
-            details: process.env.NODE_ENV === 'development' ? err.message : undefined
-        });
+        res.status(500).json({ error: 'Internal server error' });
     }
 });
 
@@ -481,19 +484,35 @@ app.post('/api/deals', authenticate, async (req, res) => {
     try {
         const userId = req.userId;
         const { brand_name, amount, due_date, deliverable, status, currency } = req.body;
-// ... validation
-const { data, error } = await supabase
-    .from('deals')
-    .insert([{
-        user_id: userId,
-        brand_name: sanitizedBrand,
-        amount: parseFloat(amount),
-        due_date: due_date || null,
-        deliverable: sanitizedDeliverable || '',
-        status: status || 'pending',
-        currency: currency || 'NGN'   // <-- add this line
-    }])
-    .select();
+        if (!brand_name || !amount) {
+            return res.status(400).json({ error: 'brand_name and amount required' });
+        }
+        const sanitizedBrand = sanitizeInput(brand_name.trim());
+        if (sanitizedBrand.length < 2 || sanitizedBrand.length > 100) {
+            return res.status(400).json({ error: 'Brand name must be between 2 and 100 characters' });
+        }
+        if (!isValidAmount(amount)) {
+            return res.status(400).json({ error: 'Invalid amount' });
+        }
+        const sanitizedDeliverable = deliverable ? sanitizeInput(deliverable.trim()) : '';
+        if (sanitizedDeliverable.length > 500) {
+            return res.status(400).json({ error: 'Deliverable too long (max 500 characters)' });
+        }
+        if (due_date && isNaN(Date.parse(due_date))) {
+            return res.status(400).json({ error: 'Invalid due date format' });
+        }
+        const { data, error } = await supabase
+            .from('deals')
+            .insert([{
+                user_id: userId,
+                brand_name: sanitizedBrand,
+                amount: parseFloat(amount),
+                due_date: due_date || null,
+                deliverable: sanitizedDeliverable || '',
+                status: status || 'pending',
+                currency: currency || 'NGN'
+            }])
+            .select();
         if (error) {
             console.error('Supabase error:', error);
             return res.status(500).json({ error: error.message });
@@ -509,7 +528,7 @@ app.put('/api/deals/:id', authenticate, async (req, res) => {
     try {
         const dealId = req.params.id;
         const userId = req.userId;
-        const { brand_name, amount, due_date, deliverable, status } = req.body;
+        const { brand_name, amount, due_date, deliverable, status, currency } = req.body;
 
         if (!brand_name || !amount) {
             return res.status(400).json({ error: 'brand_name and amount required' });
@@ -551,7 +570,8 @@ app.put('/api/deals/:id', authenticate, async (req, res) => {
                 amount: parseFloat(amount),
                 due_date: due_date || null,
                 deliverable: sanitizedDeliverable || '',
-                status: status || 'pending'
+                status: status || 'pending',
+                currency: currency || 'NGN'
             })
             .eq('id', dealId)
             .eq('user_id', userId)
@@ -628,7 +648,7 @@ app.get('/api/expenses', authenticate, async (req, res) => {
 app.post('/api/expenses', authenticate, async (req, res) => {
     try {
         const userId = req.userId;
-        const { vendor, amount, category, receipt_url } = req.body;
+        const { vendor, amount, category, receipt_url, currency } = req.body;
         if (!vendor || !amount) {
             return res.status(400).json({ error: 'vendor and amount required' });
         }
@@ -651,7 +671,8 @@ app.post('/api/expenses', authenticate, async (req, res) => {
                 vendor: sanitizedVendor,
                 amount: parseFloat(amount),
                 category: sanitizedCategory,
-                receipt_url: receipt_url || ''
+                receipt_url: receipt_url || '',
+                currency: currency || 'NGN'
             }])
             .select();
         if (error) {
@@ -674,6 +695,7 @@ if (!PAYSTACK_SECRET_KEY) {
     process.exit(1);
 }
 
+// Initialize payment for a deal (NO 5% FEE)
 app.post('/api/payments/initialize', authenticate, async (req, res) => {
     try {
         const { dealId, email } = req.body;
@@ -749,11 +771,12 @@ app.post('/api/payments/initialize', authenticate, async (req, res) => {
     }
 });
 
+// ✅ FIX SSRF: validate reference format
 app.get('/api/payments/verify/:reference', authenticate, async (req, res) => {
     try {
         const { reference } = req.params;
-        if (!reference) {
-            return res.status(400).json({ error: 'Reference required' });
+        if (!reference || !/^[a-zA-Z0-9\-_]+$/.test(reference)) {
+            return res.status(400).json({ error: 'Invalid reference format' });
         }
 
         const response = await fetch(`https://api.paystack.co/transaction/verify/${reference}`, {
@@ -870,7 +893,7 @@ app.post('/api/invoices/create', authenticate, async (req, res) => {
             return res.status(500).json({ error: error.message });
         }
 
-        // Generate portal token – uses global crypto (no re-declaration)
+        // Generate portal token
         const portalToken = crypto.randomBytes(32).toString('hex');
 
         await supabase
@@ -1138,6 +1161,7 @@ app.post('/api/payments/create-subaccount', authenticate, async (req, res) => {
 // ✅ SUBSCRIPTION SYSTEM (Pro/Free)
 // ============================================
 
+// 1. Initialize subscription payment
 app.post('/api/subscribe', authenticate, async (req, res) => {
     try {
         const userId = req.userId;
@@ -1147,6 +1171,7 @@ app.post('/api/subscribe', authenticate, async (req, res) => {
             return res.status(400).json({ error: 'User email required' });
         }
 
+        // Check current subscription
         const { data: profile, error } = await supabase
             .from('profiles')
             .select('subscription_tier, subscription_status, subscription_expires_at')
@@ -1199,6 +1224,7 @@ app.post('/api/subscribe', authenticate, async (req, res) => {
     }
 });
 
+// 2. Webhook - secure & updates profiles
 app.post('/api/webhooks/paystack',
     express.raw({ type: 'application/json' }),
     async (req, res) => {
@@ -1259,6 +1285,7 @@ app.post('/api/webhooks/paystack',
     }
 );
 
+// 3. Original deal webhook – still needed
 app.post('/api/webhooks/paystack-deal',
     express.raw({ type: 'application/json' }),
     async (req, res) => {
@@ -1344,7 +1371,7 @@ app.post('/api/webhooks/paystack-deal',
 );
 
 // ============================================
-// PUBLIC PORTAL - View Invoice
+// PUBLIC PORTAL - View Invoice (✅ XSS fixed)
 // ============================================
 app.get('/portal/:token', async (req, res) => {
     try {
@@ -1382,13 +1409,21 @@ app.get('/portal/:token', async (req, res) => {
         const creator = deal.users;
         const isPaid = invoice.paid || false;
 
+        // ✅ Escape all dynamic content
+        const brandName = escapeHtml(deal.brand_name);
+        const deliverable = escapeHtml(deal.deliverable || 'Not specified');
+        const invoiceNumber = escapeHtml(invoice.invoice_number);
+        const creatorName = escapeHtml(creator?.user_metadata?.name || 'Creator');
+        const amountFormatted = Number(deal.amount).toLocaleString();
+        const dueDateFormatted = new Date(deal.due_date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+
         res.send(`
             <!DOCTYPE html>
             <html lang="en">
             <head>
                 <meta charset="UTF-8">
                 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                <title>Invoice · ${deal.brand_name}</title>
+                <title>Invoice · ${brandName}</title>
                 <style>
                     * { margin: 0; padding: 0; box-sizing: border-box; }
                     body {
@@ -1470,11 +1505,11 @@ app.get('/portal/:token', async (req, res) => {
             <body>
                 <div class="portal-container">
                     <div class="header">
-                        <h1>💼 ${deal.brand_name}</h1>
+                        <h1>💼 ${brandName}</h1>
                         <p>Invoice Portal · Powered by PayPoint</p>
                     </div>
 
-                    <div class="amount">₦${Number(deal.amount).toLocaleString()}</div>
+                    <div class="amount">₦${amountFormatted}</div>
 
                     <div style="text-align: center; margin-bottom: 16px;">
                         <span class="status-badge ${isPaid ? 'status-paid' : 'status-pending'}">
@@ -1486,19 +1521,19 @@ app.get('/portal/:token', async (req, res) => {
 
                     <div class="detail-row">
                         <span class="detail-label">Invoice #</span>
-                        <span class="detail-value">${invoice.invoice_number}</span>
+                        <span class="detail-value">${invoiceNumber}</span>
                     </div>
                     <div class="detail-row">
                         <span class="detail-label">Deliverable</span>
-                        <span class="detail-value">${deal.deliverable || 'Not specified'}</span>
+                        <span class="detail-value">${deliverable}</span>
                     </div>
                     <div class="detail-row">
                         <span class="detail-label">Due Date</span>
-                        <span class="detail-value">${new Date(deal.due_date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
+                        <span class="detail-value">${dueDateFormatted}</span>
                     </div>
                     <div class="detail-row">
                         <span class="detail-label">Creator</span>
-                        <span class="detail-value">${creator?.user_metadata?.name || 'Creator'}</span>
+                        <span class="detail-value">${creatorName}</span>
                     </div>
 
                     ${!isPaid ? `
