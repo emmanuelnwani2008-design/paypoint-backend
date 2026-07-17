@@ -96,8 +96,8 @@
             justify-content: center;
         }
         .sidebar-nav a .icon img {
-            width: 20px;
-            height: 20px;
+            width: 28px;
+            height: 28px;
             object-fit: contain;
         }
         .sidebar-nav a .badge {
@@ -110,7 +110,7 @@
             font-weight: 600;
         }
         .sidebar-nav a.logout {
-            margin-top: 20px;
+            margin-top: 28px;
             border-top: 1px solid #E8EDF2;
             padding-top: 16px;
             color: #FF3B30;
@@ -127,17 +127,18 @@
         }
 
         .sidebar-user .avatar {
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
-            background: #4F7CFF;
-            color: #FFFFFF;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 700;
-            font-size: 14px;
-        }
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: #4F7CFF;
+    color: #FFFFFF;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 14px;
+    overflow: hidden;
+}
 
         .sidebar-user .info { flex: 1; }
         .sidebar-user .info .name { font-size: 14px; font-weight: 600; color: #000000; }
@@ -472,20 +473,15 @@
     </span> Profile
 </a>
 <!-- Logout -->
-<a href="#" id="navLogout" class="logout">
-    <span class="icon">
-        <img src="sign-out.png" alt="Logout">
-    </span> Logout
-</a>
-        </div>
-
-        <div class="sidebar-user">
-            <div class="avatar" id="sidebarAvatar">C</div>
-            <div class="info">
-                <div class="name" id="sidebarName">Creator</div>
-                <div class="email" id="sidebarEmail">creator@paypoint.com</div>
-            </div>
-        </div>
+<div class="sidebar-user">
+    <div class="avatar" id="sidebarAvatar">
+        <img src="user.png" alt="Profile" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">
+    </div>
+    <div class="info">
+        <div class="name" id="sidebarName">Creator</div>
+        <div class="email" id="sidebarEmail">creator@paypoint.com</div>
+    </div>
+</div>
     </nav>
 
     <div class="main-content">
@@ -659,7 +655,8 @@
                 
                 document.getElementById('sidebarName').textContent = name;
                 document.getElementById('sidebarEmail').textContent = email;
-                document.getElementById('sidebarAvatar').textContent = name.charAt(0).toUpperCase();
+                // The avatar is now an image, so we don't set textContent
+// document.getElementById('sidebarAvatar').textContent = name.charAt(0).toUpperCase();
                 
                 return true;
             } catch (e) {
