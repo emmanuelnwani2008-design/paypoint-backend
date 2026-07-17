@@ -270,6 +270,8 @@
             </div>
         </nav>
 
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+        
         <div class="page-header">
             <h1>Profile <span>· Manage your account</span></h1>
         </div>
@@ -277,7 +279,13 @@
         <div class="profile-grid">
             <!-- Sidebar -->
             <div class="profile-sidebar">
-                <div class="profile-avatar" id="profileAvatar">👤</div>
+                <div class="profile-avatar" id="profileAvatar" style="position: relative; cursor: pointer;">
+    <img id="avatarImg" src="" alt="Avatar" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover; display: none;">
+    <span id="avatarPlaceholder" style="font-size: 48px; color: #4F7CFF;">
+    <i class="fas fa-user-circle"></i>
+</span>
+    <input type="file" id="avatarInput" accept="image/*" style="display: none;">
+</div>
                 <div class="profile-name" id="profileName">Creator</div>
                 <div class="profile-email" id="profileEmail">creator@example.com</div>
                 <div class="profile-tier">
@@ -407,45 +415,59 @@
         }
 
         function checkAuth() {
-            const token = localStorage.getItem('paypoint_session');
-            const user = localStorage.getItem('paypoint_user');
-            if (!token || !user) {
-                localStorage.removeItem('paypoint_user');
-                localStorage.removeItem('paypoint_session');
-                window.location.replace('login.html');
-                return false;
-            }
+    const token = localStorage.getItem('paypoint_session');
+    const user = localStorage.getItem('paypoint_user');
+    if (!token || !user) {
+        localStorage.removeItem('paypoint_user');
+        localStorage.removeItem('paypoint_session');
+        window.location.replace('login.html');
+        return false;
+    }
 
-            try {
-                const userData = JSON.parse(user);
-                const name = userData?.user_metadata?.name || userData?.name || 'Creator';
-                const email = userData?.email || 'creator@example.com';
-                const bio = userData?.user_metadata?.bio || '';
+    try {
+        const userData = JSON.parse(user);
+        const name = userData?.user_metadata?.name || userData?.name || 'Creator';
+        const email = userData?.email || 'creator@example.com';
+        const bio = userData?.user_metadata?.bio || '';
 
-                document.getElementById('userBadge').textContent = `👤 ${name}`;
-                document.getElementById('profileName').textContent = name;
-                document.getElementById('profileEmail').textContent = email;
-                document.getElementById('profileAvatar').textContent = name.charAt(0).toUpperCase();
-                document.getElementById('editName').value = name;
-                document.getElementById('editBio').value = bio;
-
-                if (userData?.user_metadata?.subaccount_code) {
-                    document.getElementById('bankStatus').textContent = '✅ Active';
-                    document.getElementById('bankStatus').className = 'bank-status saved';
-                    document.getElementById('verifyBankBtn').style.display = 'none';
-                    document.getElementById('saveBankBtn').style.display = 'none';
-                    document.getElementById('bankCode').disabled = true;
-                    document.getElementById('accountNumber').disabled = true;
-                }
-
-                return true;
-            } catch (e) {
-                localStorage.removeItem('paypoint_user');
-                localStorage.removeItem('paypoint_session');
-                window.location.replace('login.html');
-                return false;
-            }
+        // ✅ LOAD AVATAR (NEW PART)
+        const avatarUrl = userData?.user_metadata?.avatar_url;
+        const avatarImg = document.getElementById('avatarImg');
+        const avatarPlaceholder = document.getElementById('avatarPlaceholder');
+        if (avatarUrl) {
+            avatarImg.src = avatarUrl;
+            avatarImg.style.display = 'block';
+            avatarPlaceholder.style.display = 'none';
+        } else {
+            avatarImg.style.display = 'none';
+            avatarPlaceholder.style.display = 'block';
         }
+
+        // Update UI
+        document.getElementById('userBadge').textContent = `👤 ${name}`;
+        document.getElementById('profileName').textContent = name;
+        document.getElementById('profileEmail').textContent = email;
+        document.getElementById('profileAvatar').textContent = name.charAt(0).toUpperCase();
+        document.getElementById('editName').value = name;
+        document.getElementById('editBio').value = bio;
+
+        if (userData?.user_metadata?.subaccount_code) {
+            document.getElementById('bankStatus').textContent = '✅ Active';
+            document.getElementById('bankStatus').className = 'bank-status saved';
+            document.getElementById('verifyBankBtn').style.display = 'none';
+            document.getElementById('saveBankBtn').style.display = 'none';
+            document.getElementById('bankCode').disabled = true;
+            document.getElementById('accountNumber').disabled = true;
+        }
+
+        return true;
+    } catch (e) {
+        localStorage.removeItem('paypoint_user');
+        localStorage.removeItem('paypoint_session');
+        window.location.replace('login.html');
+        return false;
+    }
+}
 
         // ============================================
         // FETCH SUBSCRIPTION TIER
@@ -875,6 +897,52 @@
             localStorage.removeItem('paypoint_session');
             window.location.replace('login.html');
         });
+// ============================================
+// AVATAR UPLOAD HANDLER
+// ============================================
+const avatarInput = document.getElementById('avatarInput');
+const avatarImg = document.getElementById('avatarImg');
+const avatarPlaceholder = document.getElementById('avatarPlaceholder');
+
+// Click avatar to upload
+document.getElementById('profileAvatar').addEventListener('click', () => {
+    avatarInput.click();
+});
+
+avatarInput.addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append('avatar', file);
+
+    try {
+        const token = localStorage.getItem('paypoint_session');
+        const res = await fetch(`${API_URL}/auth/upload-avatar`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            },
+            body: formData
+        });
+
+        const data = await res.json();
+        if (data.success) {
+            avatarImg.src = data.avatar_url;
+            avatarImg.style.display = 'block';
+            avatarPlaceholder.style.display = 'none';
+            // Update localStorage
+            const user = JSON.parse(localStorage.getItem('paypoint_user'));
+            user.user_metadata.avatar_url = data.avatar_url;
+            localStorage.setItem('paypoint_user', JSON.stringify(user));
+        } else {
+            alert('Failed to upload avatar');
+        }
+    } catch (err) {
+        console.error(err);
+        alert('Error uploading avatar');
+    }
+});
 
         // ============================================
         // INIT

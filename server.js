@@ -429,6 +429,67 @@ app.get('/api/auth/user', authenticate, async (req, res) => {
 });
 
 // ============================================
+// UPLOAD PROFILE PICTURE
+// ============================================
+const multer = require('multer');
+const storage = multer.memoryStorage();
+const upload = multer({ 
+    limits: { fileSize: 2 * 1024 * 1024 }, // 2 MB limit
+    fileFilter: (req, file, cb) => {
+        if (file.mimetype.startsWith('image/')) {
+            cb(null, true);
+        } else {
+            cb(new Error('Only images are allowed'), false);
+        }
+    }
+});
+
+app.post('/api/auth/upload-avatar', authenticate, upload.single('avatar'), async (req, res) => {
+    try {
+        if (!req.file) {
+            return res.status(400).json({ error: 'No image file provided' });
+        }
+
+        const userId = req.userId;
+        const fileExt = req.file.originalname.split('.').pop();
+        const fileName = `${userId}-${Date.now()}.${fileExt}`;
+
+        // Upload to Supabase Storage
+        const { data, error } = await supabaseAdmin
+            .storage
+            .from('avatars')
+            .upload(fileName, req.file.buffer, {
+                contentType: req.file.mimetype,
+                upsert: true
+            });
+
+        if (error) throw error;
+
+        // Get public URL
+        const { data: urlData } = supabaseAdmin
+            .storage
+            .from('avatars')
+            .getPublicUrl(fileName);
+
+        const avatarUrl = urlData.publicUrl;
+
+        // Update user metadata with avatar URL
+        const { error: updateError } = await supabase.auth.updateUser({
+            data: { avatar_url: avatarUrl }
+        });
+
+        if (updateError) throw updateError;
+
+        // Return the avatar URL
+        res.json({ success: true, avatar_url: avatarUrl });
+
+    } catch (err) {
+        console.error('Avatar upload error:', err);
+        res.status(500).json({ error: 'Failed to upload avatar' });
+    }
+});
+
+// ============================================
 // UPDATE PROFILE
 // ============================================
 app.put('/api/auth/update', authenticate, async (req, res) => {
