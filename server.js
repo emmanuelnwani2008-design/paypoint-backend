@@ -473,19 +473,22 @@ app.post('/api/auth/upload-avatar', authenticate, upload.single('avatar'), async
 
         const avatarUrl = urlData.publicUrl;
 
-        // Update user metadata with avatar URL
-        const { error: updateError } = await supabase.auth.updateUser({
-            data: { avatar_url: avatarUrl }
-        });
+        // ✅ FIX: Use admin client to update user metadata
+        const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(
+            userId,
+            { user_metadata: { avatar_url: avatarUrl } }
+        );
 
         if (updateError) throw updateError;
 
-        // Return the avatar URL
+        // Optionally, also update the profiles table (if you use it)
+        // await supabaseAdmin.from('profiles').update({ avatar_url: avatarUrl }).eq('id', userId);
+
         res.json({ success: true, avatar_url: avatarUrl });
 
     } catch (err) {
         console.error('Avatar upload error:', err);
-        res.status(500).json({ error: 'Failed to upload avatar' });
+        res.status(500).json({ error: 'Failed to upload avatar: ' + err.message });
     }
 });
 
