@@ -414,6 +414,7 @@
             };
         }
 
+
         function checkAuth() {
     const token = localStorage.getItem('paypoint_session');
     const user = localStorage.getItem('paypoint_user');
@@ -429,28 +430,35 @@
         const name = userData?.user_metadata?.name || userData?.name || 'Creator';
         const email = userData?.email || 'creator@example.com';
         const bio = userData?.user_metadata?.bio || '';
-
-        // ✅ LOAD AVATAR (NEW PART)
         const avatarUrl = userData?.user_metadata?.avatar_url;
+
+        // --- AVATAR LOADING (fixed) ---
         const avatarImg = document.getElementById('avatarImg');
         const avatarPlaceholder = document.getElementById('avatarPlaceholder');
+
         if (avatarUrl) {
             avatarImg.src = avatarUrl;
             avatarImg.style.display = 'block';
             avatarPlaceholder.style.display = 'none';
         } else {
             avatarImg.style.display = 'none';
-            avatarPlaceholder.style.display = 'block';
+            avatarPlaceholder.style.display = 'flex';
+            avatarPlaceholder.style.alignItems = 'center';
+            avatarPlaceholder.style.justifyContent = 'center';
+            avatarPlaceholder.style.fontSize = '48px';
+            avatarPlaceholder.style.color = '#4F7CFF';
+            // Show the first letter as a fallback avatar (like the sidebar)
+            avatarPlaceholder.textContent = name.charAt(0).toUpperCase();
         }
 
-        // Update UI
+        // --- Update UI (DO NOT touch profileAvatar's innerHTML) ---
         document.getElementById('userBadge').textContent = `👤 ${name}`;
         document.getElementById('profileName').textContent = name;
         document.getElementById('profileEmail').textContent = email;
-        document.getElementById('profileAvatar').textContent = name.charAt(0).toUpperCase();
         document.getElementById('editName').value = name;
         document.getElementById('editBio').value = bio;
 
+        // Update bank status if subaccount exists
         if (userData?.user_metadata?.subaccount_code) {
             document.getElementById('bankStatus').textContent = '✅ Active';
             document.getElementById('bankStatus').className = 'bank-status saved';
@@ -462,6 +470,7 @@
 
         return true;
     } catch (e) {
+        console.error('checkAuth error:', e);
         localStorage.removeItem('paypoint_user');
         localStorage.removeItem('paypoint_session');
         window.location.replace('login.html');

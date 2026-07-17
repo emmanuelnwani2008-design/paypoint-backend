@@ -5,13 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PayPoint · Finance OS for Creators</title>
     <!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-HFJ9JM358E"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-  gtag('config', 'G-HFJ9JM358E');
-</script>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-HFJ9JM358E"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-HFJ9JM358E');
+    </script>
+    <!-- Font Awesome (added to load the icons) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <style>
         /* ============================================
            CLEAN WHITE/BLACK/GREY THEME
@@ -54,6 +56,11 @@
             display: flex;
             align-items: center;
             gap: 8px;
+        }
+
+        .sidebar-logo img {
+            height: 32px;
+            width: auto;
         }
 
         .sidebar-logo span {
@@ -352,7 +359,7 @@
         .modal h2 { font-size: 22px; font-weight: 700; color: #000000; margin-bottom: 4px; }
         .modal p { color: #8A9AAB; font-size: 14px; margin-bottom: 20px; }
         .modal label { display: block; font-size: 13px; font-weight: 500; color: #5E6F82; margin-bottom: 4px; }
-        .modal input {
+        .modal input, .modal select {
             width: 100%;
             padding: 12px 16px;
             background: #F8FAFC;
@@ -364,7 +371,7 @@
             transition: border 0.2s ease;
             font-family: 'Inter', sans-serif;
         }
-        .modal input:focus { outline: none; border-color: #4F7CFF; }
+        .modal input:focus, .modal select:focus { outline: none; border-color: #4F7CFF; }
 
         .modal-actions {
             display: flex;
@@ -424,9 +431,10 @@
         </div>
 
         <div class="sidebar-nav">
+            <!-- FIXED: chart-pie -> fas fa-chart-pie -->
             <a href="dashboard.html" class="active">
-    <span class="icon"><i class="chart-pie"></i></span> Dashboard
-</a>
+                <span class="icon"><i class="fas fa-chart-pie"></i></span> Dashboard
+            </a>
             <a href="deals.html">
                 <span class="icon"><i class="fas fa-handshake"></i></span> Deals
                 <span class="badge">New</span>
@@ -626,9 +634,6 @@
                 document.getElementById('sidebarName').textContent = name;
                 document.getElementById('sidebarEmail').textContent = email;
                 document.getElementById('sidebarAvatar').textContent = name.charAt(0).toUpperCase();
-                
-                const badge = document.getElementById('userBadge');
-                if (badge) badge.textContent = '👤 ' + name;
                 
                 return true;
             } catch (e) {
