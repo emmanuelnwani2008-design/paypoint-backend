@@ -380,10 +380,7 @@
             align-items: center;
             z-index: 9999;
         }
-
-        .modal-overlay.active {
-            display: flex;
-        }
+        .modal-overlay.active { display: flex; }
 
         .modal {
             background: #FFFFFF;
@@ -482,10 +479,7 @@
             font-family: 'Inter', sans-serif;
             box-shadow: 0 2px 8px rgba(79, 124, 255, 0.25);
         }
-
-        .btn-save:hover {
-            opacity: 0.9;
-        }
+        .btn-save:hover { opacity: 0.9; }
 
         .btn-cancel {
             flex: 1;
@@ -500,10 +494,7 @@
             transition: background 0.2s ease;
             font-family: 'Inter', sans-serif;
         }
-
-        .btn-cancel:hover {
-            background: #EEF2F7;
-        }
+        .btn-cancel:hover { background: #EEF2F7; }
 
         @media (max-width: 768px) {
             .navbar {
@@ -547,20 +538,18 @@
         <!-- NAVBAR -->
         <nav class="navbar">
             <a href="dashboard.html" class="logo">
-    <img src="logo.png" alt="PayPoint" onerror="this.style.display='none'">
-    PayPoint <span>· Expenses</span>
-</a>
-<div class="nav-links">
-    <a href="dashboard.html">Dashboard</a>
-    <a href="deals.html">Deals</a>
-    <a href="expense.html" class="active">Expenses</a>
-    <a href="invoice.html">Invoices</a>
-    <a href="creator.html">Creator</a>
-    <span class="user-badge" id="userBadge">👤 Creator</span>
-    <a href="#" class="logout" id="navLogout">Logout</a>
-</div>
-
-
+                <img src="logo.png" alt="PayPoint" onerror="this.style.display='none'">
+                PayPoint <span>· Expenses</span>
+            </a>
+            <div class="nav-links">
+                <a href="dashboard.html">Dashboard</a>
+                <a href="deals.html">Deals</a>
+                <a href="expense.html" class="active">Expenses</a>
+                <a href="invoice.html">Invoices</a>
+                <a href="creator.html">Creator</a>
+                <span class="user-badge" id="userBadge">👤 Creator</span>
+                <a href="#" class="logout" id="navLogout">Logout</a>
+            </div>
         </nav>
 
         <!-- PAGE HEADER -->
@@ -579,11 +568,11 @@
             </div>
             <div class="stat-card">
                 <span class="label">Total Spent</span>
-                <span class="value blue" id="totalSpent">$0</span>
+                <span class="value blue" id="totalSpent">₦0</span>
             </div>
             <div class="stat-card">
                 <span class="label">Average Per Expense</span>
-                <span class="value green" id="averageExpense">$0</span>
+                <span class="value green" id="averageExpense">₦0</span>
             </div>
         </div>
 
@@ -639,7 +628,7 @@
             <label for="modalVendor">Vendor Name</label>
             <input type="text" id="modalVendor" placeholder="e.g. Best Buy, Amazon, Starbucks">
 
-            <label for="modalAmount">Amount ($)</label>
+            <label for="modalAmount">Amount</label>
             <input type="number" id="modalAmount" placeholder="e.g. 299.99">
 
             <label for="modalCategory">Category</label>
@@ -650,6 +639,12 @@
                 <option value="software">Software (Editing, Apps)</option>
                 <option value="office">Office (Desk, Supplies)</option>
                 <option value="other">Other</option>
+            </select>
+
+            <label for="modalCurrency">Currency</label>
+            <select id="modalCurrency">
+                <option value="NGN">₦ NGN</option>
+                <option value="USD">$ USD</option>
             </select>
 
             <label for="modalReceipt">Receipt Photo (Optional)</label>
@@ -680,6 +675,16 @@
             };
         }
 
+        // ============================================
+        // CURRENCY HELPER
+        // ============================================
+        function formatCurrency(amount, currency) {
+            if (!amount) return '₦0';
+            const symbols = { USD: '$', NGN: '₦' };
+            const symbol = symbols[currency] || '₦';
+            return symbol + Number(amount).toLocaleString();
+        }
+
         let allExpenses = [];
 
         // DOM REFERENCES
@@ -697,30 +702,31 @@
         const modalVendor = document.getElementById('modalVendor');
         const modalAmount = document.getElementById('modalAmount');
         const modalCategory = document.getElementById('modalCategory');
+        const modalCurrency = document.getElementById('modalCurrency');
         const modalReceipt = document.getElementById('modalReceipt');
         const receiptPreview = document.getElementById('receiptPreview');
         const receiptPreviewImg = document.getElementById('receiptPreviewImg');
 
         // CHECK AUTHENTICATION
         function checkAuth() {
-    const user = localStorage.getItem('paypoint_user');
-    if (!user) {
-        window.location.replace('login.html');
-        return false;
-    }
-    
-    try {
-        const userData = JSON.parse(user);
-        const name = userData?.user_metadata?.name || userData?.name || 'Creator';
-        document.getElementById('userBadge').textContent = `👤 ${name}`;
-        return true;
-    } catch (e) {
-        localStorage.removeItem('paypoint_user');
-        localStorage.removeItem('paypoint_session');
-        window.location.replace('login.html');
-        return false;
-    }
-}
+            const user = localStorage.getItem('paypoint_user');
+            if (!user) {
+                window.location.replace('login.html');
+                return false;
+            }
+            
+            try {
+                const userData = JSON.parse(user);
+                const name = userData?.user_metadata?.name || userData?.name || 'Creator';
+                document.getElementById('userBadge').textContent = `👤 ${name}`;
+                return true;
+            } catch (e) {
+                localStorage.removeItem('paypoint_user');
+                localStorage.removeItem('paypoint_session');
+                window.location.replace('login.html');
+                return false;
+            }
+        }
 
 
         // LOAD EXPENSES
@@ -782,7 +788,7 @@
                 tr.innerHTML = `
                     <td>${receiptHtml}</td>
                     <td><span class="vendor-name">${exp.vendor}</span></td>
-                    <td>$${Number(exp.amount).toLocaleString()}</td>
+                    <td>${formatCurrency(exp.amount, exp.currency)}</td>
                     <td><span class="category-badge ${category}">${category}</span></td>
                     <td>${date}</td>
                     <td>
@@ -803,8 +809,8 @@
             const avg = total > 0 ? spent / total : 0;
 
             totalExpensesEl.textContent = total;
-            totalSpentEl.textContent = `$${spent.toLocaleString()}`;
-            averageExpenseEl.textContent = `$${avg.toFixed(2)}`;
+            totalSpentEl.textContent = formatCurrency(spent, 'NGN');
+            averageExpenseEl.textContent = formatCurrency(avg, 'NGN');
         }
 
         function filterExpenses() {
@@ -846,6 +852,7 @@
             modalVendor.value = '';
             modalAmount.value = '';
             modalCategory.value = 'equipment';
+            modalCurrency.value = 'NGN';
             modalReceipt.value = '';
             receiptPreview.style.display = 'none';
             modal.classList.add('active');
@@ -864,6 +871,7 @@
             const vendor = modalVendor.value.trim();
             const amount = modalAmount.value;
             const category = modalCategory.value;
+            const currency = modalCurrency.value;
 
             if (!vendor || !amount) {
                 alert('Vendor and Amount are required!');
@@ -886,7 +894,8 @@
                 vendor,
                 amount: parseFloat(amount),
                 category: category || 'other',
-                receipt_url: receipt_url || ''
+                receipt_url: receipt_url || '',
+                currency: currency
             };
 
             try {

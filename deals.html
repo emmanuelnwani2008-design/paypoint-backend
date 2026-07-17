@@ -578,11 +578,11 @@
             </div>
             <div class="stat-card">
                 <span class="label">Total Revenue</span>
-                <span class="value blue" id="totalRevenue">$0</span>
+                <span class="value blue" id="totalRevenue">₦0</span>
             </div>
             <div class="stat-card">
                 <span class="label">Pending Payments</span>
-                <span class="value red" id="pendingPayments">$0</span>
+                <span class="value red" id="pendingPayments">₦0</span>
             </div>
         </div>
 
@@ -641,7 +641,7 @@
             <label for="modalBrand">Brand Name</label>
             <input type="text" id="modalBrand" placeholder="e.g. Nike, Glossier, Samsung">
 
-            <label for="modalAmount">Amount ($)</label>
+            <label for="modalAmount">Amount</label>
             <input type="number" id="modalAmount" placeholder="e.g. 5000">
 
             <label for="modalDeliverable">Deliverable</label>
@@ -656,11 +656,12 @@
                 <option value="paid">Paid</option>
                 <option value="overdue">Overdue</option>
             </select>
+
             <label for="dealCurrency">Currency</label>
-<select id="dealCurrency">
-    <option value="NGN">₦ NGN</option>
-    <option value="USD">$ USD</option>
-</select>
+            <select id="dealCurrency">
+                <option value="NGN">₦ NGN</option>
+                <option value="USD">$ USD</option>
+            </select>
 
             <input type="hidden" id="modalDealId" value="">
 
@@ -719,35 +720,36 @@
         function showError(msg) {
             alert(msg || 'Something went wrong');
         }
+
         function formatCurrency(amount, currency) {
-    if (!amount) return '₦0';
-    const symbols = { USD: '$', NGN: '₦' };
-    const symbol = symbols[currency] || '₦';
-    return symbol + Number(amount).toLocaleString();
-}
+            if (!amount) return '₦0';
+            const symbols = { USD: '$', NGN: '₦' };
+            const symbol = symbols[currency] || '₦';
+            return symbol + Number(amount).toLocaleString();
+        }
 
         // ============================================
         // CHECK AUTH
         // ============================================
         function checkAuth() {
-    const user = localStorage.getItem('paypoint_user');
-    if (!user) {
-        window.location.replace('login.html');
-        return false;
-    }
-    
-    try {
-        const userData = JSON.parse(user);
-        const name = userData?.user_metadata?.name || userData?.name || 'Creator';
-        document.getElementById('userBadge').textContent = `👤 ${name}`;
-        return true;
-    } catch (e) {
-        localStorage.removeItem('paypoint_user');
-        localStorage.removeItem('paypoint_session');
-        window.location.replace('login.html');
-        return false;
-    }
-}
+            const user = localStorage.getItem('paypoint_user');
+            if (!user) {
+                window.location.replace('login.html');
+                return false;
+            }
+            
+            try {
+                const userData = JSON.parse(user);
+                const name = userData?.user_metadata?.name || userData?.name || 'Creator';
+                document.getElementById('userBadge').textContent = `👤 ${name}`;
+                return true;
+            } catch (e) {
+                localStorage.removeItem('paypoint_user');
+                localStorage.removeItem('paypoint_session');
+                window.location.replace('login.html');
+                return false;
+            }
+        }
 
         // ============================================
         // LOAD DEALS
@@ -838,14 +840,36 @@
         // ============================================
         function updateStats(deals) {
             const total = deals.length;
-            const revenue = deals.reduce((sum, d) => sum + Number(d.amount), 0);
-            const pending = deals
-                .filter(d => d.status === 'pending' || d.status === 'overdue')
+            
+            const revenueNGN = deals
+                .filter(d => d.currency === 'NGN' || !d.currency)
+                .reduce((sum, d) => sum + Number(d.amount), 0);
+            const revenueUSD = deals
+                .filter(d => d.currency === 'USD')
+                .reduce((sum, d) => sum + Number(d.amount), 0);
+            
+            const pendingNGN = deals
+                .filter(d => (d.status === 'pending' || d.status === 'overdue') && (d.currency === 'NGN' || !d.currency))
+                .reduce((sum, d) => sum + Number(d.amount), 0);
+            const pendingUSD = deals
+                .filter(d => (d.status === 'pending' || d.status === 'overdue') && d.currency === 'USD')
                 .reduce((sum, d) => sum + Number(d.amount), 0);
 
             totalDealsEl.textContent = total;
-            totalRevenueEl.textContent = `$${revenue.toLocaleString()}`;
-            pendingPaymentsEl.textContent = `$${pending.toLocaleString()}`;
+            
+            let revenueText = '';
+            if (revenueNGN > 0) revenueText += `₦${revenueNGN.toLocaleString()}`;
+            if (revenueNGN > 0 && revenueUSD > 0) revenueText += ' | ';
+            if (revenueUSD > 0) revenueText += `$${revenueUSD.toLocaleString()}`;
+            if (!revenueText) revenueText = '₦0';
+            totalRevenueEl.textContent = revenueText;
+            
+            let pendingText = '';
+            if (pendingNGN > 0) pendingText += `₦${pendingNGN.toLocaleString()}`;
+            if (pendingNGN > 0 && pendingUSD > 0) pendingText += ' | ';
+            if (pendingUSD > 0) pendingText += `$${pendingUSD.toLocaleString()}`;
+            if (!pendingText) pendingText = '₦0';
+            pendingPaymentsEl.textContent = pendingText;
         }
 
         // ============================================
@@ -930,6 +954,7 @@
             const deliverable = modalDeliverable.value.trim();
             const due_date = modalDueDate.value;
             const status = modalStatus.value;
+            const currency = document.getElementById('dealCurrency').value;
 
             if (!brand_name || !amount) {
                 alert('Brand Name and Amount are required!');
@@ -941,7 +966,8 @@
                 amount: parseFloat(amount),
                 deliverable: deliverable || '',
                 due_date: due_date || null,
-                status: status || 'pending'
+                status: status || 'pending',
+                currency: currency
             };
 
             const isEdit = currentEditId !== null;
@@ -995,17 +1021,17 @@
         }
 
         // ============================================
-        // LOGOUT - FIXED
+        // LOGOUT
         // ============================================
         document.getElementById('navLogout')?.addEventListener('click', async (e) => {
-    e.preventDefault();
-    try {
-        await fetch(`${API_URL}/auth/logout`, { method: 'POST', headers: getAuthHeaders() });
-    } catch (err) {}
-    localStorage.removeItem('paypoint_user');
-    localStorage.removeItem('paypoint_session');
-    window.location.replace('login.html');
-});
+            e.preventDefault();
+            try {
+                await fetch(`${API_URL}/auth/logout`, { method: 'POST', headers: getAuthHeaders() });
+            } catch (err) {}
+            localStorage.removeItem('paypoint_user');
+            localStorage.removeItem('paypoint_session');
+            window.location.replace('login.html');
+        });
 
         // ============================================
         // INIT

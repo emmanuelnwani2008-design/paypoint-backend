@@ -466,22 +466,22 @@
         <section class="metrics-grid" id="metricsGrid">
             <div class="metric-card">
                 <div class="label">Total Revenue</div>
-                <div class="value blue" id="totalRevenue">$0</div>
+                <div class="value blue" id="totalRevenue">₦0</div>
                 <div class="sub">↑ 12% this month</div>
             </div>
             <div class="metric-card">
                 <div class="label">Total Expenses</div>
-                <div class="value white" id="totalExpenses">$0</div>
+                <div class="value white" id="totalExpenses">₦0</div>
                 <div class="sub">↓ 3% from last month</div>
             </div>
             <div class="metric-card">
                 <div class="label">Taxes Set Aside</div>
-                <div class="value gold" id="totalTaxes">$0</div>
+                <div class="value gold" id="totalTaxes">₦0</div>
                 <div class="sub">30% of net profit</div>
             </div>
             <div class="metric-card">
                 <div class="label">Real Take-Home</div>
-                <div class="value green" id="takeHome">$0</div>
+                <div class="value green" id="takeHome">₦0</div>
                 <div class="sub">What you actually keep</div>
             </div>
         </section>
@@ -517,7 +517,7 @@
             <label for="brandName">Brand Name</label>
             <input type="text" id="brandName" placeholder="e.g. Nike, Glossier, Samsung">
 
-            <label for="dealAmount">Amount ($)</label>
+            <label for="dealAmount">Amount</label>
             <input type="number" id="dealAmount" placeholder="e.g. 5000">
 
             <label for="dealDeliverable">Deliverable</label>
@@ -525,6 +525,12 @@
 
             <label for="dealDueDate">Due Date</label>
             <input type="date" id="dealDueDate">
+
+            <label for="dealCurrency">Currency</label>
+            <select id="dealCurrency">
+                <option value="NGN">₦ NGN</option>
+                <option value="USD">$ USD</option>
+            </select>
 
             <div class="modal-actions">
                 <button class="btn-cancel" id="closeModalBtn">Cancel</button>
@@ -539,6 +545,19 @@
         // ============================================
         const API_URL = 'https://paypoint-backend-9m63.onrender.com/api';
 
+        // ============================================
+        // CURRENCY HELPER
+        // ============================================
+        function formatCurrency(amount, currency) {
+            if (!amount) return '₦0';
+            const symbols = { USD: '$', NGN: '₦' };
+            const symbol = symbols[currency] || '₦';
+            return symbol + Number(amount).toLocaleString();
+        }
+
+        // ============================================
+        // AUTH HELPERS
+        // ============================================
         function getAuthHeaders() {
             const token = localStorage.getItem('paypoint_session');
             return {
@@ -590,47 +609,57 @@
         // CHECK AUTHENTICATION
         // ============================================
         function checkAuth() {
-    const user = localStorage.getItem('paypoint_user');
-    console.log('🔍 checkAuth - user from localStorage:', user);
+            const user = localStorage.getItem('paypoint_user');
+            if (!user) {
+                window.location.replace('login.html');
+                return false;
+            }
 
-    if (!user) {
-        console.log('❌ No user found, redirecting to login...');
-        window.location.replace('login.html');
-        return false;
-    }
-
-    try {
-        const userData = JSON.parse(user);
-        console.log('✅ Parsed userData:', userData);
-
-        // Ensure the user object has an id (to confirm it's valid)
-        if (!userData.id) {
-            console.warn('⚠️ User object missing id, clearing storage...');
-            throw new Error('Invalid user - missing id');
+            try {
+                const userData = JSON.parse(user);
+                if (!userData.id) {
+                    throw new Error('Invalid user - missing id');
+                }
+                const name = userData?.user_metadata?.name || userData?.name || 'Creator';
+                const email = userData?.email || 'creator@paypoint.com';
+                
+                document.getElementById('sidebarName').textContent = name;
+                document.getElementById('sidebarEmail').textContent = email;
+                document.getElementById('sidebarAvatar').textContent = name.charAt(0).toUpperCase();
+                
+                const badge = document.getElementById('userBadge');
+                if (badge) badge.textContent = '👤 ' + name;
+                
+                return true;
+            } catch (e) {
+                console.error('checkAuth error:', e);
+                localStorage.removeItem('paypoint_user');
+                localStorage.removeItem('paypoint_session');
+                window.location.replace('login.html');
+                return false;
+            }
         }
 
-        // Update UI with user info
-        const name = userData?.user_metadata?.name || userData?.name || 'Creator';
-        const email = userData?.email || 'creator@paypoint.com';
-        
-        // Update sidebar
-        document.getElementById('sidebarName').textContent = name;
-        document.getElementById('sidebarEmail').textContent = email;
-        document.getElementById('sidebarAvatar').textContent = name.charAt(0).toUpperCase();
-        
-        // Update badge if exists
-        const badge = document.getElementById('userBadge');
-        if (badge) badge.textContent = '👤 ' + name;
-        
-        return true;
-    } catch (e) {
-        console.error('⚠️ checkAuth error:', e);
-        localStorage.removeItem('paypoint_user');
-        localStorage.removeItem('paypoint_session');
-        window.location.replace('login.html');
-        return false;
-    }
-}
+        // ============================================
+        // FETCH SUBSCRIPTION
+        // ============================================
+        async function fetchUserWithSubscription() {
+            const token = localStorage.getItem('paypoint_session');
+            if (!token) return;
+            try {
+                const res = await fetch(`${API_URL}/auth/user`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await res.json();
+                if (data.success && data.user) {
+                    const tier = data.user.user_metadata?.subscription_tier || 'free';
+                    localStorage.setItem('user_subscription_tier', tier);
+                    localStorage.setItem('paypoint_user', JSON.stringify(data.user));
+                }
+            } catch (err) {
+                console.error('Failed to fetch subscription:', err);
+            }
+        }
 
         // ============================================
         // LOAD DEALS
@@ -686,9 +715,9 @@
             const taxes = totalRevenue * 0.30;
             const takeHome = totalRevenue - taxes;
 
-            totalRevenueEl.textContent = `$${totalRevenue.toLocaleString()}`;
-            totalTaxesEl.textContent = `$${taxes.toLocaleString()}`;
-            takeHomeEl.textContent = `$${takeHome.toLocaleString()}`;
+            totalRevenueEl.textContent = formatCurrency(totalRevenue, 'NGN');
+            totalTaxesEl.textContent = formatCurrency(taxes, 'NGN');
+            takeHomeEl.textContent = formatCurrency(takeHome, 'NGN');
         }
 
         // ============================================
@@ -701,8 +730,19 @@
 
                 if (result.success && result.data.length > 0) {
                     renderExpenses(result.data);
-                    const total = result.data.reduce((sum, e) => sum + Number(e.amount), 0);
-                    totalExpensesEl.textContent = `$${total.toLocaleString()}`;
+                    const expenses = result.data;
+                    const totalNGN = expenses
+                        .filter(e => e.currency === 'NGN' || !e.currency)
+                        .reduce((sum, e) => sum + Number(e.amount), 0);
+                    const totalUSD = expenses
+                        .filter(e => e.currency === 'USD')
+                        .reduce((sum, e) => sum + Number(e.amount), 0);
+                    let totalText = '';
+                    if (totalNGN > 0) totalText += `₦${totalNGN.toLocaleString()}`;
+                    if (totalNGN > 0 && totalUSD > 0) totalText += ' | ';
+                    if (totalUSD > 0) totalText += `$${totalUSD.toLocaleString()}`;
+                    if (!totalText) totalText = '₦0';
+                    totalExpensesEl.textContent = totalText;
                 } else {
                     expensesList.innerHTML =
                         `<div style="color:#8A9AAB; font-size:14px; padding:12px 0;">No expenses logged yet.</div>`;
@@ -721,7 +761,7 @@
                     <div class="expense-vendor">${exp.vendor}</div>
                     <div>
                         <span class="expense-category">${exp.category || 'Uncategorized'}</span>
-                        <span class="expense-amount">-$${Number(exp.amount).toLocaleString()}</span>
+                        <span class="expense-amount">-${formatCurrency(exp.amount, exp.currency)}</span>
                     </div>
                 `;
                 expensesList.appendChild(div);
@@ -736,6 +776,7 @@
             const amount = document.getElementById('dealAmount').value;
             const deliverable = document.getElementById('dealDeliverable').value.trim();
             const due_date = document.getElementById('dealDueDate').value;
+            const currency = document.getElementById('dealCurrency').value;
 
             if (!brand_name || !amount) {
                 alert('Brand Name and Amount are required!');
@@ -747,7 +788,8 @@
                 amount: parseFloat(amount),
                 deliverable: deliverable || '',
                 due_date: due_date || null,
-                status: 'pending'
+                status: 'pending',
+                currency: currency
             };
 
             try {
@@ -766,15 +808,6 @@
                     document.getElementById('dealDeliverable').value = '';
                     document.getElementById('dealDueDate').value = '';
                     loadDeals();
-                    const currency = document.getElementById('dealCurrency').value;
-const dealData = {
-    brand_name,
-    amount: parseFloat(amount),
-    deliverable: deliverable || '',
-    due_date: due_date || null,
-    status: 'pending',
-    currency: currency   // <-- add this
-};
                 } else {
                     alert('❌ Error: ' + (result.error || 'Unknown error'));
                 }
@@ -811,38 +844,11 @@ const dealData = {
         // LOAD EVERYTHING
         // ============================================
         if (checkAuth()) {
-            async function fetchUserWithSubscription() {
-    const token = localStorage.getItem('paypoint_session');
-    if (!token) return;
-    try {
-        const res = await fetch(`${API_URL}/auth/user`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-        const data = await res.json();
-        if (data.success && data.user) {
-            const tier = data.user.user_metadata?.subscription_tier || 'free';
-            localStorage.setItem('user_subscription_tier', tier);
-            localStorage.setItem('paypoint_user', JSON.stringify(data.user));
-        }
-    } catch (err) {
-        console.error('Failed to fetch subscription:', err);
-    }
-}
-
-if (checkAuth()) {
-    fetchUserWithSubscription();
-    loadDeals();
-    loadExpenses();
-}
+            fetchUserWithSubscription();
             loadDeals();
             loadExpenses();
         }
-function formatCurrency(amount, currency) {
-    if (!amount) return '₦0';
-    const symbols = { USD: '$', NGN: '₦' };
-    const symbol = symbols[currency] || '₦';
-    return symbol + Number(amount).toLocaleString();
-}
+
         console.log('🚀 PayPoint Dashboard loaded');
         console.log('📡 Connected to:', API_URL);
     </script>

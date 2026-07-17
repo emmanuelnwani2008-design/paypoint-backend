@@ -280,16 +280,15 @@
                 <div class="profile-avatar" id="profileAvatar">👤</div>
                 <div class="profile-name" id="profileName">Creator</div>
                 <div class="profile-email" id="profileEmail">creator@example.com</div>
-                <!-- ✅ Tier display (added) -->
                 <div class="profile-tier">
                     🏷️ Tier: <span id="userTierDisplay">Free</span>
                 </div>
                 <div class="profile-joined" id="profileJoined">Joined: Today</div>
                 <div class="sidebar-stats">
                     <div class="sidebar-stat"><div class="num" id="statDeals">0</div><div class="label">Deals</div></div>
-                    <div class="sidebar-stat"><div class="num" id="statRevenue">$0</div><div class="label">Revenue</div></div>
+                    <div class="sidebar-stat"><div class="num" id="statRevenue">₦0</div><div class="label">Revenue</div></div>
                     <div class="sidebar-stat"><div class="num" id="statExpenses">0</div><div class="label">Expenses</div></div>
-                    <div class="sidebar-stat"><div class="num" id="statSpent">$0</div><div class="label">Spent</div></div>
+                    <div class="sidebar-stat"><div class="num" id="statSpent">₦0</div><div class="label">Spent</div></div>
                 </div>
             </div>
 
@@ -430,7 +429,6 @@
                 document.getElementById('editName').value = name;
                 document.getElementById('editBio').value = bio;
 
-                // Check if user already has a subaccount
                 if (userData?.user_metadata?.subaccount_code) {
                     document.getElementById('bankStatus').textContent = '✅ Active';
                     document.getElementById('bankStatus').className = 'bank-status saved';
@@ -503,15 +501,40 @@
 
                 if (dealsResult.success) {
                     const deals = dealsResult.data || [];
-                    const totalRevenue = deals.reduce((sum, d) => sum + Number(d.amount), 0);
                     document.getElementById('statDeals').textContent = deals.length;
-                    document.getElementById('statRevenue').textContent = `$${totalRevenue.toLocaleString()}`;
+                    
+                    const revenueNGN = deals
+                        .filter(d => d.currency === 'NGN' || !d.currency)
+                        .reduce((sum, d) => sum + Number(d.amount), 0);
+                    const revenueUSD = deals
+                        .filter(d => d.currency === 'USD')
+                        .reduce((sum, d) => sum + Number(d.amount), 0);
+                    
+                    let revenueText = '';
+                    if (revenueNGN > 0) revenueText += `₦${revenueNGN.toLocaleString()}`;
+                    if (revenueNGN > 0 && revenueUSD > 0) revenueText += ' | ';
+                    if (revenueUSD > 0) revenueText += `$${revenueUSD.toLocaleString()}`;
+                    if (!revenueText) revenueText = '₦0';
+                    document.getElementById('statRevenue').textContent = revenueText;
                 }
+                
                 if (expensesResult.success) {
                     const expenses = expensesResult.data || [];
-                    const totalSpent = expenses.reduce((sum, e) => sum + Number(e.amount), 0);
                     document.getElementById('statExpenses').textContent = expenses.length;
-                    document.getElementById('statSpent').textContent = `$${totalSpent.toLocaleString()}`;
+                    
+                    const totalNGN = expenses
+                        .filter(e => e.currency === 'NGN' || !e.currency)
+                        .reduce((sum, e) => sum + Number(e.amount), 0);
+                    const totalUSD = expenses
+                        .filter(e => e.currency === 'USD')
+                        .reduce((sum, e) => sum + Number(e.amount), 0);
+                    
+                    let totalText = '';
+                    if (totalNGN > 0) totalText += `₦${totalNGN.toLocaleString()}`;
+                    if (totalNGN > 0 && totalUSD > 0) totalText += ' | ';
+                    if (totalUSD > 0) totalText += `$${totalUSD.toLocaleString()}`;
+                    if (!totalText) totalText = '₦0';
+                    document.getElementById('statSpent').textContent = totalText;
                 }
             } catch (err) {
                 console.error('Error loading stats:', err);
