@@ -58,8 +58,6 @@ app.use(cors({
     maxAge: 86400,
 }));
 
-// Request logging
-app.use(morgan('combined'));
 
 const limiter = rateLimit({
     windowMs: 15 * 60 * 1000,
