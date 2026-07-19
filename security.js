@@ -2,13 +2,13 @@ const helmet = require('helmet');
 const cors = require('cors');
 const rateLimit = require('express-rate-limit');
 const xss = require('xss-clean');
-const morgan = require('morgan');
+
 
 function createSecurity(app, opts = {}) {
   const { allowedOrigins = ['http://localhost:3000'], rate = { windowMs: 15 * 60 * 1000, max: 100 } } = opts;
 
   app.use(helmet());
-  app.use(morgan('combined'));
+  
 
   // CORS - restrict to allowed origins
   const corsOptions = {
