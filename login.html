@@ -121,6 +121,16 @@
         .form-group .password-wrapper .toggle-password:hover {
             color: #4F7CFF;
         }
+        /* Remove browser autofill highlight */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0 30px #F8FAFC inset !important;
+    -webkit-text-fill-color: #000000 !important;
+    background-color: #F8FAFC !important;
+    background-clip: padding-box !important;
+}
         .btn-primary {
             width: 100%;
             background: #4F7CFF;
