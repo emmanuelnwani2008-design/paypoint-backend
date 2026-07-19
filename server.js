@@ -5,9 +5,9 @@ const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const { createClient } = require('@supabase/supabase-js');
 const PDFDocument = require('pdfkit');
-const nodemailer = require('nodemailer');   // ✅ declared once
-const crypto = require('crypto');           // ✅ declared once
-const cron = require('node-cron');          // ✅ declared once
+const nodemailer = require('nodemailer');
+const crypto = require('crypto');
+const cron = require('node-cron');
 
 const app = express();
 app.set('trust proxy', 1);
@@ -105,14 +105,23 @@ const supabase = createClient(supabaseUrl, supabaseAnonKey);
 const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
 
 // ============================================
-// Email Transporter (used by cron job)
+// Email Transporter (used by cron job & invoice)
 // ============================================
 const transporter = nodemailer.createTransport({
-    service: 'gmail',
+    host: 'smtp.gmail.com',
+    port: 587,
+    secure: false,
     auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS
-    }
+    },
+    connectionTimeout: 10000,
+    greetingTimeout: 10000,
+    socketTimeout: 20000,
+    tls: {
+        rejectUnauthorized: false
+    },
+    requireTLS: true
 });
 
 // ============================================
@@ -122,7 +131,6 @@ cron.schedule('0 9 * * *', async () => {
     console.log('🔔 Running overdue invoice check...');
 
     try {
-        // Fetch overdue invoices with deal details
         const { data: invoices, error } = await supabase
             .from('invoices')
             .select(`
@@ -158,7 +166,6 @@ cron.schedule('0 9 * * *', async () => {
             const dueDate = deal.due_date;
             if (!dueDate) continue;
 
-            // Get the creator's email and tier from profiles
             const { data: profile, error: profileError } = await supabase
                 .from('profiles')
                 .select('email, subscription_tier, user_metadata')
@@ -170,7 +177,6 @@ cron.schedule('0 9 * * *', async () => {
                 continue;
             }
 
-            // Only send reminders for Pro users
             if (profile.subscription_tier !== 'pro') {
                 continue;
             }
@@ -254,10 +260,9 @@ function isValidEmail(email) {
     return emailRegex.test(email);
 }
 
-// ✅ FIX ReDoS vulnerability – safe, non‑backtracking replace
 function sanitizeInput(str) {
     if (!str || typeof str !== 'string') return str;
-    if (str.length > 10000) return str.substring(0, 10000); // prevent long input abuse
+    if (str.length > 10000) return str.substring(0, 10000);
     const map = {
         '&': '&amp;',
         '<': '&lt;',
@@ -269,7 +274,6 @@ function sanitizeInput(str) {
     return str.replace(/[&<>"'\/]/g, function(m) { return map[m]; });
 }
 
-// ✅ HTML escaping for portal route (XSS prevention)
 function escapeHtml(text) {
     if (!text) return '';
     return String(text)
@@ -363,7 +367,6 @@ app.post('/api/auth/signup', authLimiter, async (req, res) => {
             return res.status(400).json({ error: error.message });
         }
 
-        // Create profile entry for new user
         if (data.user) {
             await supabaseAdmin
                 .from('profiles')
@@ -448,7 +451,7 @@ app.get('/api/auth/user', authenticate, async (req, res) => {
 const multer = require('multer');
 const storage = multer.memoryStorage();
 const upload = multer({ 
-    limits: { fileSize: 2 * 1024 * 1024 }, // 2 MB limit
+    limits: { fileSize: 2 * 1024 * 1024 },
     fileFilter: (req, file, cb) => {
         if (file.mimetype.startsWith('image/')) {
             cb(null, true);
@@ -468,7 +471,6 @@ app.post('/api/auth/upload-avatar', authenticate, upload.single('avatar'), async
         const fileExt = req.file.originalname.split('.').pop();
         const fileName = `${userId}-${Date.now()}.${fileExt}`;
 
-        // Upload to Supabase Storage
         const { data, error } = await supabaseAdmin
             .storage
             .from('avatars')
@@ -479,7 +481,6 @@ app.post('/api/auth/upload-avatar', authenticate, upload.single('avatar'), async
 
         if (error) throw error;
 
-        // Get public URL
         const { data: urlData } = supabaseAdmin
             .storage
             .from('avatars')
@@ -487,16 +488,12 @@ app.post('/api/auth/upload-avatar', authenticate, upload.single('avatar'), async
 
         const avatarUrl = urlData.publicUrl;
 
-        // ✅ FIX: Use admin client to update user metadata
         const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(
             userId,
             { user_metadata: { avatar_url: avatarUrl } }
         );
 
         if (updateError) throw updateError;
-
-        // Optionally, also update the profiles table (if you use it)
-        // await supabaseAdmin.from('profiles').update({ avatar_url: avatarUrl }).eq('id', userId);
 
         res.json({ success: true, avatar_url: avatarUrl });
 
@@ -773,7 +770,6 @@ if (!PAYSTACK_SECRET_KEY) {
     process.exit(1);
 }
 
-// Initialize payment for a deal (NO 5% FEE)
 app.post('/api/payments/initialize', authenticate, async (req, res) => {
     try {
         const { dealId, email } = req.body;
@@ -849,7 +845,6 @@ app.post('/api/payments/initialize', authenticate, async (req, res) => {
     }
 });
 
-// ✅ FIX SSRF: validate reference format
 app.get('/api/payments/verify/:reference', authenticate, async (req, res) => {
     try {
         const { reference } = req.params;
@@ -974,26 +969,25 @@ app.post('/api/invoices/create', authenticate, async (req, res) => {
         // Generate portal token
         const portalToken = crypto.randomBytes(32).toString('hex');
 
-        await supabase
+        // ✅ FIX: Add error handling for token update
+        const { error: tokenError } = await supabase
             .from('invoices')
             .update({ portal_token: portalToken })
             .eq('id', data[0].id);
+
+        if (tokenError) {
+            console.error('❌ Failed to save portal token:', tokenError);
+        } else {
+            console.log(`✅ Portal token saved for invoice ${data[0].id}`);
+        }
 
         const portalLink = `${process.env.FRONTEND_URL}/portal/${portalToken}`;
 
         if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
             try {
-                const transporter = nodemailer.createTransport({
-                    service: 'gmail',
-                    auth: {
-                        user: process.env.EMAIL_USER,
-                        pass: process.env.EMAIL_PASS
-                    }
-                });
-
-                const dueDate = deal.due_date ? new Date(deal.due_date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : 'Not set';
-
-                await transporter.sendMail({
+                // Use the global transporter (already defined)
+                // ✅ FIX: Send email asynchronously – don't await
+                transporter.sendMail({
                     from: process.env.EMAIL_USER,
                     to: brandEmail,
                     subject: `📄 Invoice #${invNumber} from ${deal.brand_name}`,
@@ -1006,7 +1000,7 @@ app.post('/api/invoices/create', authenticate, async (req, res) => {
                             <p><strong>Brand:</strong> ${deal.brand_name}</p>
                             <p><strong>Amount:</strong> <span style="font-size: 20px; font-weight: bold; color: #4F7CFF;">$${Number(deal.amount).toLocaleString()}</span></p>
                             <p><strong>Deliverable:</strong> ${deal.deliverable || 'Not specified'}</p>
-                            <p><strong>Due Date:</strong> ${dueDate}</p>
+                            <p><strong>Due Date:</strong> ${deal.due_date ? new Date(deal.due_date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : 'Not set'}</p>
                             <hr style="border: none; border-top: 1px solid #E8EDF2;">
                             <p style="text-align: center; color: #8A9AAB; font-size: 14px;">
                                 <a href="${portalLink}" style="color: #4F7CFF; text-decoration: none;">📄 View Invoice Portal</a>
@@ -1014,8 +1008,9 @@ app.post('/api/invoices/create', authenticate, async (req, res) => {
                             </p>
                         </div>
                     `
-                });
-                console.log(`✅ Invoice email sent to ${brandEmail}`);
+                })
+                .then(() => console.log(`✅ Invoice email sent to ${brandEmail}`))
+                .catch((emailErr) => console.error('❌ Email send error:', emailErr));
             } catch (emailErr) {
                 console.error('❌ Email send error:', emailErr);
             }
@@ -1239,7 +1234,6 @@ app.post('/api/payments/create-subaccount', authenticate, async (req, res) => {
 // ✅ SUBSCRIPTION SYSTEM (Pro/Free)
 // ============================================
 
-// 1. Initialize subscription payment
 app.post('/api/subscribe', authenticate, async (req, res) => {
     try {
         const userId = req.userId;
@@ -1249,7 +1243,6 @@ app.post('/api/subscribe', authenticate, async (req, res) => {
             return res.status(400).json({ error: 'User email required' });
         }
 
-        // Check current subscription
         const { data: profile, error } = await supabase
             .from('profiles')
             .select('subscription_tier, subscription_status, subscription_expires_at')
@@ -1302,7 +1295,6 @@ app.post('/api/subscribe', authenticate, async (req, res) => {
     }
 });
 
-// 2. Webhook - secure & updates profiles
 app.post('/api/webhooks/paystack',
     express.raw({ type: 'application/json' }),
     async (req, res) => {
@@ -1363,7 +1355,6 @@ app.post('/api/webhooks/paystack',
     }
 );
 
-// 3. Original deal webhook – still needed
 app.post('/api/webhooks/paystack-deal',
     express.raw({ type: 'application/json' }),
     async (req, res) => {
@@ -1428,7 +1419,6 @@ app.post('/api/webhooks/paystack-deal',
 
                     console.log(`✅ Deal ${dealId} marked as paid via webhook`);
 
-                    // Also mark the invoice as paid
                     await supabase
                         .from('invoices')
                         .update({
@@ -1449,7 +1439,7 @@ app.post('/api/webhooks/paystack-deal',
 );
 
 // ============================================
-// PUBLIC PORTAL - View Invoice (✅ XSS fixed)
+// PUBLIC PORTAL - View Invoice
 // ============================================
 app.get('/portal/:token', async (req, res) => {
     try {
@@ -1487,7 +1477,6 @@ app.get('/portal/:token', async (req, res) => {
         const creator = deal.users;
         const isPaid = invoice.paid || false;
 
-        // ✅ Escape all dynamic content
         const brandName = escapeHtml(deal.brand_name);
         const deliverable = escapeHtml(deal.deliverable || 'Not specified');
         const invoiceNumber = escapeHtml(invoice.invoice_number);
