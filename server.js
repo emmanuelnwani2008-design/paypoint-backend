@@ -9,6 +9,7 @@ const nodemailer = require('nodemailer');
 const crypto = require('crypto');
 const cron = require('node-cron');
 const multer = require('multer');
+const morgan = require('morgan'); // ← Added for logging
 
 const app = express();
 app.set('trust proxy', 1);
@@ -16,9 +17,14 @@ app.set('trust proxy', 1);
 const port = process.env.PORT || 3000;
 
 // ============================================
+// FRONTEND_URL FALLBACK (Critical)
+// ============================================
+const FRONTEND_URL = process.env.FRONTEND_URL || 'https://your-app.vercel.app';
+console.log(`🌐 Frontend URL: ${FRONTEND_URL}`);
+
+// ============================================
 // SECURITY MIDDLEWARE
 // ============================================
-
 app.use(helmet({
     contentSecurityPolicy: {
         directives: {
@@ -52,6 +58,9 @@ app.use(cors({
     maxAge: 86400,
 }));
 
+// Request logging
+app.use(morgan('combined'));
+
 const limiter = rateLimit({
     windowMs: 15 * 60 * 1000,
     max: 100,
@@ -59,7 +68,6 @@ const limiter = rateLimit({
     standardHeaders: true,
     legacyHeaders: false,
 });
-
 app.use(limiter);
 
 const authLimiter = rateLimit({
@@ -124,6 +132,28 @@ const transporter = nodemailer.createTransport({
     },
     requireTLS: true
 });
+
+// ============================================
+// EMAIL RETRY LOGIC (Prevents Failed Emails)
+// ============================================
+async function sendEmailWithRetry(mailOptions, retries = 3, delay = 2000) {
+    for (let i = 0; i < retries; i++) {
+        try {
+            await transporter.sendMail(mailOptions);
+            console.log(`📧 Email sent successfully (attempt ${i + 1})`);
+            return true;
+        } catch (err) {
+            console.log(`📧 Email attempt ${i + 1} failed:`, err.message);
+            if (i < retries - 1) {
+                await new Promise(resolve => setTimeout(resolve, delay * (i + 1)));
+            } else {
+                console.error('❌ All email attempts failed:', err);
+                return false;
+            }
+        }
+    }
+    return false;
+}
 
 // ============================================
 // CRON JOB – Automated Invoice Chasing (Pro)
@@ -202,32 +232,33 @@ cron.schedule('0 9 * * *', async () => {
 
             const brandEmail = profile.email || 'brand@example.com';
             const creatorName = profile.user_metadata?.name || 'Creator';
-            const paymentLink = `${process.env.FRONTEND_URL}/pay-invoice.html?deal=${deal.id}`;
+            const paymentLink = `${FRONTEND_URL}/pay-invoice.html?deal=${deal.id}`;
+
+            const mailOptions = {
+                from: process.env.EMAIL_USER,
+                to: brandEmail,
+                subject: subject,
+                html: `
+                    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #E8EDF2; border-radius: 12px;">
+                        <h1 style="color: #4F7CFF; text-align: center;">PayPoint</h1>
+                        <hr>
+                        <p>Dear Brand,</p>
+                        <p>This is a <strong>${reminderType}</strong> reminder that invoice <strong>#${invoice.invoice_number}</strong> of <strong>₦${Number(deal.amount).toLocaleString()}</strong> is now <strong style="color: #FF3B30;">${daysOverdue} days overdue</strong>.</p>
+                        ${urgency === 'urgent' ? '<p style="color: #FF3B30; font-weight: bold;">Please make payment immediately to avoid further escalation.</p>' : ''}
+                        <div style="text-align: center; margin: 24px 0;">
+                            <a href="${paymentLink}" style="background: #4F7CFF; color: white; padding: 12px 32px; border-radius: 8px; text-decoration: none; font-weight: 600;">
+                                💳 Pay Now
+                            </a>
+                        </div>
+                        <p style="font-size: 12px; color: #8A9AAB;">If you have already paid, please ignore this message. For questions, contact ${creatorName}.</p>
+                        <hr>
+                        <p style="text-align: center; color: #8A9AAB; font-size: 12px;">PayPoint · Finance OS for Creators</p>
+                    </div>
+                `
+            };
 
             try {
-                await transporter.sendMail({
-                    from: process.env.EMAIL_USER,
-                    to: brandEmail,
-                    subject: subject,
-                    html: `
-                        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #E8EDF2; border-radius: 12px;">
-                            <h1 style="color: #4F7CFF; text-align: center;">PayPoint</h1>
-                            <hr>
-                            <p>Dear Brand,</p>
-                            <p>This is a <strong>${reminderType}</strong> reminder that invoice <strong>#${invoice.invoice_number}</strong> of <strong>₦${Number(deal.amount).toLocaleString()}</strong> is now <strong style="color: #FF3B30;">${daysOverdue} days overdue</strong>.</p>
-                            ${urgency === 'urgent' ? '<p style="color: #FF3B30; font-weight: bold;">Please make payment immediately to avoid further escalation.</p>' : ''}
-                            <div style="text-align: center; margin: 24px 0;">
-                                <a href="${paymentLink}" style="background: #4F7CFF; color: white; padding: 12px 32px; border-radius: 8px; text-decoration: none; font-weight: 600;">
-                                    💳 Pay Now
-                                </a>
-                            </div>
-                            <p style="font-size: 12px; color: #8A9AAB;">If you have already paid, please ignore this message. For questions, contact ${creatorName}.</p>
-                            <hr>
-                            <p style="text-align: center; color: #8A9AAB; font-size: 12px;">PayPoint · Finance OS for Creators</p>
-                        </div>
-                    `
-                });
-
+                await sendEmailWithRetry(mailOptions);
                 await supabase
                     .from('invoices')
                     .update({
@@ -235,11 +266,9 @@ cron.schedule('0 9 * * *', async () => {
                         last_reminder_sent_at: new Date().toISOString()
                     })
                     .eq('id', invoice.id);
-
                 console.log(`✅ Reminder sent for invoice ${invoice.invoice_number} (${reminderType})`);
-
-            } catch (emailErr) {
-                console.error(`❌ Failed to send reminder for invoice ${invoice.invoice_number}:`, emailErr);
+            } catch (err) {
+                console.error(`❌ Failed to send reminder for invoice ${invoice.invoice_number}:`, err);
             }
         }
 
@@ -333,6 +362,16 @@ app.get('/health', (req, res) => {
         timestamp: new Date().toISOString(),
         uptime: process.uptime()
     });
+});
+
+app.get('/api/db-health', async (req, res) => {
+    try {
+        const { data, error } = await supabase.from('profiles').select('count').limit(1);
+        if (error) throw error;
+        res.json({ status: 'ok', message: 'Database connected' });
+    } catch (err) {
+        res.status(500).json({ status: 'error', message: err.message });
+    }
 });
 
 // ============================================
@@ -848,7 +887,7 @@ app.post('/api/payments/initialize', authenticate, async (req, res) => {
         }
 
         const totalAmount = Math.round(deal.amount * 100);
-        const callbackUrl = `${process.env.FRONTEND_URL}/success.html`;
+        const callbackUrl = `${FRONTEND_URL}/success.html`;
 
         const subaccountCode = req.user?.user_metadata?.subaccount_code;
         if (!subaccountCode) {
@@ -1028,36 +1067,36 @@ app.post('/api/invoices/create', authenticate, async (req, res) => {
             console.log(`✅ Portal token saved for invoice ${data[0].id}`);
         }
 
-        const portalLink = `${process.env.FRONTEND_URL}/portal/${portalToken}`;
+        const portalLink = `${FRONTEND_URL}/portal/${portalToken}`;
 
-        // Send email via Gmail SMTP
+        // Send email via Gmail SMTP with retry logic
         if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
-            try {
-                await transporter.sendMail({
-                    from: process.env.EMAIL_USER,
-                    to: brandEmail,
-                    subject: `📄 Invoice #${invNumber} from ${deal.brand_name}`,
-                    html: `
-                        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #E8EDF2; border-radius: 12px;">
-                            <h1 style="color: #4F7CFF; text-align: center;">PayPoint</h1>
-                            <h2 style="text-align: center; color: #000000;">Invoice</h2>
-                            <hr>
-                            <p><strong>Invoice #:</strong> ${invNumber}</p>
-                            <p><strong>Brand:</strong> ${deal.brand_name}</p>
-                            <p><strong>Amount:</strong> <span style="font-size: 20px; font-weight: bold; color: #4F7CFF;">₦${Number(deal.amount).toLocaleString()}</span></p>
-                            <p><strong>Deliverable:</strong> ${deal.deliverable || 'Not specified'}</p>
-                            <p><strong>Due Date:</strong> ${deal.due_date ? new Date(deal.due_date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : 'Not set'}</p>
-                            <hr>
-                            <p style="text-align: center;">
-                                <a href="${portalLink}" style="color: #4F7CFF; text-decoration: none;">📄 View Invoice Portal</a>
-                            </p>
-                            <p style="text-align: center; color: #8A9AAB; font-size: 12px;">PayPoint · Finance OS for Creators</p>
-                        </div>
-                    `
-                });
-                console.log(`✅ Invoice email sent to ${brandEmail}`);
-            } catch (emailErr) {
-                console.error('❌ Email send error:', emailErr);
+            const mailOptions = {
+                from: process.env.EMAIL_USER,
+                to: brandEmail,
+                subject: `📄 Invoice #${invNumber} from ${deal.brand_name}`,
+                html: `
+                    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #E8EDF2; border-radius: 12px;">
+                        <h1 style="color: #4F7CFF; text-align: center;">PayPoint</h1>
+                        <h2 style="text-align: center; color: #000000;">Invoice</h2>
+                        <hr>
+                        <p><strong>Invoice #:</strong> ${invNumber}</p>
+                        <p><strong>Brand:</strong> ${deal.brand_name}</p>
+                        <p><strong>Amount:</strong> <span style="font-size: 20px; font-weight: bold; color: #4F7CFF;">₦${Number(deal.amount).toLocaleString()}</span></p>
+                        <p><strong>Deliverable:</strong> ${deal.deliverable || 'Not specified'}</p>
+                        <p><strong>Due Date:</strong> ${deal.due_date ? new Date(deal.due_date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : 'Not set'}</p>
+                        <hr>
+                        <p style="text-align: center;">
+                            <a href="${portalLink}" style="color: #4F7CFF; text-decoration: none;">📄 View Invoice Portal</a>
+                        </p>
+                        <p style="text-align: center; color: #8A9AAB; font-size: 12px;">PayPoint · Finance OS for Creators</p>
+                    </div>
+                `
+            };
+
+            const emailSent = await sendEmailWithRetry(mailOptions);
+            if (!emailSent) {
+                console.warn('⚠️ All email attempts failed – but invoice created.');
             }
         } else {
             console.log('ℹ️ Email credentials not set – email not sent.');
@@ -1318,7 +1357,7 @@ app.post('/api/subscribe', authenticate, async (req, res) => {
                 amount: 300000,
                 plan: process.env.PAYSTACK_PLAN_CODE,
                 metadata: { user_id: userId },
-                callback_url: `${process.env.FRONTEND_URL || 'https://paypoint-app.netlify.app'}/dashboard.html?subscription=success`
+                callback_url: `${FRONTEND_URL}/dashboard.html?subscription=success`
             })
         });
 
@@ -1653,7 +1692,7 @@ app.get('/portal/:token', async (req, res) => {
                     </div>
 
                     ${!isPaid ? `
-                        <a href="${process.env.FRONTEND_URL}/pay-invoice.html?deal=${deal.id}" class="btn-primary">
+                        <a href="${FRONTEND_URL}/pay-invoice.html?deal=${deal.id}" class="btn-primary">
                             💳 Pay Now
                         </a>
                     ` : `
