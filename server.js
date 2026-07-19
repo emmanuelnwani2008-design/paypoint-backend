@@ -8,6 +8,10 @@ const PDFDocument = require('pdfkit');
 const nodemailer = require('nodemailer');
 const crypto = require('crypto');
 const cron = require('node-cron');
+const multer = require('multer');
+
+// ✅ Brevo (Sendinblue) for reliable email
+const SibApiV3Sdk = require('@sendinblue/client');
 
 const app = express();
 app.set('trust proxy', 1);
@@ -105,8 +109,15 @@ const supabase = createClient(supabaseUrl, supabaseAnonKey);
 const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
 
 // ============================================
-// Email Transporter (used by cron job & invoice)
+// EMAIL SETUP – BREVO (Sendinblue)
 // ============================================
+const brevoClient = SibApiV3Sdk.ApiClient.instance;
+const apiKey = brevoClient.authentications['api-key'];
+apiKey.apiKey = process.env.BREVO_API_KEY;
+
+const transactionalEmailsApi = new SibApiV3Sdk.TransactionalEmailsApi();
+
+// Gmail SMTP as fallback (if Brevo fails)
 const transporter = nodemailer.createTransport({
     host: 'smtp.gmail.com',
     port: 587,
@@ -203,29 +214,31 @@ cron.schedule('0 9 * * *', async () => {
             const creatorName = profile.user_metadata?.name || 'Creator';
             const paymentLink = `${process.env.FRONTEND_URL}/pay-invoice.html?deal=${deal.id}`;
 
+            // ✅ Send reminder via Brevo
             try {
-                await transporter.sendMail({
-                    from: process.env.EMAIL_USER,
-                    to: brandEmail,
-                    subject: subject,
-                    html: `
-                        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #E8EDF2; border-radius: 12px;">
-                            <h1 style="color: #4F7CFF; text-align: center;">PayPoint</h1>
-                            <hr>
-                            <p>Dear Brand,</p>
-                            <p>This is a <strong>${reminderType}</strong> reminder that invoice <strong>#${invoice.invoice_number}</strong> of <strong>₦${Number(deal.amount).toLocaleString()}</strong> is now <strong style="color: #FF3B30;">${daysOverdue} days overdue</strong>.</p>
-                            ${urgency === 'urgent' ? '<p style="color: #FF3B30; font-weight: bold;">Please make payment immediately to avoid further escalation.</p>' : ''}
-                            <div style="text-align: center; margin: 24px 0;">
-                                <a href="${paymentLink}" style="background: #4F7CFF; color: white; padding: 12px 32px; border-radius: 8px; text-decoration: none; font-weight: 600;">
-                                    💳 Pay Now
-                                </a>
-                            </div>
-                            <p style="font-size: 12px; color: #8A9AAB;">If you have already paid, please ignore this message. For questions, contact ${creatorName}.</p>
-                            <hr>
-                            <p style="text-align: center; color: #8A9AAB; font-size: 12px;">PayPoint · Finance OS for Creators</p>
+                const reminderEmail = new SibApiV3Sdk.SendSmtpEmail();
+                reminderEmail.to = [{ email: brandEmail }];
+                reminderEmail.sender = { email: process.env.EMAIL_USER || 'noreply@paypoint.com', name: 'PayPoint' };
+                reminderEmail.subject = subject;
+                reminderEmail.htmlContent = `
+                    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #E8EDF2; border-radius: 12px;">
+                        <h1 style="color: #4F7CFF; text-align: center;">PayPoint</h1>
+                        <hr>
+                        <p>Dear Brand,</p>
+                        <p>This is a <strong>${reminderType}</strong> reminder that invoice <strong>#${invoice.invoice_number}</strong> of <strong>₦${Number(deal.amount).toLocaleString()}</strong> is now <strong style="color: #FF3B30;">${daysOverdue} days overdue</strong>.</p>
+                        ${urgency === 'urgent' ? '<p style="color: #FF3B30; font-weight: bold;">Please make payment immediately to avoid further escalation.</p>' : ''}
+                        <div style="text-align: center; margin: 24px 0;">
+                            <a href="${paymentLink}" style="background: #4F7CFF; color: white; padding: 12px 32px; border-radius: 8px; text-decoration: none; font-weight: 600;">
+                                💳 Pay Now
+                            </a>
                         </div>
-                    `
-                });
+                        <p style="font-size: 12px; color: #8A9AAB;">If you have already paid, please ignore this message. For questions, contact ${creatorName}.</p>
+                        <hr>
+                        <p style="text-align: center; color: #8A9AAB; font-size: 12px;">PayPoint · Finance OS for Creators</p>
+                    </div>
+                `;
+
+                await transactionalEmailsApi.sendTransacEmail(reminderEmail);
 
                 await supabase
                     .from('invoices')
@@ -238,7 +251,19 @@ cron.schedule('0 9 * * *', async () => {
                 console.log(`✅ Reminder sent for invoice ${invoice.invoice_number} (${reminderType})`);
 
             } catch (emailErr) {
-                console.error(`❌ Failed to send reminder for invoice ${invoice.invoice_number}:`, emailErr);
+                console.error(`❌ Brevo reminder error for ${invoice.invoice_number}:`, emailErr);
+                // Fallback to Gmail
+                try {
+                    await transporter.sendMail({
+                        from: process.env.EMAIL_USER,
+                        to: brandEmail,
+                        subject: subject,
+                        html: `...`
+                    });
+                    console.log(`✅ Fallback reminder sent for ${invoice.invoice_number}`);
+                } catch (fallbackErr) {
+                    console.error(`❌ Fallback also failed:`, fallbackErr);
+                }
             }
         }
 
@@ -246,11 +271,6 @@ cron.schedule('0 9 * * *', async () => {
         console.error('Cron job error:', err);
     }
 });
-
-// Optional: run once on startup (for testing)
-setTimeout(() => {
-    console.log('🔄 Running initial overdue check on startup...');
-}, 5000);
 
 // ============================================
 // HELPERS
@@ -446,9 +466,62 @@ app.get('/api/auth/user', authenticate, async (req, res) => {
 });
 
 // ============================================
+// ADMIN ROUTE – Force Pro (Testing Only)
+// ============================================
+app.post('/api/admin/force-pro', authenticate, async (req, res) => {
+    try {
+        const userId = req.userId;
+        const { email } = req.user;
+
+        // Only allow your email
+        const adminEmails = ['emmysmart850@gmail.com'];
+        if (!adminEmails.includes(email)) {
+            return res.status(403).json({ error: 'Access denied. Admin only.' });
+        }
+
+        const expiresAt = new Date();
+        expiresAt.setDate(expiresAt.getDate() + 30);
+
+        const { error: upsertError } = await supabaseAdmin
+            .from('profiles')
+            .upsert({
+                id: userId,
+                subscription_tier: 'pro',
+                subscription_status: 'active',
+                subscription_expires_at: expiresAt.toISOString(),
+                updated_at: new Date().toISOString()
+            }, { onConflict: 'id' });
+
+        if (upsertError) {
+            console.error('❌ Error updating profile:', upsertError);
+            return res.status(500).json({ error: 'Failed to upgrade to Pro' });
+        }
+
+        // Update user metadata too
+        const { error: metadataError } = await supabaseAdmin.auth.admin.updateUserById(
+            userId,
+            { user_metadata: { subscription_tier: 'pro' } }
+        );
+
+        if (metadataError) {
+            console.error('❌ Error updating metadata:', metadataError);
+        }
+
+        res.json({
+            success: true,
+            message: '✅ You are now Pro! (Testing only – expires in 30 days)',
+            expires_at: expiresAt.toISOString()
+        });
+
+    } catch (err) {
+        console.error('Force Pro error:', err);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// ============================================
 // UPLOAD PROFILE PICTURE
 // ============================================
-const multer = require('multer');
 const storage = multer.memoryStorage();
 const upload = multer({ 
     limits: { fileSize: 2 * 1024 * 1024 },
@@ -800,7 +873,7 @@ app.post('/api/payments/initialize', authenticate, async (req, res) => {
         }
 
         const totalAmount = Math.round(deal.amount * 100);
-        const callbackUrl = 'https://paypoint-backend.vercel.app/success.html';
+        const callbackUrl = `${process.env.FRONTEND_URL}/success.html`;
 
         const subaccountCode = req.user?.user_metadata?.subaccount_code;
         if (!subaccountCode) {
@@ -969,7 +1042,6 @@ app.post('/api/invoices/create', authenticate, async (req, res) => {
         // Generate portal token
         const portalToken = crypto.randomBytes(32).toString('hex');
 
-        // ✅ FIX: Add error handling for token update
         const { error: tokenError } = await supabase
             .from('invoices')
             .update({ portal_token: portalToken })
@@ -983,39 +1055,54 @@ app.post('/api/invoices/create', authenticate, async (req, res) => {
 
         const portalLink = `${process.env.FRONTEND_URL}/portal/${portalToken}`;
 
-        if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
+        // ✅ Send email via Brevo (reliable)
+        if (process.env.BREVO_API_KEY) {
             try {
-                // Use the global transporter (already defined)
-                // ✅ FIX: Send email asynchronously – don't await
-                transporter.sendMail({
-                    from: process.env.EMAIL_USER,
-                    to: brandEmail,
-                    subject: `📄 Invoice #${invNumber} from ${deal.brand_name}`,
-                    html: `
-                        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #E8EDF2; border-radius: 12px;">
-                            <h1 style="color: #4F7CFF; text-align: center;">PayPoint</h1>
-                            <h2 style="text-align: center; color: #000000;">Invoice</h2>
-                            <hr style="border: none; border-top: 1px solid #E8EDF2;">
-                            <p><strong>Invoice #:</strong> ${invNumber}</p>
-                            <p><strong>Brand:</strong> ${deal.brand_name}</p>
-                            <p><strong>Amount:</strong> <span style="font-size: 20px; font-weight: bold; color: #4F7CFF;">$${Number(deal.amount).toLocaleString()}</span></p>
-                            <p><strong>Deliverable:</strong> ${deal.deliverable || 'Not specified'}</p>
-                            <p><strong>Due Date:</strong> ${deal.due_date ? new Date(deal.due_date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : 'Not set'}</p>
-                            <hr style="border: none; border-top: 1px solid #E8EDF2;">
-                            <p style="text-align: center; color: #8A9AAB; font-size: 14px;">
-                                <a href="${portalLink}" style="color: #4F7CFF; text-decoration: none;">📄 View Invoice Portal</a>
-                                PayPoint · Finance OS for Creators
-                            </p>
-                        </div>
-                    `
-                })
-                .then(() => console.log(`✅ Invoice email sent to ${brandEmail}`))
-                .catch((emailErr) => console.error('❌ Email send error:', emailErr));
+                const sendSmtpEmail = new SibApiV3Sdk.SendSmtpEmail();
+                sendSmtpEmail.to = [{ email: brandEmail }];
+                sendSmtpEmail.sender = { 
+                    email: process.env.EMAIL_USER || 'noreply@paypoint.com', 
+                    name: 'PayPoint' 
+                };
+                sendSmtpEmail.subject = `📄 Invoice #${invNumber} from ${deal.brand_name}`;
+                sendSmtpEmail.htmlContent = `
+                    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #E8EDF2; border-radius: 12px;">
+                        <h1 style="color: #4F7CFF; text-align: center;">PayPoint</h1>
+                        <h2 style="text-align: center; color: #000000;">Invoice</h2>
+                        <hr>
+                        <p><strong>Invoice #:</strong> ${invNumber}</p>
+                        <p><strong>Brand:</strong> ${deal.brand_name}</p>
+                        <p><strong>Amount:</strong> <span style="font-size: 20px; font-weight: bold; color: #4F7CFF;">₦${Number(deal.amount).toLocaleString()}</span></p>
+                        <p><strong>Deliverable:</strong> ${deal.deliverable || 'Not specified'}</p>
+                        <p><strong>Due Date:</strong> ${deal.due_date ? new Date(deal.due_date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : 'Not set'}</p>
+                        <hr>
+                        <p style="text-align: center;">
+                            <a href="${portalLink}" style="color: #4F7CFF; text-decoration: none;">📄 View Invoice Portal</a>
+                        </p>
+                        <p style="text-align: center; color: #8A9AAB; font-size: 12px;">PayPoint · Finance OS for Creators</p>
+                    </div>
+                `;
+
+                await transactionalEmailsApi.sendTransacEmail(sendSmtpEmail);
+                console.log(`✅ Invoice email sent via Brevo to ${brandEmail}`);
+
             } catch (emailErr) {
-                console.error('❌ Email send error:', emailErr);
+                console.error('❌ Brevo error:', emailErr);
+                // Fallback to Gmail
+                try {
+                    await transporter.sendMail({
+                        from: process.env.EMAIL_USER,
+                        to: brandEmail,
+                        subject: `📄 Invoice #${invNumber} from ${deal.brand_name}`,
+                        html: `...`
+                    });
+                    console.log(`✅ Fallback email sent to ${brandEmail}`);
+                } catch (fallbackErr) {
+                    console.error('❌ Fallback also failed:', fallbackErr);
+                }
             }
         } else {
-            console.log('ℹ️ Email credentials not set – email not sent.');
+            console.log('ℹ️ BREVO_API_KEY not set – email not sent.');
         }
 
         res.status(201).json({ success: true, data: data[0] });
@@ -1025,6 +1112,11 @@ app.post('/api/invoices/create', authenticate, async (req, res) => {
         res.status(500).json({ error: 'Internal server error' });
     }
 });
+
+// ============================================
+// CONTINUE WITH EXISTING ROUTES...
+// (Invoice generate, bank verification, etc.)
+// ============================================
 
 app.post('/api/invoices/generate', authenticate, async (req, res) => {
     try {
@@ -1231,7 +1323,7 @@ app.post('/api/payments/create-subaccount', authenticate, async (req, res) => {
 });
 
 // ============================================
-// ✅ SUBSCRIPTION SYSTEM (Pro/Free)
+// SUBSCRIPTION SYSTEM (Pro/Free)
 // ============================================
 
 app.post('/api/subscribe', authenticate, async (req, res) => {
@@ -1294,6 +1386,10 @@ app.post('/api/subscribe', authenticate, async (req, res) => {
         res.status(500).json({ error: 'Internal server error' });
     }
 });
+
+// ============================================
+// WEBHOOKS
+// ============================================
 
 app.post('/api/webhooks/paystack',
     express.raw({ type: 'application/json' }),
