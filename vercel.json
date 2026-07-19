@@ -1,0 +1,7 @@
+{
+  "rewrites": [
+    { "source": "/api/(.*)", "destination": "https://paypoint-backend-9m63.onrender.com/api/$1" },
+    { "source": "/portal/(.*)", "destination": "https://paypoint-backend-9m63.onrender.com/portal/$1" },
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
+}
