@@ -122,43 +122,58 @@ cron.schedule('0 9 * * *', async () => {
     console.log('🔔 Running overdue invoice check...');
 
     try {
-        const { data: overdueInvoices, error } = await supabase
+        // Fetch overdue invoices with deal details
+        const { data: invoices, error } = await supabase
             .from('invoices')
             .select(`
                 *,
-                deals!inner(
+                deals (
                     id,
                     brand_name,
                     amount,
                     due_date,
-                    user_id,
-                    users!inner(
-                        email,
-                        user_metadata->name,
-                        subscription_tier
-                    )
+                    user_id
                 )
             `)
             .eq('status', 'sent')
             .eq('paid', false)
-            .lt('reminder_count', 3)
-            .eq('deals.users.subscription_tier', 'pro');
+            .lt('reminder_count', 3);
 
         if (error) {
-            console.error('Error fetching overdue invoices:', error);
+            console.error('Error fetching invoices:', error);
             return;
         }
 
-        if (!overdueInvoices || overdueInvoices.length === 0) {
+        if (!invoices || invoices.length === 0) {
             console.log('✅ No overdue invoices to chase.');
             return;
         }
 
-        console.log(`📨 Found ${overdueInvoices.length} overdue invoices.`);
+        console.log(`📨 Found ${invoices.length} overdue invoices.`);
 
-        for (const invoice of overdueInvoices) {
-            const dueDate = invoice.deals.due_date;
+        for (const invoice of invoices) {
+            const deal = invoice.deals;
+            if (!deal) continue;
+
+            const dueDate = deal.due_date;
             if (!dueDate) continue;
+
+            // Get the creator's email and tier from profiles
+            const { data: profile, error: profileError } = await supabase
+                .from('profiles')
+                .select('email, subscription_tier, user_metadata')
+                .eq('id', deal.user_id)
+                .single();
+
+            if (profileError || !profile) {
+                console.error(`❌ Could not find profile for user ${deal.user_id}`);
+                continue;
+            }
+
+            // Only send reminders for Pro users
+            if (profile.subscription_tier !== 'pro') {
+                continue;
+            }
 
             const daysOverdue = Math.floor(
                 (Date.now() - new Date(dueDate).getTime()) / (1000 * 60 * 60 * 24)
@@ -178,10 +193,9 @@ cron.schedule('0 9 * * *', async () => {
                 urgency = 'moderate';
             }
 
-            const brandEmail = invoice.deals.users?.email || 'brand@example.com';
-            const brandName = invoice.deals.users?.user_metadata?.name || 'Brand';
-            const creatorName = invoice.deals.users?.user_metadata?.name || 'Creator';
-            const paymentLink = `${process.env.FRONTEND_URL}/pay-invoice.html?deal=${invoice.deals.id}`;
+            const brandEmail = profile.email || 'brand@example.com';
+            const creatorName = profile.user_metadata?.name || 'Creator';
+            const paymentLink = `${process.env.FRONTEND_URL}/pay-invoice.html?deal=${deal.id}`;
 
             try {
                 await transporter.sendMail({
@@ -192,8 +206,8 @@ cron.schedule('0 9 * * *', async () => {
                         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #E8EDF2; border-radius: 12px;">
                             <h1 style="color: #4F7CFF; text-align: center;">PayPoint</h1>
                             <hr>
-                            <p>Dear ${brandName},</p>
-                            <p>This is a <strong>${reminderType}</strong> reminder that invoice <strong>#${invoice.invoice_number}</strong> of <strong>₦${Number(invoice.deals.amount).toLocaleString()}</strong> is now <strong style="color: #FF3B30;">${daysOverdue} days overdue</strong>.</p>
+                            <p>Dear Brand,</p>
+                            <p>This is a <strong>${reminderType}</strong> reminder that invoice <strong>#${invoice.invoice_number}</strong> of <strong>₦${Number(deal.amount).toLocaleString()}</strong> is now <strong style="color: #FF3B30;">${daysOverdue} days overdue</strong>.</p>
                             ${urgency === 'urgent' ? '<p style="color: #FF3B30; font-weight: bold;">Please make payment immediately to avoid further escalation.</p>' : ''}
                             <div style="text-align: center; margin: 24px 0;">
                                 <a href="${paymentLink}" style="background: #4F7CFF; color: white; padding: 12px 32px; border-radius: 8px; text-decoration: none; font-weight: 600;">
