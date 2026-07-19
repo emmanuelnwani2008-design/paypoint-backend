@@ -4,15 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PayPoint · Login</title>
-    <link rel="icon" type="image/png" href="logo.png">
     <!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-HFJ9JM358E"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-  gtag('config', 'G-HFJ9JM358E');
-</script>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-HFJ9JM358E"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-HFJ9JM358E');
+    </script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -89,9 +88,12 @@
             color: #5E6F82;
             margin-bottom: 4px;
         }
-        .form-group input {
+        .form-group .password-wrapper {
+            position: relative;
+        }
+        .form-group .password-wrapper input {
             width: 100%;
-            padding: 12px 16px;
+            padding: 12px 40px 12px 16px; /* right padding for icon */
             background: #F8FAFC;
             border: 1px solid #E8EDF2;
             border-radius: 10px;
@@ -100,7 +102,25 @@
             transition: border 0.2s ease;
             font-family: 'Inter', sans-serif;
         }
-        .form-group input:focus { outline: none; border-color: #4F7CFF; }
+        .form-group .password-wrapper input:focus {
+            outline: none;
+            border-color: #4F7CFF;
+        }
+        .form-group .password-wrapper .toggle-password {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: #8A9AAB;
+            font-size: 18px;
+            padding: 4px;
+        }
+        .form-group .password-wrapper .toggle-password:hover {
+            color: #4F7CFF;
+        }
         .btn-primary {
             width: 100%;
             background: #4F7CFF;
@@ -151,9 +171,7 @@
         }
         .demo-note span:hover { text-decoration: underline; }
 
-        /* ============================================
-           EMAIL CONFIRMATION NOTIFICATION (NEW)
-        ============================================ */
+        /* Confirmation banner */
         .confirm-banner {
             background: #FFF5E6;
             border: 1px solid #FFE4B3;
@@ -162,9 +180,7 @@
             margin-bottom: 20px;
             display: none;
         }
-        .confirm-banner.show {
-            display: block;
-        }
+        .confirm-banner.show { display: block; }
         .confirm-banner h4 {
             color: #B97300;
             font-size: 14px;
@@ -197,9 +213,7 @@
         </div>
         <div class="subtitle">Finance OS for Creators</div>
 
-        <!-- ============================================
-        EMAIL CONFIRMATION BANNER
-        ============================================ -->
+        <!-- Confirmation Banner -->
         <div class="confirm-banner" id="confirmBanner">
             <h4>📧 Confirm Your Email</h4>
             <p>
@@ -214,6 +228,7 @@
             <button class="tab-btn" id="signupTab">Sign Up</button>
         </div>
 
+        <!-- Login Form -->
         <div id="loginForm">
             <div class="form-group">
                 <label>Email Address</label>
@@ -221,12 +236,16 @@
             </div>
             <div class="form-group">
                 <label>Password</label>
-                <input type="password" id="loginPassword" placeholder="Enter your password">
+                <div class="password-wrapper">
+                    <input type="password" id="loginPassword" placeholder="Enter your password">
+                    <button type="button" class="toggle-password" onclick="togglePasswordVisibility('loginPassword', this)">👁️</button>
+                </div>
             </div>
             <button class="btn-primary" id="loginBtn">Log In</button>
             <div class="error-msg" id="loginError">Invalid email or password</div>
         </div>
 
+        <!-- Signup Form -->
         <div id="signupForm" class="form-hidden">
             <div class="form-group">
                 <label>Full Name</label>
@@ -238,7 +257,10 @@
             </div>
             <div class="form-group">
                 <label>Password</label>
-                <input type="password" id="signupPassword" placeholder="Create a password (min 6 characters)">
+                <div class="password-wrapper">
+                    <input type="password" id="signupPassword" placeholder="Create a password (min 6 characters)">
+                    <button type="button" class="toggle-password" onclick="togglePasswordVisibility('signupPassword', this)">👁️</button>
+                </div>
             </div>
             <button class="btn-primary" id="signupBtn">Create Account</button>
             <div class="error-msg" id="signupError">Something went wrong</div>
@@ -274,10 +296,22 @@
         const signupError = document.getElementById('signupError');
         const signupSuccess = document.getElementById('signupSuccess');
         const demoLogin = document.getElementById('demoLogin');
-
-        // Email confirmation banner
         const confirmBanner = document.getElementById('confirmBanner');
         const confirmEmail = document.getElementById('confirmEmail');
+
+        // ============================================
+        // PASSWORD VISIBILITY TOGGLE (Global)
+        // ============================================
+        window.togglePasswordVisibility = function(inputId, btn) {
+            const input = document.getElementById(inputId);
+            if (input.type === 'password') {
+                input.type = 'text';
+                btn.textContent = '🙈';
+            } else {
+                input.type = 'password';
+                btn.textContent = '👁️';
+            }
+        };
 
         // ============================================
         // TAB SWITCHING
@@ -290,7 +324,7 @@
             loginError.style.display = 'none';
             signupError.style.display = 'none';
             signupSuccess.style.display = 'none';
-            confirmBanner.classList.remove('show'); // Hide banner when switching
+            confirmBanner.classList.remove('show');
         });
 
         signupTab.addEventListener('click', () => {
@@ -301,7 +335,7 @@
             loginError.style.display = 'none';
             signupError.style.display = 'none';
             signupSuccess.style.display = 'none';
-            confirmBanner.classList.remove('show'); // Hide banner when switching
+            confirmBanner.classList.remove('show');
         });
 
         // ============================================
@@ -338,18 +372,12 @@
                 const data = await res.json();
 
                 if (data.success) {
-                    // Show email confirmation banner
                     confirmEmail.textContent = email;
                     confirmBanner.classList.add('show');
-
-                    // Clear form
                     signupName.value = '';
                     signupEmail.value = '';
                     signupPassword.value = '';
                     signupError.style.display = 'none';
-
-                    // Optional: stay on signup tab so they can see the banner
-                    // Don't auto-switch to login – let them read the confirmation message first
                 } else {
                     signupError.textContent = data.error || 'Signup failed';
                     signupError.style.display = 'block';
@@ -361,7 +389,7 @@
         });
 
         // ============================================
-        // LOGIN (FIXED)
+        // LOGIN
         // ============================================
         loginBtn.addEventListener('click', async () => {
             const email = loginEmail.value.trim();
@@ -403,7 +431,7 @@
         });
 
         // ============================================
-        // DEMO LOGIN – auto-creates demo account if missing
+        // DEMO LOGIN
         // ============================================
         async function demoLoginHandler() {
             const DEMO_EMAIL = 'demo@paypoint.com';
@@ -484,6 +512,5 @@
         console.log('🔐 PayPoint Login page loaded');
         console.log('📡 Connected to:', API_URL);
     </script>
-
 </body>
 </html>
