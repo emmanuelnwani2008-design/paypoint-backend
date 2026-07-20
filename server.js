@@ -1,4 +1,7 @@
 require('dotenv').config();
+const dns = require('dns');
+dns.setDefaultResultOrder('ipv4first');   // ✅ Force IPv4 globally
+
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
@@ -110,13 +113,12 @@ const supabase = createClient(supabaseUrl, supabaseAnonKey);
 const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
 
 // ============================================
-// EMAIL SETUP – ONE GLOBAL TRANSPORTER (IPv4)
+// EMAIL SETUP – ONE GLOBAL TRANSPORTER (IPv4 forced already)
 // ============================================
 const transporter = nodemailer.createTransport({
     host: 'smtp.gmail.com',
     port: 587,
     secure: false,
-    family: 4,                        // ✅ Force IPv4 – fixes ENETUNREACH
     auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS
