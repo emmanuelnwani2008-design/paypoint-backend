@@ -10,14 +10,13 @@ const crypto = require('crypto');
 const cron = require('node-cron');
 const multer = require('multer');
 
-
 const app = express();
 app.set('trust proxy', 1);
 
 const port = process.env.PORT || 3000;
 
 // ============================================
-// FRONTEND_URL FALLBACK (Critical)
+// FRONTEND_URL FALLBACK
 // ============================================
 const FRONTEND_URL = process.env.FRONTEND_URL || 'https://your-app.vercel.app';
 console.log(`🌐 Frontend URL: ${FRONTEND_URL}`);
@@ -57,7 +56,6 @@ app.use(cors({
     credentials: true,
     maxAge: 86400,
 }));
-
 
 const limiter = rateLimit({
     windowMs: 15 * 60 * 1000,
@@ -112,20 +110,20 @@ const supabase = createClient(supabaseUrl, supabaseAnonKey);
 const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
 
 // ============================================
-// EMAIL SETUP – Gmail SMTP (Improved)
+// EMAIL SETUP – ONE GLOBAL TRANSPORTER (IPv4)
 // ============================================
 const transporter = nodemailer.createTransport({
     host: 'smtp.gmail.com',
     port: 587,
     secure: false,
-    family: 4, // <-- Force IPv4
+    family: 4,                        // ✅ Force IPv4 – fixes ENETUNREACH
     auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS
     },
-    connectionTimeout: 10000,
-    greetingTimeout: 10000,
-    socketTimeout: 20000,
+    connectionTimeout: 15000,
+    greetingTimeout: 15000,
+    socketTimeout: 30000,
     tls: {
         rejectUnauthorized: false
     },
@@ -133,22 +131,21 @@ const transporter = nodemailer.createTransport({
 });
 
 // ============================================
-// EMAIL RETRY LOGIC (Prevents Failed Emails)
+// EMAIL RETRY FUNCTION
 // ============================================
 async function sendEmailWithRetry(mailOptions, retries = 3, delay = 2000) {
-    for (let i = 0; i < retries; i++) {
+    for (let attempt = 1; attempt <= retries; attempt++) {
         try {
             await transporter.sendMail(mailOptions);
-            console.log(`📧 Email sent successfully (attempt ${i + 1})`);
+            console.log(`📧 Email sent successfully (attempt ${attempt})`);
             return true;
-        } catch (err) {
-            console.log(`📧 Email attempt ${i + 1} failed:`, err.message);
-            if (i < retries - 1) {
-                await new Promise(resolve => setTimeout(resolve, delay * (i + 1)));
-            } else {
-                console.error('❌ All email attempts failed:', err);
+        } catch (error) {
+            console.log(`📧 Email attempt ${attempt} failed:`, error.message);
+            if (attempt === retries) {
+                console.error('❌ All email attempts failed:', error);
                 return false;
             }
+            await new Promise(resolve => setTimeout(resolve, delay * attempt));
         }
     }
     return false;
@@ -196,40 +193,16 @@ cron.schedule('0 9 * * *', async () => {
             const dueDate = deal.due_date;
             if (!dueDate) continue;
 
-            let { data: profile, error: profileError } = await supabase
-    .from('profiles')
-    .select('email, subscription_tier, user_metadata')
-    .eq('id', deal.user_id)
-    .single();
+            const { data: profile, error: profileError } = await supabase
+                .from('profiles')
+                .select('email, subscription_tier, user_metadata')
+                .eq('id', deal.user_id)
+                .single();
 
-// If profile is missing, create it
-if (profileError || !profile) {
-    console.log(`⚠️ Profile missing for user ${deal.user_id} – creating one...`);
-    const { data: userData, error: userError } = await supabaseAdmin.auth.admin.getUserById(deal.user_id);
-    if (userError || !userData.user) {
-        console.error(`❌ Could not fetch user ${deal.user_id}:`, userError);
-        continue;
-    }
-    const { error: insertError } = await supabaseAdmin
-        .from('profiles')
-        .insert({
-            id: deal.user_id,
-            email: userData.user.email,
-            subscription_tier: 'free',
-            user_metadata: userData.user.user_metadata || {}
-        });
-    if (insertError) {
-        console.error(`❌ Failed to create profile for ${deal.user_id}:`, insertError);
-        continue;
-    }
-    // Fetch the newly created profile
-    const { data: newProfile } = await supabase
-        .from('profiles')
-        .select('email, subscription_tier, user_metadata')
-        .eq('id', deal.user_id)
-        .single();
-    profile = newProfile;
-}
+            if (profileError || !profile) {
+                console.error(`❌ Could not find profile for user ${deal.user_id}`);
+                continue;
+            }
 
             if (profile.subscription_tier !== 'pro') {
                 continue;
@@ -280,8 +253,8 @@ if (profileError || !profile) {
                 `
             };
 
-            try {
-                await sendEmailWithRetry(mailOptions);
+            const sent = await sendEmailWithRetry(mailOptions);
+            if (sent) {
                 await supabase
                     .from('invoices')
                     .update({
@@ -290,8 +263,8 @@ if (profileError || !profile) {
                     })
                     .eq('id', invoice.id);
                 console.log(`✅ Reminder sent for invoice ${invoice.invoice_number} (${reminderType})`);
-            } catch (err) {
-                console.error(`❌ Failed to send reminder for invoice ${invoice.invoice_number}:`, err);
+            } else {
+                console.error(`❌ Failed to send reminder for invoice ${invoice.invoice_number}`);
             }
         }
 
@@ -299,11 +272,6 @@ if (profileError || !profile) {
         console.error('Cron job error:', err);
     }
 });
-
-// Optional: run once on startup (for testing)
-setTimeout(() => {
-    console.log('🔄 Running initial overdue check on startup...');
-}, 5000);
 
 // ============================================
 // HELPERS
@@ -509,7 +477,7 @@ app.get('/api/auth/user', authenticate, async (req, res) => {
 });
 
 // ============================================
-// ADMIN ROUTE – Force Pro (Testing Only)
+// ADMIN ROUTE – Force Pro
 // ============================================
 app.post('/api/admin/force-pro', authenticate, async (req, res) => {
     try {
@@ -1092,7 +1060,7 @@ app.post('/api/invoices/create', authenticate, async (req, res) => {
 
         const portalLink = `${FRONTEND_URL}/portal/${portalToken}`;
 
-        // Send email via Gmail SMTP with retry logic
+        // Send email via global transporter with retry
         if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
             const mailOptions = {
                 from: process.env.EMAIL_USER,
@@ -1117,9 +1085,11 @@ app.post('/api/invoices/create', authenticate, async (req, res) => {
                 `
             };
 
-            const emailSent = await sendEmailWithRetry(mailOptions);
-            if (!emailSent) {
-                console.warn('⚠️ All email attempts failed – but invoice created.');
+            const sent = await sendEmailWithRetry(mailOptions);
+            if (sent) {
+                console.log(`✅ Invoice email sent to ${brandEmail}`);
+            } else {
+                console.warn(`⚠️ All email attempts failed – but invoice created.`);
             }
         } else {
             console.log('ℹ️ Email credentials not set – email not sent.');
