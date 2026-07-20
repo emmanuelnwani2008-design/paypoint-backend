@@ -9,8 +9,6 @@
     "dev": "nodemon server.js"
   },
   "dependencies": {
-    "@sendgrid/mail": "^8.1.6",
-    "@sendinblue/client": "^3.3.1",
     "@supabase/supabase-js": "^2.110.0",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
@@ -18,17 +16,16 @@
     "express-rate-limit": "^7.5.1",
     "helmet": "^6.2.0",
     "jsonwebtoken": "^9.0.0",
-    "morgan": "^1.11.0",
     "multer": "^2.2.0",
     "node-cron": "^4.6.0",
     "nodemailer": "^9.0.3",
     "nodemon": "^3.0.1",
     "pdfkit": "^0.15.0"
-  }
+  },
   "overrides": {
-  "form-data": "4.0.0",
-  "qs": "6.13.0",
-  "tough-cookie": "4.1.4",
-  "request": "npm:@cypress/request@3.0.1"
-}
+    "form-data": "4.0.0",
+    "qs": "6.13.0",
+    "tough-cookie": "4.1.4",
+    "request": "npm:@cypress/request@3.0.1"
+  }
 }
