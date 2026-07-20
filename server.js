@@ -195,16 +195,40 @@ cron.schedule('0 9 * * *', async () => {
             const dueDate = deal.due_date;
             if (!dueDate) continue;
 
-            const { data: profile, error: profileError } = await supabase
-                .from('profiles')
-                .select('email, subscription_tier, user_metadata')
-                .eq('id', deal.user_id)
-                .single();
+            let { data: profile, error: profileError } = await supabase
+    .from('profiles')
+    .select('email, subscription_tier, user_metadata')
+    .eq('id', deal.user_id)
+    .single();
 
-            if (profileError || !profile) {
-                console.error(`❌ Could not find profile for user ${deal.user_id}`);
-                continue;
-            }
+// If profile is missing, create it
+if (profileError || !profile) {
+    console.log(`⚠️ Profile missing for user ${deal.user_id} – creating one...`);
+    const { data: userData, error: userError } = await supabaseAdmin.auth.admin.getUserById(deal.user_id);
+    if (userError || !userData.user) {
+        console.error(`❌ Could not fetch user ${deal.user_id}:`, userError);
+        continue;
+    }
+    const { error: insertError } = await supabaseAdmin
+        .from('profiles')
+        .insert({
+            id: deal.user_id,
+            email: userData.user.email,
+            subscription_tier: 'free',
+            user_metadata: userData.user.user_metadata || {}
+        });
+    if (insertError) {
+        console.error(`❌ Failed to create profile for ${deal.user_id}:`, insertError);
+        continue;
+    }
+    // Fetch the newly created profile
+    const { data: newProfile } = await supabase
+        .from('profiles')
+        .select('email, subscription_tier, user_metadata')
+        .eq('id', deal.user_id)
+        .single();
+    profile = newProfile;
+}
 
             if (profile.subscription_tier !== 'pro') {
                 continue;
