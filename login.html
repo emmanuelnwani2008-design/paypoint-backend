@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PayPoint · Login</title>
+    <!-- Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-HFJ9JM358E"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){ dataLayer.push(arguments); }
+        gtag('js', new Date());
+        gtag('config', 'G-HFJ9JM358E');
+    </script>
+    <style>
+        /* ---------- Reset ---------- */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #ffffff;
+            color: #000000;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* ---------- Card ---------- */
+        .login-container {
+            background: #ffffff;
+            border: none !important;
+            outline: none !important;
+            border-radius: 24px;
+            padding: 48px 40px 36px;
+            width: 100%;
+            max-width: 400px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.06);
+        }
+
+        .logo {
+            font-size: 28px;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 4px;
+        }
+        .logo img {
+            height: 40px;
+            width: auto;
+            vertical-align: middle;
+            margin-right: 8px;
+        }
+        .subtitle {
+            text-align: center;
+            color: #8A9AAB;
+            font-size: 14px;
+            margin-bottom: 28px;
+        }
+
+        /* ---------- Tabs ---------- */
+        .tabs {
+            display: flex;
+            background: #F2F4F8;
+            border-radius: 12px;
+            padding: 4px;
+            margin-bottom: 28px;
+            border: 1px solid #EAEDF2;
+        }
+        .tab {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            background: transparent;
+            font-weight: 600;
+            font-size: 14px;
+            border-radius: 8px;
+            cursor: pointer;
+            color: #5E6F82;
+            transition: 0.2s;
+            font-family: inherit;
+        }
+        .tab.active {
+            background: #4F7CFF;
+            color: #fff;
+            box-shadow: 0 2px 8px rgba(79,124,255,0.25);
+        }
+        .tab:hover:not(.active) { color: #000; }
+
+        /* ---------- Form ---------- */
+        .form-group { margin-bottom: 18px; }
+        .form-group label {
+            display: block;
+            font-size: 13px;
+            font-weight: 500;
+            color: #5E6F82;
+            margin-bottom: 4px;
+        }
+        .password-wrapper {
+            position: relative;
+        }
+        .password-wrapper input {
+            width: 100%;
+            padding: 12px 44px 12px 16px;
+            background: #F8FAFC;
+            border: 1px solid #E2E8F0;
+            border-radius: 10px;
+            font-size: 14px;
+            color: #000;
+            transition: border 0.2s;
+            font-family: inherit;
+        }
+        .password-wrapper input:focus {
+            outline: none;
+            border-color: #4F7CFF;
+        }
+        .toggle {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 18px;
+            color: #8A9AAB;
+            padding: 4px;
+        }
+        .toggle:hover { color: #4F7CFF; }
+
+        /* ---------- Buttons ---------- */
+        .btn {
+            width: 100%;
+            background: #4F7CFF;
+            border: none;
+            padding: 14px;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 15px;
+            color: #fff;
+            cursor: pointer;
+            transition: 0.2s;
+            font-family: inherit;
+            box-shadow: 0 2px 8px rgba(79,124,255,0.25);
+            margin-top: 6px;
+        }
+        .btn:hover {
+            background: #3A5FD9;
+            transform: translateY(-1px);
+        }
+
+        /* ---------- Messages ---------- */
+        .msg {
+            text-align: center;
+            font-size: 13px;
+            margin-top: 12px;
+            display: none;
+        }
+        .msg.error { color: #FF3B30; }
+        .msg.success { color: #34C759; }
+        .hidden { display: none; }
+
+        /* ---------- Demo link ---------- */
+        .demo {
+            text-align: center;
+            color: #8A9AAB;
+            font-size: 12px;
+            margin-top: 18px;
+            border-top: 1px solid #E8EDF2;
+            padding-top: 16px;
+        }
+        .demo span {
+            color: #4F7CFF;
+            cursor: pointer;
+            font-weight: 500;
+        }
+        .demo span:hover { text-decoration: underline; }
+
+        /* ---------- Confirm banner ---------- */
+        .banner {
+            background: #FFF5E6;
+            border: 1px solid #FFE4B3;
+            border-radius: 10px;
+            padding: 14px 16px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        .banner.show { display: block; }
+        .banner h4 { color: #B97300; font-size: 14px; font-weight: 600; margin-bottom: 2px; }
+        .banner p { color: #8A6D00; font-size: 13px; line-height: 1.5; }
+        .banner .highlight { font-weight: 600; color: #B97300; word-break: break-all; }
+        .banner .spam { font-size: 12px; color: #8A9AAB; margin-top: 4px; display: block; }
+
+        /* ---------- Autofill fix ---------- */
+        input:-webkit-autofill,
+        input:-webkit-autofill:hover,
+        input:-webkit-autofill:focus,
+        input:-webkit-autofill:active {
+            -webkit-box-shadow: 0 0 0 30px #F8FAFC inset !important;
+            -webkit-text-fill-color: #000 !important;
+            background-color: #F8FAFC !important;
+            background-clip: padding-box !important;
+        }
+    </style>
+</head>
+<body>
+
+<div class="login-container">
+
+    <!-- Logo -->
+    <div class="logo">
+        <img src="logo.png" alt="PayPoint" />
+        PayPoint
+    </div>
+    <div class="subtitle">Finance OS for Creators</div>
+
+    <!-- Confirmation banner -->
+    <div class="banner" id="banner">
+        <h4>📧 Confirm Your Email</h4>
+        <p>We sent a confirmation link to <span class="highlight" id="confirmEmail"></span>.<br />Check your inbox (and <strong>spam</strong>) and click the link to verify.</p>
+        <span class="spam">💡 If you don't see it, check your spam or junk folder.</span>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tabs">
+        <button class="tab active" id="tabLogin">Log In</button>
+        <button class="tab" id="tabSignup">Sign Up</button>
+    </div>
+
+    <!-- Login form -->
+    <div id="formLogin">
+        <div class="form-group">
+            <label>Email Address</label>
+            <input type="email" id="loginEmail" placeholder="you@example.com" autocomplete="off" />
+        </div>
+        <div class="form-group">
+            <label>Password</label>
+            <div class="password-wrapper">
+                <input type="password" id="loginPassword" placeholder="Enter your password" />
+                <button type="button" class="toggle" onclick="toggle('loginPassword', this)">👁️</button>
+            </div>
+        </div>
+        <button class="btn" id="loginBtn">Log In</button>
+        <div class="msg error" id="loginError">Invalid email or password</div>
+    </div>
+
+    <!-- Signup form -->
+    <div id="formSignup" class="hidden">
+        <div class="form-group">
+            <label>Full Name</label>
+            <input type="text" id="signupName" placeholder="John Doe" />
+        </div>
+        <div class="form-group">
+            <label>Email Address</label>
+            <input type="email" id="signupEmail" placeholder="you@example.com" autocomplete="off" />
+        </div>
+        <div class="form-group">
+            <label>Password</label>
+            <div class="password-wrapper">
+                <input type="password" id="signupPassword" placeholder="Create a password (min 6 characters)" />
+                <button type="button" class="toggle" onclick="toggle('signupPassword', this)">👁️</button>
+            </div>
+        </div>
+        <button class="btn" id="signupBtn">Create Account</button>
+        <div class="msg error" id="signupError">Something went wrong</div>
+        <div class="msg success" id="signupSuccess">Account created! Please log in.</div>
+    </div>
+
+    <!-- Demo -->
+    <div class="demo">
+        💡 Demo: <span id="demoLogin">Log in as test user</span>
+    </div>
+</div>
+
+<script>
+// ---------- Configuration ----------
+const API_URL = 'https://paypoint-backend-9m63.onrender.com/api';
+
+// ---------- DOM elements ----------
+const tabLogin = document.getElementById('tabLogin');
+const tabSignup = document.getElementById('tabSignup');
+const formLogin = document.getElementById('formLogin');
+const formSignup = document.getElementById('formSignup');
+const loginBtn = document.getElementById('loginBtn');
+const signupBtn = document.getElementById('signupBtn');
+const loginEmail = document.getElementById('loginEmail');
+const loginPassword = document.getElementById('loginPassword');
+const signupName = document.getElementById('signupName');
+const signupEmail = document.getElementById('signupEmail');
+const signupPassword = document.getElementById('signupPassword');
+const loginError = document.getElementById('loginError');
+const signupError = document.getElementById('signupError');
+const signupSuccess = document.getElementById('signupSuccess');
+const demoLogin = document.getElementById('demoLogin');
+const banner = document.getElementById('banner');
+const confirmEmail = document.getElementById('confirmEmail');
+
+// ---------- Password toggle ----------
+window.toggle = function(inputId, btn) {
+    const input = document.getElementById(inputId);
+    if (input.type === 'password') {
+        input.type = 'text';
+        btn.textContent = '🙈';
+    } else {
+        input.type = 'password';
+        btn.textContent = '👁️';
+    }
+};
+
+// ---------- Tab switching ----------
+tabLogin.addEventListener('click', function() {
+    tabLogin.classList.add('active');
+    tabSignup.classList.remove('active');
+    formLogin.classList.remove('hidden');
+    formSignup.classList.add('hidden');
+    loginError.style.display = 'none';
+    signupError.style.display = 'none';
+    signupSuccess.style.display = 'none';
+    banner.classList.remove('show');
+});
+
+tabSignup.addEventListener('click', function() {
+    tabSignup.classList.add('active');
+    tabLogin.classList.remove('active');
+    formSignup.classList.remove('hidden');
+    formLogin.classList.add('hidden');
+    loginError.style.display = 'none';
+    signupError.style.display = 'none';
+    signupSuccess.style.display = 'none';
+    banner.classList.remove('show');
+});
+
+// ---------- Signup ----------
+signupBtn.addEventListener('click', async function() {
+    const name = signupName.value.trim();
+    const email = signupEmail.value.trim();
+    const password = signupPassword.value;
+
+    signupError.style.display = 'none';
+    signupSuccess.style.display = 'none';
+    banner.classList.remove('show');
+
+    if (!name || !email || !password) {
+        signupError.textContent = 'Please fill in all fields';
+        signupError.style.display = 'block';
+        return;
+    }
+    if (password.length < 6) {
+        signupError.textContent = 'Password must be at least 6 characters';
+        signupError.style.display = 'block';
+        return;
+    }
+
+    try {
+        const res = await fetch(API_URL + '/auth/signup', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name, email, password })
+        });
+        const data = await res.json();
+        if (data.success) {
+            confirmEmail.textContent = email;
+            banner.classList.add('show');
+            signupName.value = '';
+            signupEmail.value = '';
+            signupPassword.value = '';
+            signupError.style.display = 'none';
+        } else {
+            signupError.textContent = data.error || 'Signup failed';
+            signupError.style.display = 'block';
+        }
+    } catch (err) {
+        signupError.textContent = 'Could not connect to server.';
+        signupError.style.display = 'block';
+    }
+});
+
+// ---------- Login ----------
+loginBtn.addEventListener('click', async function() {
+    const email = loginEmail.value.trim();
+    const password = loginPassword.value;
+
+    loginError.style.display = 'none';
+    banner.classList.remove('show');
+
+    if (!email || !password) {
+        loginError.textContent = 'Please enter email and password';
+        loginError.style.display = 'block';
+        return;
+    }
+
+    try {
+        const res = await fetch(API_URL + '/auth/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password })
+        });
+        const data = await res.json();
+        if (data.success && data.user) {
+            localStorage.setItem('paypoint_user', JSON.stringify(data.user));
+            if (data.session && data.session.access_token) {
+                localStorage.setItem('paypoint_session', data.session.access_token);
+            }
+            window.location.replace('dashboard.html');
+        } else {
+            loginError.textContent = data.error || 'Invalid credentials';
+            loginError.style.display = 'block';
+        }
+    } catch (err) {
+        loginError.textContent = 'Could not connect to server.';
+        loginError.style.display = 'block';
+        console.error('Login error:', err);
+    }
+});
+
+// ---------- Enter key ----------
+loginPassword.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') loginBtn.click();
+});
+signupPassword.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') signupBtn.click();
+});
+
+// ---------- Demo login ----------
+async function demoHandler() {
+    const DEMO_EMAIL = 'demo@paypoint.com';
+    const DEMO_PASSWORD = 'DemoSecure2026!';
+    try {
+        let res = await fetch(API_URL + '/auth/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: DEMO_EMAIL, password: DEMO_PASSWORD })
+        });
+        let data = await res.json();
+        if (!data.success) {
+            console.log('Demo account not found – creating...');
+            const signupRes = await fetch(API_URL + '/auth/signup', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name: 'Demo User', email: DEMO_EMAIL, password: DEMO_PASSWORD })
+            });
+            const signupData = await signupRes.json();
+            if (!signupData.success) {
+                alert('Demo account creation failed: ' + (signupData.error || 'Unknown error'));
+                return;
+            }
+            res = await fetch(API_URL + '/auth/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: DEMO_EMAIL, password: DEMO_PASSWORD })
+            });
+            data = await res.json();
+        }
+        if (data.success && data.user) {
+            localStorage.setItem('paypoint_user', JSON.stringify(data.user));
+            if (data.session && data.session.access_token) {
+                localStorage.setItem('paypoint_session', data.session.access_token);
+            }
+            window.location.replace('dashboard.html');
+        } else {
+            alert('Demo login failed. Please try again.');
+        }
+    } catch (err) {
+        alert('Demo login could not connect to server.');
+        console.error('Demo error:', err);
+    }
+}
+demoLogin.addEventListener('click', demoHandler);
+
+// ---------- Auto‑redirect if already logged in ----------
+const user = localStorage.getItem('paypoint_user');
+if (user) {
+    try {
+        const userData = JSON.parse(user);
+        if (userData && userData.id) {
+            window.location.replace('dashboard.html');
+        }
+    } catch (e) {
+        localStorage.removeItem('paypoint_user');
+        localStorage.removeItem('paypoint_session');
+    }
+}
+</script>
+</body>
+</html>
