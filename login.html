@@ -27,12 +27,12 @@
         }
         .login-container {
             background: #FFFFFF;
-            border: none;          /* ← Border removed – blends with background */
+            border: none;                 /* No border – exactly like your screenshot */
             border-radius: 20px;
             padding: 48px 40px;
             width: 100%;
             max-width: 420px;
-            box-shadow: 0 24px 64px rgba(0, 0, 0, 0.06);
+            box-shadow: 0 24px 64px rgba(0, 0, 0, 0.06);  /* Soft shadow */
         }
         .logo {
             font-size: 32px;
@@ -153,21 +153,17 @@
             transform: translateY(-1px);
             box-shadow: 0 4px 16px rgba(79, 124, 255, 0.35);
         }
-        .error-msg {
-            color: #FF3B30;
-            font-size: 13px;
+
+        /* Security message – exactly as in your screenshot */
+        .security-message {
             text-align: center;
-            margin-top: 12px;
-            display: none;
-        }
-        .success-msg {
-            color: #34C759;
+            color: #8A9AAB;
             font-size: 13px;
-            text-align: center;
-            margin-top: 12px;
-            display: none;
+            margin-top: 16px;
+            padding: 8px 0;
+            border-top: 1px solid #F0F2F5;
         }
-        .form-hidden { display: none; }
+
         .demo-note {
             text-align: center;
             color: #8A9AAB;
@@ -183,6 +179,7 @@
         }
         .demo-note span:hover { text-decoration: underline; }
 
+        /* Confirmation banner (if needed) */
         .confirm-banner {
             background: #FFF5E6;
             border: 1px solid #FFE4B3;
@@ -192,28 +189,20 @@
             display: none;
         }
         .confirm-banner.show { display: block; }
-        .confirm-banner h4 {
-            color: #B97300;
-            font-size: 14px;
-            font-weight: 600;
-            margin-bottom: 4px;
-        }
-        .confirm-banner p {
-            color: #8A6D00;
+        .confirm-banner h4 { color: #B97300; font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+        .confirm-banner p { color: #8A6D00; font-size: 13px; line-height: 1.5; }
+        .confirm-banner .email-highlight { font-weight: 600; color: #B97300; word-break: break-all; }
+        .confirm-banner .check-spam { font-size: 12px; color: #8A9AAB; margin-top: 6px; display: block; }
+
+        .error-msg, .success-msg {
+            text-align: center;
             font-size: 13px;
-            line-height: 1.5;
+            margin-top: 12px;
+            display: none;
         }
-        .confirm-banner .email-highlight {
-            font-weight: 600;
-            color: #B97300;
-            word-break: break-all;
-        }
-        .confirm-banner .check-spam {
-            font-size: 12px;
-            color: #8A9AAB;
-            margin-top: 6px;
-            display: block;
-        }
+        .error-msg { color: #FF3B30; }
+        .success-msg { color: #34C759; }
+        .form-hidden { display: none; }
     </style>
 </head>
 <body>
@@ -227,10 +216,7 @@
         <!-- Confirmation Banner -->
         <div class="confirm-banner" id="confirmBanner">
             <h4>📧 Confirm Your Email</h4>
-            <p>
-                We sent a confirmation link to <span class="email-highlight" id="confirmEmail"></span>.
-                Please check your inbox (and <strong>spam folder</strong>) and click the link to verify your account.
-            </p>
+            <p>We sent a confirmation link to <span class="email-highlight" id="confirmEmail"></span>. Please check your inbox (and <strong>spam folder</strong>) and click the link to verify your account.</p>
             <span class="check-spam">💡 If you don't see the email, check your spam or junk folder.</span>
         </div>
 
@@ -278,6 +264,11 @@
             <div class="success-msg" id="signupSuccess">Account created! Please log in.</div>
         </div>
 
+        <!-- Security message – exactly like in your screenshot -->
+        <div class="security-message">
+            For security purposes, you can only request this after 53 seconds.
+        </div>
+
         <div class="demo-note">
             💡 Demo: <span id="demoLogin">Log in as test user</span>
         </div>
@@ -311,7 +302,7 @@
         const confirmEmail = document.getElementById('confirmEmail');
 
         // ============================================
-        // PASSWORD VISIBILITY TOGGLE (Global)
+        // PASSWORD VISIBILITY TOGGLE
         // ============================================
         window.togglePasswordVisibility = function(inputId, btn) {
             const input = document.getElementById(inputId);
@@ -366,7 +357,6 @@
                 signupError.style.display = 'block';
                 return;
             }
-
             if (password.length < 6) {
                 signupError.textContent = 'Password must be at least 6 characters';
                 signupError.style.display = 'block';
@@ -379,9 +369,7 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ name, email, password })
                 });
-
                 const data = await res.json();
-
                 if (data.success) {
                     confirmEmail.textContent = email;
                     confirmBanner.classList.add('show');
@@ -421,9 +409,7 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ email, password })
                 });
-
                 const data = await res.json();
-
                 if (data.success && data.user) {
                     localStorage.setItem('paypoint_user', JSON.stringify(data.user));
                     if (data.session?.access_token) {
@@ -447,7 +433,6 @@
         async function demoLoginHandler() {
             const DEMO_EMAIL = 'demo@paypoint.com';
             const DEMO_PASSWORD = 'DemoSecure2026!';
-
             try {
                 let res = await fetch(`${API_URL}/auth/login`, {
                     method: 'POST',
@@ -455,7 +440,6 @@
                     body: JSON.stringify({ email: DEMO_EMAIL, password: DEMO_PASSWORD })
                 });
                 let data = await res.json();
-
                 if (!data.success) {
                     console.log('Demo account not found – creating...');
                     const signupRes = await fetch(`${API_URL}/auth/signup`, {
@@ -475,7 +459,6 @@
                     });
                     data = await res.json();
                 }
-
                 if (data.success && data.user) {
                     localStorage.setItem('paypoint_user', JSON.stringify(data.user));
                     if (data.session?.access_token) {
@@ -490,7 +473,6 @@
                 console.error('Demo error:', err);
             }
         }
-
         demoLogin.addEventListener('click', demoLoginHandler);
 
         // ============================================
@@ -499,7 +481,6 @@
         loginPassword.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') loginBtn.click();
         });
-
         signupPassword.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') signupBtn.click();
         });
