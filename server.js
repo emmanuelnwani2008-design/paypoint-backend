@@ -8,11 +8,11 @@ const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const { createClient } = require('@supabase/supabase-js');
 const PDFDocument = require('pdfkit');
-const { Resend } = require('resend');
+const { Resend } = require('resend');      // <-- KEPT (This is correct)
 const crypto = require('crypto');
 const cron = require('node-cron');
 const multer = require('multer');
-const nodemailer = require('nodemailer'); // ← was missing in original!
+const nodemailer = require('nodemailer'); // <-- KEPT (For Gmail fallback)
 
 const app = express();
 app.set('trust proxy', 1);
@@ -22,7 +22,7 @@ const FRONTEND_URL = process.env.FRONTEND_URL || 'https://your-app.vercel.app';
 console.log(`🌐 Frontend URL: ${FRONTEND_URL}`);
 
 // ============================================
-// SECURITY MIDDLEWARE (unchanged)
+// SECURITY MIDDLEWARE (UNCHANGED)
 // ============================================
 app.use(helmet({
     contentSecurityPolicy: {
@@ -95,7 +95,7 @@ app.use((req, res, next) => {
 });
 
 // ============================================
-// SUPABASE CLIENTS (unchanged)
+// SUPABASE CLIENTS (UNCHANGED)
 // ============================================
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseAnonKey = process.env.SUPABASE_ANON_KEY;
@@ -110,8 +110,13 @@ const supabase = createClient(supabaseUrl, supabaseAnonKey);
 const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
 
 // ============================================
-// EMAIL SETUP – Gmail SMTP (fallback)
+// EMAIL SETUP (UPDATED: Brevo REMOVED, Resend ADDED)
 // ============================================
+
+// 1. Instantiate Resend
+const resend = new Resend(process.env.RESEND_API_KEY);
+
+// 2. Gmail SMTP Transporter (KEPT for fallback)
 const transporter = nodemailer.createTransport({
     host: 'smtp.gmail.com',
     port: 587,
@@ -127,57 +132,42 @@ const transporter = nodemailer.createTransport({
     requireTLS: true
 });
 
-// ------------------------------------------------------------
-// Send email with Brevo API (HTTPS – no IPv6 issues)
-// ------------------------------------------------------------
-async function sendEmailBrevo(to, subject, htmlContent) {
-    const apiKey = process.env.BREVO_API_KEY;
+// 3. NEW: Send email with Resend (Replaces Brevo)
+async function sendEmailResend(to, subject, htmlContent) {
+    const apiKey = process.env.RESEND_API_KEY;
     if (!apiKey) {
-        console.log('⚠️ BREVO_API_KEY not set – skipping Brevo.');
+        console.log('⚠️ RESEND_API_KEY not set – skipping Resend.');
         return false;
     }
 
-    const url = 'https://api.brevo.com/v3/smtp/email';
-    const payload = {
-        sender: { email: process.env.EMAIL_USER || 'noreply@paypoint.com', name: 'PayPoint' },
-        to: [{ email: to }],
-        subject: subject,
-        htmlContent: htmlContent
-    };
-
     try {
-        const response = await fetch(url, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'api-key': apiKey
-            },
-            body: JSON.stringify(payload)
+        const { data, error } = await resend.emails.send({
+            from: process.env.EMAIL_FROM || 'PayPoint <onboarding@resend.dev>',
+            to: [to],
+            subject: subject,
+            html: htmlContent,
         });
 
-        if (!response.ok) {
-            const errorText = await response.text();
-            console.error('❌ Brevo API error:', response.status, errorText);
+        if (error) {
+            console.error('❌ Resend error:', error);
             return false;
         }
 
-        console.log(`✅ Brevo email sent to ${to}`);
+        console.log(`✅ Resend email sent to ${to}`);
         return true;
     } catch (err) {
-        console.error('❌ Brevo fetch error:', err.message);
+        console.error('❌ Resend fetch error:', err.message);
         return false;
     }
 }
 
-// ------------------------------------------------------------
-// Unified email sender – tries Brevo first, falls back to Gmail
-// ------------------------------------------------------------
+// 4. UPDATED: Unified sender (Now tries Resend first, then Gmail)
 async function sendEmailWithRetry(to, subject, html, retries = 2) {
-    // 1. Try Brevo (primary)
-    if (process.env.BREVO_API_KEY) {
-        const sent = await sendEmailBrevo(to, subject, html);
+    // 1. Try Resend (primary)
+    if (process.env.RESEND_API_KEY) {
+        const sent = await sendEmailResend(to, subject, html);
         if (sent) return true;
-        console.log('⚠️ Brevo failed – falling back to Gmail SMTP.');
+        console.log('⚠️ Resend failed – falling back to Gmail SMTP.');
     }
 
     // 2. Fallback to Gmail SMTP with retry
@@ -200,7 +190,7 @@ async function sendEmailWithRetry(to, subject, html, retries = 2) {
 }
 
 // ============================================
-// CRON JOB – Automated Invoice Chasing (Pro)  (unchanged)
+// CRON JOB – Automated Invoice Chasing (UNCHANGED)
 // ============================================
 cron.schedule('0 9 * * *', async () => {
     console.log('🔔 Running overdue invoice check...');
@@ -307,7 +297,7 @@ cron.schedule('0 9 * * *', async () => {
 });
 
 // ============================================
-// HELPERS (unchanged)
+// HELPERS (UNCHANGED)
 // ============================================
 function isValidEmail(email) {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
@@ -336,7 +326,7 @@ function isValidAmount(amount) {
 }
 
 // ============================================
-// AUTHENTICATION (unchanged)
+// AUTHENTICATION (UNCHANGED)
 // ============================================
 async function authenticate(req, res, next) {
     try {
@@ -359,7 +349,7 @@ async function authenticate(req, res, next) {
 }
 
 // ============================================
-// TEST & HEALTH ROUTES (unchanged)
+// TEST & HEALTH ROUTES (UNCHANGED)
 // ============================================
 app.get('/', (req, res) => {
     res.json({ message: '🚀 PayPoint API is running!', status: 'secure', timestamp: new Date().toISOString() });
@@ -380,7 +370,7 @@ app.get('/api/db-health', async (req, res) => {
 });
 
 // ============================================
-// AUTH ROUTES (unchanged)
+// AUTH ROUTES (UNCHANGED)
 // ============================================
 app.post('/api/auth/signup', authLimiter, async (req, res) => {
     try {
@@ -473,7 +463,7 @@ app.get('/api/auth/user', authenticate, async (req, res) => {
 });
 
 // ============================================
-// ADMIN ROUTE – Force Pro (unchanged)
+// ADMIN ROUTE – Force Pro (UNCHANGED)
 // ============================================
 app.post('/api/admin/force-pro', authenticate, async (req, res) => {
     try {
@@ -519,7 +509,7 @@ app.post('/api/admin/force-pro', authenticate, async (req, res) => {
 });
 
 // ============================================
-// UPLOAD PROFILE PICTURE (unchanged)
+// UPLOAD PROFILE PICTURE (UNCHANGED)
 // ============================================
 const storage = multer.memoryStorage();
 const upload = multer({
@@ -566,7 +556,7 @@ app.post('/api/auth/upload-avatar', authenticate, upload.single('avatar'), async
 });
 
 // ============================================
-// UPDATE PROFILE (unchanged)
+// UPDATE PROFILE (UNCHANGED)
 // ============================================
 app.put('/api/auth/update', authenticate, async (req, res) => {
     try {
@@ -594,7 +584,7 @@ app.put('/api/auth/update', authenticate, async (req, res) => {
 });
 
 // ============================================
-// DEALS ROUTES (unchanged)
+// DEALS ROUTES (UNCHANGED)
 // ============================================
 app.get('/api/deals', authenticate, async (req, res) => {
     try {
@@ -759,7 +749,7 @@ app.delete('/api/deals/:id', authenticate, async (req, res) => {
 });
 
 // ============================================
-// EXPENSES ROUTES (unchanged)
+// EXPENSES ROUTES (UNCHANGED)
 // ============================================
 app.get('/api/expenses', authenticate, async (req, res) => {
     try {
@@ -822,7 +812,7 @@ app.post('/api/expenses', authenticate, async (req, res) => {
 });
 
 // ============================================
-// PAYSTACK ROUTES (unchanged)
+// PAYSTACK ROUTES (UNCHANGED)
 // ============================================
 const PAYSTACK_SECRET_KEY = process.env.PAYSTACK_SECRET_KEY;
 if (!PAYSTACK_SECRET_KEY) {
@@ -982,7 +972,7 @@ app.get('/api/payments/verify/:reference', authenticate, async (req, res) => {
 });
 
 // ============================================
-// INVOICE ROUTES – UPDATED (only create & send)
+// INVOICE ROUTES (UNCHANGED - but uses new email sender)
 // ============================================
 
 app.post('/api/invoices/create', authenticate, async (req, res) => {
@@ -990,15 +980,14 @@ app.post('/api/invoices/create', authenticate, async (req, res) => {
         const { dealId, invoiceNumber, brandEmail } = req.body;
         const userId = req.userId;
 
-        // --- Validation ---
         if (!dealId || !brandEmail) {
             return res.status(400).json({ error: 'dealId and brandEmail required' });
         }
+
         if (!isValidEmail(brandEmail)) {
             return res.status(400).json({ error: 'Invalid brand email format' });
         }
 
-        // --- Fetch deal ---
         const { data: deal, error: dealError } = await supabase
             .from('deals')
             .select('*')
@@ -1010,9 +999,8 @@ app.post('/api/invoices/create', authenticate, async (req, res) => {
             return res.status(404).json({ error: 'Deal not found' });
         }
 
-        // --- Create invoice record ---
         const invNumber = invoiceNumber || `INV-${Date.now()}`;
-        const { data: invoice, error: invoiceError } = await supabase
+        const { data, error } = await supabase
             .from('invoices')
             .insert([{
                 user_id: userId,
@@ -1023,14 +1011,13 @@ app.post('/api/invoices/create', authenticate, async (req, res) => {
             }])
             .select();
 
-        if (invoiceError) {
-            console.error('Invoice create error:', invoiceError);
-            return res.status(500).json({ error: invoiceError.message });
+        if (error) {
+            console.error('Invoice create error:', error);
+            return res.status(500).json({ error: error.message });
         }
 
-        const newInvoice = invoice[0];
+        const newInvoice = data[0];
 
-        // --- Generate and save portal token ---
         const portalToken = crypto.randomBytes(32).toString('hex');
         const { error: tokenError } = await supabase
             .from('invoices')
@@ -1039,14 +1026,12 @@ app.post('/api/invoices/create', authenticate, async (req, res) => {
 
         if (tokenError) {
             console.error('❌ Failed to save portal token:', tokenError);
-            // We still continue – the invoice exists, just no portal link.
         } else {
             console.log(`✅ Portal token saved for invoice ${newInvoice.id}`);
         }
 
         const portalLink = `${FRONTEND_URL}/portal/${portalToken}`;
 
-        // --- Build email content ---
         const html = `
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #E8EDF2; border-radius: 12px;">
                 <h1 style="color: #4F7CFF; text-align: center;">PayPoint</h1>
@@ -1066,16 +1051,15 @@ app.post('/api/invoices/create', authenticate, async (req, res) => {
         `;
         const subject = `📄 Invoice #${invNumber} from ${deal.brand_name}`;
 
-        // --- Send email with retry (Brevo → Gmail) ---
+        // *** THIS IS THE LINE THAT SENDS THE EMAIL USING THE NEW RESEND FUNCTION ***
         const sent = await sendEmailWithRetry(brandEmail, subject, html);
 
         if (sent) {
             console.log(`✅ Invoice email sent to ${brandEmail}`);
         } else {
-            console.warn(`⚠️ All email attempts failed – but invoice was created. You may need to manually send it.`);
+            console.warn(`⚠️ All email attempts failed – but invoice was created.`);
         }
 
-        // --- Respond with invoice data (regardless of email success) ---
         res.status(201).json({
             success: true,
             data: newInvoice,
@@ -1089,7 +1073,6 @@ app.post('/api/invoices/create', authenticate, async (req, res) => {
     }
 });
 
-// --- Invoice generation (PDF) – unchanged ---
 app.post('/api/invoices/generate', authenticate, async (req, res) => {
     try {
         const { dealId } = req.body;
@@ -1177,7 +1160,7 @@ app.post('/api/invoices/generate', authenticate, async (req, res) => {
 });
 
 // ============================================
-// BANK ACCOUNT VERIFICATION & SUBACCOUNT (unchanged)
+// BANK ACCOUNT VERIFICATION & SUBACCOUNT (UNCHANGED)
 // ============================================
 
 app.post('/api/payments/verify-account', authenticate, async (req, res) => {
@@ -1295,7 +1278,7 @@ app.post('/api/payments/create-subaccount', authenticate, async (req, res) => {
 });
 
 // ============================================
-// SUBSCRIPTION SYSTEM (Pro/Free) – unchanged
+// SUBSCRIPTION SYSTEM (Pro/Free) (UNCHANGED)
 // ============================================
 
 app.post('/api/subscribe', authenticate, async (req, res) => {
@@ -1360,7 +1343,7 @@ app.post('/api/subscribe', authenticate, async (req, res) => {
 });
 
 // ============================================
-// WEBHOOKS (unchanged)
+// WEBHOOKS (UNCHANGED)
 // ============================================
 
 app.post('/api/webhooks/paystack',
@@ -1507,7 +1490,7 @@ app.post('/api/webhooks/paystack-deal',
 );
 
 // ============================================
-// PUBLIC PORTAL - View Invoice (unchanged)
+// PUBLIC PORTAL - View Invoice (UNCHANGED)
 // ============================================
 app.get('/portal/:token', async (req, res) => {
     try {
@@ -1696,7 +1679,7 @@ app.get('/portal/:token', async (req, res) => {
 });
 
 // ============================================
-// ERROR HANDLERS (unchanged)
+// ERROR HANDLERS (UNCHANGED)
 // ============================================
 app.use((err, req, res, next) => {
     console.error('Unhandled error:', err);
@@ -1711,10 +1694,11 @@ app.use((req, res) => {
 });
 
 // ============================================
-// START SERVER (unchanged)
+// START SERVER (UNCHANGED)
 // ============================================
 app.listen(port, () => {
     console.log(`🚀 PayPoint API running on port ${port}`);
     console.log(`🔒 Security: Helmet, CORS, Rate Limiting enabled`);
+    console.log(`📧 Email: Resend (Primary) + Gmail (Fallback)`);
     console.log(`🌐 Allowed origins: ${allowedOrigins.join(', ')}`);
 });
