@@ -12,6 +12,7 @@ const { Resend } = require('resend');
 const crypto = require('crypto');
 const cron = require('node-cron');
 const multer = require('multer');
+const nodemailer = require('nodemailer'); // ← was missing in original!
 
 const app = express();
 app.set('trust proxy', 1);
@@ -21,7 +22,7 @@ const FRONTEND_URL = process.env.FRONTEND_URL || 'https://your-app.vercel.app';
 console.log(`🌐 Frontend URL: ${FRONTEND_URL}`);
 
 // ============================================
-// SECURITY MIDDLEWARE
+// SECURITY MIDDLEWARE (unchanged)
 // ============================================
 app.use(helmet({
     contentSecurityPolicy: {
@@ -94,7 +95,7 @@ app.use((req, res, next) => {
 });
 
 // ============================================
-// SUPABASE CLIENTS
+// SUPABASE CLIENTS (unchanged)
 // ============================================
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseAnonKey = process.env.SUPABASE_ANON_KEY;
@@ -199,7 +200,7 @@ async function sendEmailWithRetry(to, subject, html, retries = 2) {
 }
 
 // ============================================
-// CRON JOB – Automated Invoice Chasing (Pro)
+// CRON JOB – Automated Invoice Chasing (Pro)  (unchanged)
 // ============================================
 cron.schedule('0 9 * * *', async () => {
     console.log('🔔 Running overdue invoice check...');
@@ -306,7 +307,7 @@ cron.schedule('0 9 * * *', async () => {
 });
 
 // ============================================
-// HELPERS
+// HELPERS (unchanged)
 // ============================================
 function isValidEmail(email) {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
@@ -335,7 +336,7 @@ function isValidAmount(amount) {
 }
 
 // ============================================
-// AUTHENTICATION
+// AUTHENTICATION (unchanged)
 // ============================================
 async function authenticate(req, res, next) {
     try {
@@ -358,7 +359,7 @@ async function authenticate(req, res, next) {
 }
 
 // ============================================
-// TEST & HEALTH ROUTES
+// TEST & HEALTH ROUTES (unchanged)
 // ============================================
 app.get('/', (req, res) => {
     res.json({ message: '🚀 PayPoint API is running!', status: 'secure', timestamp: new Date().toISOString() });
@@ -379,7 +380,7 @@ app.get('/api/db-health', async (req, res) => {
 });
 
 // ============================================
-// AUTH ROUTES
+// AUTH ROUTES (unchanged)
 // ============================================
 app.post('/api/auth/signup', authLimiter, async (req, res) => {
     try {
@@ -472,7 +473,7 @@ app.get('/api/auth/user', authenticate, async (req, res) => {
 });
 
 // ============================================
-// ADMIN ROUTE – Force Pro
+// ADMIN ROUTE – Force Pro (unchanged)
 // ============================================
 app.post('/api/admin/force-pro', authenticate, async (req, res) => {
     try {
@@ -518,7 +519,7 @@ app.post('/api/admin/force-pro', authenticate, async (req, res) => {
 });
 
 // ============================================
-// UPLOAD PROFILE PICTURE
+// UPLOAD PROFILE PICTURE (unchanged)
 // ============================================
 const storage = multer.memoryStorage();
 const upload = multer({
@@ -565,7 +566,7 @@ app.post('/api/auth/upload-avatar', authenticate, upload.single('avatar'), async
 });
 
 // ============================================
-// UPDATE PROFILE
+// UPDATE PROFILE (unchanged)
 // ============================================
 app.put('/api/auth/update', authenticate, async (req, res) => {
     try {
@@ -593,7 +594,7 @@ app.put('/api/auth/update', authenticate, async (req, res) => {
 });
 
 // ============================================
-// DEALS ROUTES
+// DEALS ROUTES (unchanged)
 // ============================================
 app.get('/api/deals', authenticate, async (req, res) => {
     try {
@@ -758,7 +759,7 @@ app.delete('/api/deals/:id', authenticate, async (req, res) => {
 });
 
 // ============================================
-// EXPENSES ROUTES
+// EXPENSES ROUTES (unchanged)
 // ============================================
 app.get('/api/expenses', authenticate, async (req, res) => {
     try {
@@ -821,7 +822,7 @@ app.post('/api/expenses', authenticate, async (req, res) => {
 });
 
 // ============================================
-// PAYSTACK ROUTES
+// PAYSTACK ROUTES (unchanged)
 // ============================================
 const PAYSTACK_SECRET_KEY = process.env.PAYSTACK_SECRET_KEY;
 if (!PAYSTACK_SECRET_KEY) {
@@ -981,7 +982,7 @@ app.get('/api/payments/verify/:reference', authenticate, async (req, res) => {
 });
 
 // ============================================
-// INVOICE ROUTES
+// INVOICE ROUTES – UPDATED (only create & send)
 // ============================================
 
 app.post('/api/invoices/create', authenticate, async (req, res) => {
@@ -989,14 +990,15 @@ app.post('/api/invoices/create', authenticate, async (req, res) => {
         const { dealId, invoiceNumber, brandEmail } = req.body;
         const userId = req.userId;
 
+        // --- Validation ---
         if (!dealId || !brandEmail) {
             return res.status(400).json({ error: 'dealId and brandEmail required' });
         }
-
         if (!isValidEmail(brandEmail)) {
             return res.status(400).json({ error: 'Invalid brand email format' });
         }
 
+        // --- Fetch deal ---
         const { data: deal, error: dealError } = await supabase
             .from('deals')
             .select('*')
@@ -1008,8 +1010,9 @@ app.post('/api/invoices/create', authenticate, async (req, res) => {
             return res.status(404).json({ error: 'Deal not found' });
         }
 
+        // --- Create invoice record ---
         const invNumber = invoiceNumber || `INV-${Date.now()}`;
-        const { data, error } = await supabase
+        const { data: invoice, error: invoiceError } = await supabase
             .from('invoices')
             .insert([{
                 user_id: userId,
@@ -1020,28 +1023,30 @@ app.post('/api/invoices/create', authenticate, async (req, res) => {
             }])
             .select();
 
-        if (error) {
-            console.error('Invoice create error:', error);
-            return res.status(500).json({ error: error.message });
+        if (invoiceError) {
+            console.error('Invoice create error:', invoiceError);
+            return res.status(500).json({ error: invoiceError.message });
         }
 
-        // Generate portal token
-        const portalToken = crypto.randomBytes(32).toString('hex');
+        const newInvoice = invoice[0];
 
+        // --- Generate and save portal token ---
+        const portalToken = crypto.randomBytes(32).toString('hex');
         const { error: tokenError } = await supabase
             .from('invoices')
             .update({ portal_token: portalToken })
-            .eq('id', data[0].id);
+            .eq('id', newInvoice.id);
 
         if (tokenError) {
             console.error('❌ Failed to save portal token:', tokenError);
+            // We still continue – the invoice exists, just no portal link.
         } else {
-            console.log(`✅ Portal token saved for invoice ${data[0].id}`);
+            console.log(`✅ Portal token saved for invoice ${newInvoice.id}`);
         }
 
         const portalLink = `${FRONTEND_URL}/portal/${portalToken}`;
 
-        // Build email content
+        // --- Build email content ---
         const html = `
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #E8EDF2; border-radius: 12px;">
                 <h1 style="color: #4F7CFF; text-align: center;">PayPoint</h1>
@@ -1061,15 +1066,22 @@ app.post('/api/invoices/create', authenticate, async (req, res) => {
         `;
         const subject = `📄 Invoice #${invNumber} from ${deal.brand_name}`;
 
-        // Send email with Brevo (primary) and Gmail fallback
+        // --- Send email with retry (Brevo → Gmail) ---
         const sent = await sendEmailWithRetry(brandEmail, subject, html);
+
         if (sent) {
             console.log(`✅ Invoice email sent to ${brandEmail}`);
         } else {
-            console.warn(`⚠️ All email attempts failed – but invoice created.`);
+            console.warn(`⚠️ All email attempts failed – but invoice was created. You may need to manually send it.`);
         }
 
-        res.status(201).json({ success: true, data: data[0] });
+        // --- Respond with invoice data (regardless of email success) ---
+        res.status(201).json({
+            success: true,
+            data: newInvoice,
+            portal_token: portalToken,
+            email_sent: sent
+        });
 
     } catch (err) {
         console.error('Invoice create error:', err);
@@ -1077,6 +1089,7 @@ app.post('/api/invoices/create', authenticate, async (req, res) => {
     }
 });
 
+// --- Invoice generation (PDF) – unchanged ---
 app.post('/api/invoices/generate', authenticate, async (req, res) => {
     try {
         const { dealId } = req.body;
@@ -1164,7 +1177,7 @@ app.post('/api/invoices/generate', authenticate, async (req, res) => {
 });
 
 // ============================================
-// BANK ACCOUNT VERIFICATION & SUBACCOUNT
+// BANK ACCOUNT VERIFICATION & SUBACCOUNT (unchanged)
 // ============================================
 
 app.post('/api/payments/verify-account', authenticate, async (req, res) => {
@@ -1282,7 +1295,7 @@ app.post('/api/payments/create-subaccount', authenticate, async (req, res) => {
 });
 
 // ============================================
-// SUBSCRIPTION SYSTEM (Pro/Free)
+// SUBSCRIPTION SYSTEM (Pro/Free) – unchanged
 // ============================================
 
 app.post('/api/subscribe', authenticate, async (req, res) => {
@@ -1347,7 +1360,7 @@ app.post('/api/subscribe', authenticate, async (req, res) => {
 });
 
 // ============================================
-// WEBHOOKS
+// WEBHOOKS (unchanged)
 // ============================================
 
 app.post('/api/webhooks/paystack',
@@ -1494,7 +1507,7 @@ app.post('/api/webhooks/paystack-deal',
 );
 
 // ============================================
-// PUBLIC PORTAL - View Invoice
+// PUBLIC PORTAL - View Invoice (unchanged)
 // ============================================
 app.get('/portal/:token', async (req, res) => {
     try {
@@ -1683,7 +1696,7 @@ app.get('/portal/:token', async (req, res) => {
 });
 
 // ============================================
-// ERROR HANDLERS
+// ERROR HANDLERS (unchanged)
 // ============================================
 app.use((err, req, res, next) => {
     console.error('Unhandled error:', err);
@@ -1698,7 +1711,7 @@ app.use((req, res) => {
 });
 
 // ============================================
-// START SERVER
+// START SERVER (unchanged)
 // ============================================
 app.listen(port, () => {
     console.log(`🚀 PayPoint API running on port ${port}`);
