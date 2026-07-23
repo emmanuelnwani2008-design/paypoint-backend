@@ -575,15 +575,15 @@ function formatCurrency(amount, currency) {
                 const result = await res.json();
 
                 if (result.success) {
-    // Get the full payment link from the response
     const paymentLink = result.portal_link || 'No link generated';
     
-    // Show the link in a popup so the creator can copy it
-    alert(
+    // Use prompt() instead of alert() so the user can copy the link
+    prompt(
         '✅ Invoice created!\n\n' +
         '📋 COPY THIS LINK AND SEND IT TO THE BRAND:\n' +
-        paymentLink + '\n\n' +
-        '💡 (We are still setting up automatic email delivery. For now, copy this link and send it to the brand via WhatsApp, Slack, or email. They can click it to pay.)'
+        '(Select the link below, press Ctrl+C to copy, then close this box.)\n\n' +
+        '💡 We are still setting up automatic email delivery. For now, manually send this link to the brand via WhatsApp, Slack, or email.',
+        paymentLink  // <-- This pre-fills the text box with the link
     );
     
     closeModal();
