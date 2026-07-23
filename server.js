@@ -1002,12 +1002,11 @@ app.post('/api/invoices/create', authenticate, async (req, res) => {
         }
 
         res.status(201).json({
-    success: true,
-    data: newInvoice,
-    portal_token: portalToken,
-    portal_link: portalLink,  // <-- This is the full URL the brand needs
-    email_sent: sent
-});
+            success: true,
+            data: newInvoice,
+            portal_token: portalToken,
+            email_sent: sent
+        });
 
     } catch (err) {
         console.error('Invoice create error:', err);
@@ -1431,8 +1430,9 @@ app.post('/api/webhooks/paystack-deal',
     }
 );
 
-// ============================================
-// PUBLIC PORTAL - View Invoice
+
+        // ============================================
+// PUBLIC PORTAL - View Invoice (FIXED)
 // ============================================
 app.get('/portal/:token', async (req, res) => {
     try {
@@ -1442,42 +1442,49 @@ app.get('/portal/:token', async (req, res) => {
             return res.status(400).send('Invalid portal link');
         }
 
-        const { data: invoice, error } = await supabaseAdmin
+        // 1. Fetch the invoice using the token
+        const { data: invoice, error: invoiceError } = await supabaseAdmin
             .from('invoices')
-            .select(`
-                *,
-                deals(
-                    id,
-                    brand_name,
-                    amount,
-                    deliverable,
-                    due_date,
-                    user_id,
-                    users(
-                        email,
-                        user_metadata->name
-                    )
-                )
-            `)
+            .select('*')
             .eq('portal_token', token)
             .single();
 
-        if (error || !invoice) {
-            console.error('❌ Invoice not found:', error);
+        if (invoiceError || !invoice) {
+            console.error('❌ Invoice not found:', invoiceError);
             return res.status(404).send('Invoice not found');
         }
 
-        const deal = invoice.deals;
-        const creator = deal.users;
-        const isPaid = invoice.paid || false;
+        // 2. Fetch the associated deal
+        const { data: deal, error: dealError } = await supabaseAdmin
+            .from('deals')
+            .select('*')
+            .eq('id', invoice.deal_id)
+            .single();
 
+        if (dealError || !deal) {
+            console.error('❌ Deal not found:', dealError);
+            return res.status(404).send('Deal not found');
+        }
+
+        // 3. Fetch the creator's profile (name and email)
+        const { data: profile, error: profileError } = await supabaseAdmin
+            .from('profiles')
+            .select('email, user_metadata')
+            .eq('id', deal.user_id)
+            .single();
+
+        // If profile not found, use fallback values
+        const creatorName = profile?.user_metadata?.name || 'Creator';
+        const creatorEmail = profile?.email || 'Not provided';
+
+        const isPaid = invoice.paid || false;
         const brandName = escapeHtml(deal.brand_name);
         const deliverable = escapeHtml(deal.deliverable || 'Not specified');
         const invoiceNumber = escapeHtml(invoice.invoice_number);
-        const creatorName = escapeHtml(creator?.user_metadata?.name || 'Creator');
         const amountFormatted = Number(deal.amount).toLocaleString();
-        const dueDateFormatted = new Date(deal.due_date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+        const dueDateFormatted = deal.due_date ? new Date(deal.due_date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : 'Not set';
 
+        // 4. Render the HTML portal
         res.send(`
             <!DOCTYPE html>
             <html lang="en">
@@ -1594,7 +1601,7 @@ app.get('/portal/:token', async (req, res) => {
                     </div>
                     <div class="detail-row">
                         <span class="detail-label">Creator</span>
-                        <span class="detail-value">${creatorName}</span>
+                        <span class="detail-value">${escapeHtml(creatorName)}</span>
                     </div>
 
                     ${!isPaid ? `
