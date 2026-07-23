@@ -575,10 +575,20 @@ function formatCurrency(amount, currency) {
                 const result = await res.json();
 
                 if (result.success) {
-                    alert('✅ Invoice created and sent to ' + brandEmail);
-                    closeModal();
-                    loadDealsForInvoices();
-                } else {
+    // Get the full payment link from the response
+    const paymentLink = result.portal_link || 'No link generated';
+    
+    // Show the link in a popup so the creator can copy it
+    alert(
+        '✅ Invoice created!\n\n' +
+        '📋 COPY THIS LINK AND SEND IT TO THE BRAND:\n' +
+        paymentLink + '\n\n' +
+        '💡 (We are still setting up automatic email delivery. For now, copy this link and send it to the brand via WhatsApp, Slack, or email. They can click it to pay.)'
+    );
+    
+    closeModal();
+    loadDealsForInvoices();
+}else {
                     alert('❌ Error: ' + (result.error || 'Failed to create invoice'));
                 }
             } catch (err) {

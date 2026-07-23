@@ -1,6 +1,6 @@
 require('dotenv').config();
 const dns = require('dns');
-dns.setDefaultResultOrder('ipv4first');   // Force IPv4 globally
+dns.setDefaultResultOrder('ipv4first');
 
 const express = require('express');
 const cors = require('cors');
@@ -11,7 +11,6 @@ const PDFDocument = require('pdfkit');
 const crypto = require('crypto');
 const cron = require('node-cron');
 const multer = require('multer');
-const nodemailer = require('nodemailer');
 
 const app = express();
 app.set('trust proxy', 1);
@@ -21,7 +20,7 @@ const FRONTEND_URL = process.env.FRONTEND_URL || 'https://your-app.vercel.app';
 console.log(`🌐 Frontend URL: ${FRONTEND_URL}`);
 
 // ============================================
-// SECURITY MIDDLEWARE (UNCHANGED)
+// SECURITY MIDDLEWARE
 // ============================================
 app.use(helmet({
     contentSecurityPolicy: {
@@ -94,7 +93,7 @@ app.use((req, res, next) => {
 });
 
 // ============================================
-// SUPABASE CLIENTS (UNCHANGED)
+// SUPABASE CLIENTS
 // ============================================
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseAnonKey = process.env.SUPABASE_ANON_KEY;
@@ -109,54 +108,29 @@ const supabase = createClient(supabaseUrl, supabaseAnonKey);
 const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
 
 // ============================================
-// EMAIL SETUP (REPLACED WITH GMAIL SMTP + IPv4 FIX)
+// EMAIL DISABLED (Console Logger for Testing)
 // ============================================
-
-// 1. Gmail SMTP Transporter (with IPv4 forced)
-const transporter = nodemailer.createTransport({
-    host: 'smtp.gmail.com',
-    port: 587,
-    secure: false,
-    family: 4,   // <-- Forces IPv4, fixes Render timeout
-    auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS
-    },
-    connectionTimeout: 15000,
-    greetingTimeout: 15000,
-    socketTimeout: 30000,
-    tls: { rejectUnauthorized: false },
-    requireTLS: true
-});
-
-// 2. Email sender with retry
 async function sendEmailWithRetry(to, subject, html, retries = 2) {
-    const mailOptions = {
-        from: process.env.EMAIL_USER,
-        to: to,
-        subject: subject,
-        html: html
-    };
-
-    for (let attempt = 1; attempt <= retries; attempt++) {
-        try {
-            await transporter.sendMail(mailOptions);
-            console.log(`✅ Email sent to ${to} (attempt ${attempt})`);
-            return true;
-        } catch (err) {
-            console.log(`⚠️ Email attempt ${attempt} failed:`, err.message);
-            if (attempt === retries) {
-                console.error('❌ All email attempts failed.');
-                return false;
-            }
-            await new Promise(resolve => setTimeout(resolve, 2000 * attempt));
-        }
+    // Extract the portal link from the HTML
+    const linkMatch = html.match(/https:\/\/[^"]+\/portal\/[a-f0-9]+/);
+    
+    console.log(`📧 ========== INVOICE READY ==========`);
+    console.log(`📧 Brand Email: ${to}`);
+    console.log(`📧 Subject: ${subject}`);
+    
+    if (linkMatch) {
+        console.log(`🔗 COPY THIS LINK TO PAY: ${linkMatch[0]}`);
+    } else {
+        console.log(`📧 No link found in HTML.`);
     }
-    return false;
+    console.log(`📧 ===================================`);
+    
+    // Always return true so the invoice is marked as "sent" in the database
+    return true;
 }
 
 // ============================================
-// CRON JOB – Automated Invoice Chasing (UNCHANGED)
+// CRON JOB – Automated Invoice Chasing (Uses Logger)
 // ============================================
 cron.schedule('0 9 * * *', async () => {
     console.log('🔔 Running overdue invoice check...');
@@ -242,6 +216,7 @@ cron.schedule('0 9 * * *', async () => {
                 </div>
             `;
 
+            // This now just logs to console instead of sending real email
             const sent = await sendEmailWithRetry(brandEmail, subject, html);
             if (sent) {
                 await supabase
@@ -251,9 +226,9 @@ cron.schedule('0 9 * * *', async () => {
                         last_reminder_sent_at: new Date().toISOString()
                     })
                     .eq('id', invoice.id);
-                console.log(`✅ Reminder sent for invoice ${invoice.invoice_number} (${reminderType})`);
+                console.log(`✅ Reminder logged for invoice ${invoice.invoice_number} (${reminderType})`);
             } else {
-                console.error(`❌ Failed to send reminder for invoice ${invoice.invoice_number}`);
+                console.error(`❌ Failed to log reminder for invoice ${invoice.invoice_number}`);
             }
         }
 
@@ -263,7 +238,7 @@ cron.schedule('0 9 * * *', async () => {
 });
 
 // ============================================
-// HELPERS (UNCHANGED)
+// HELPERS
 // ============================================
 function isValidEmail(email) {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
@@ -292,7 +267,7 @@ function isValidAmount(amount) {
 }
 
 // ============================================
-// AUTHENTICATION (UNCHANGED)
+// AUTHENTICATION
 // ============================================
 async function authenticate(req, res, next) {
     try {
@@ -315,7 +290,7 @@ async function authenticate(req, res, next) {
 }
 
 // ============================================
-// TEST & HEALTH ROUTES (UNCHANGED)
+// TEST & HEALTH ROUTES
 // ============================================
 app.get('/', (req, res) => {
     res.json({ message: '🚀 PayPoint API is running!', status: 'secure', timestamp: new Date().toISOString() });
@@ -336,7 +311,7 @@ app.get('/api/db-health', async (req, res) => {
 });
 
 // ============================================
-// AUTH ROUTES (UNCHANGED)
+// AUTH ROUTES
 // ============================================
 app.post('/api/auth/signup', authLimiter, async (req, res) => {
     try {
@@ -429,7 +404,7 @@ app.get('/api/auth/user', authenticate, async (req, res) => {
 });
 
 // ============================================
-// ADMIN ROUTE – Force Pro (UNCHANGED)
+// ADMIN ROUTE – Force Pro
 // ============================================
 app.post('/api/admin/force-pro', authenticate, async (req, res) => {
     try {
@@ -475,7 +450,7 @@ app.post('/api/admin/force-pro', authenticate, async (req, res) => {
 });
 
 // ============================================
-// UPLOAD PROFILE PICTURE (UNCHANGED)
+// UPLOAD PROFILE PICTURE
 // ============================================
 const storage = multer.memoryStorage();
 const upload = multer({
@@ -522,7 +497,7 @@ app.post('/api/auth/upload-avatar', authenticate, upload.single('avatar'), async
 });
 
 // ============================================
-// UPDATE PROFILE (UNCHANGED)
+// UPDATE PROFILE
 // ============================================
 app.put('/api/auth/update', authenticate, async (req, res) => {
     try {
@@ -550,7 +525,7 @@ app.put('/api/auth/update', authenticate, async (req, res) => {
 });
 
 // ============================================
-// DEALS ROUTES (UNCHANGED)
+// DEALS ROUTES
 // ============================================
 app.get('/api/deals', authenticate, async (req, res) => {
     try {
@@ -715,7 +690,7 @@ app.delete('/api/deals/:id', authenticate, async (req, res) => {
 });
 
 // ============================================
-// EXPENSES ROUTES (UNCHANGED)
+// EXPENSES ROUTES
 // ============================================
 app.get('/api/expenses', authenticate, async (req, res) => {
     try {
@@ -778,7 +753,7 @@ app.post('/api/expenses', authenticate, async (req, res) => {
 });
 
 // ============================================
-// PAYSTACK ROUTES (UNCHANGED)
+// PAYSTACK ROUTES
 // ============================================
 const PAYSTACK_SECRET_KEY = process.env.PAYSTACK_SECRET_KEY;
 if (!PAYSTACK_SECRET_KEY) {
@@ -938,7 +913,7 @@ app.get('/api/payments/verify/:reference', authenticate, async (req, res) => {
 });
 
 // ============================================
-// INVOICE ROUTES (UNCHANGED - uses sendEmailWithRetry)
+// INVOICE ROUTES
 // ============================================
 
 app.post('/api/invoices/create', authenticate, async (req, res) => {
@@ -1017,21 +992,22 @@ app.post('/api/invoices/create', authenticate, async (req, res) => {
         `;
         const subject = `📄 Invoice #${invNumber} from ${deal.brand_name}`;
 
-        // ** THIS IS WHERE THE EMAIL IS SENT **
+        // THIS IS WHERE THE LOGGER RUNS (No real email is sent)
         const sent = await sendEmailWithRetry(brandEmail, subject, html);
 
         if (sent) {
-            console.log(`✅ Invoice email sent to ${brandEmail}`);
+            console.log(`✅ Invoice logged for ${brandEmail}`);
         } else {
-            console.warn(`⚠️ All email attempts failed – but invoice was created.`);
+            console.warn(`⚠️ Invoice logging failed.`);
         }
 
         res.status(201).json({
-            success: true,
-            data: newInvoice,
-            portal_token: portalToken,
-            email_sent: sent
-        });
+    success: true,
+    data: newInvoice,
+    portal_token: portalToken,
+    portal_link: portalLink,  // <-- This is the full URL the brand needs
+    email_sent: sent
+});
 
     } catch (err) {
         console.error('Invoice create error:', err);
@@ -1126,7 +1102,7 @@ app.post('/api/invoices/generate', authenticate, async (req, res) => {
 });
 
 // ============================================
-// BANK ACCOUNT VERIFICATION & SUBACCOUNT (UNCHANGED)
+// BANK ACCOUNT VERIFICATION & SUBACCOUNT
 // ============================================
 
 app.post('/api/payments/verify-account', authenticate, async (req, res) => {
@@ -1244,7 +1220,7 @@ app.post('/api/payments/create-subaccount', authenticate, async (req, res) => {
 });
 
 // ============================================
-// SUBSCRIPTION SYSTEM (Pro/Free) (UNCHANGED)
+// SUBSCRIPTION SYSTEM (Pro/Free)
 // ============================================
 
 app.post('/api/subscribe', authenticate, async (req, res) => {
@@ -1309,7 +1285,7 @@ app.post('/api/subscribe', authenticate, async (req, res) => {
 });
 
 // ============================================
-// WEBHOOKS (UNCHANGED)
+// WEBHOOKS
 // ============================================
 
 app.post('/api/webhooks/paystack',
@@ -1456,7 +1432,7 @@ app.post('/api/webhooks/paystack-deal',
 );
 
 // ============================================
-// PUBLIC PORTAL - View Invoice (UNCHANGED)
+// PUBLIC PORTAL - View Invoice
 // ============================================
 app.get('/portal/:token', async (req, res) => {
     try {
@@ -1467,26 +1443,27 @@ app.get('/portal/:token', async (req, res) => {
         }
 
         const { data: invoice, error } = await supabaseAdmin
-    .from('invoices')
-    .select(`
-        *,
-        deals(
-            id,
-            brand_name,
-            amount,
-            deliverable,
-            due_date,
-            user_id,
-            users(
-                email,
-                user_metadata->name
-            )
-        )
-    `)
-    .eq('portal_token', token)
-    .single();
+            .from('invoices')
+            .select(`
+                *,
+                deals(
+                    id,
+                    brand_name,
+                    amount,
+                    deliverable,
+                    due_date,
+                    user_id,
+                    users(
+                        email,
+                        user_metadata->name
+                    )
+                )
+            `)
+            .eq('portal_token', token)
+            .single();
 
         if (error || !invoice) {
+            console.error('❌ Invoice not found:', error);
             return res.status(404).send('Invoice not found');
         }
 
@@ -1645,7 +1622,7 @@ app.get('/portal/:token', async (req, res) => {
 });
 
 // ============================================
-// ERROR HANDLERS (UNCHANGED)
+// ERROR HANDLERS
 // ============================================
 app.use((err, req, res, next) => {
     console.error('Unhandled error:', err);
@@ -1660,11 +1637,11 @@ app.use((req, res) => {
 });
 
 // ============================================
-// START SERVER (UNCHANGED)
+// START SERVER
 // ============================================
 app.listen(port, () => {
     console.log(`🚀 PayPoint API running on port ${port}`);
     console.log(`🔒 Security: Helmet, CORS, Rate Limiting enabled`);
-    console.log(`📧 Email: Gmail SMTP (IPv4 forced)`);
+    console.log(`📧 Email: DISABLED (Console Logger Active)`);
     console.log(`🌐 Allowed origins: ${allowedOrigins.join(', ')}`);
 });
