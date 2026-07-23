@@ -8,11 +8,10 @@ const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const { createClient } = require('@supabase/supabase-js');
 const PDFDocument = require('pdfkit');
-const { Resend } = require('resend');      // <-- KEPT (This is correct)
 const crypto = require('crypto');
 const cron = require('node-cron');
 const multer = require('multer');
-const nodemailer = require('nodemailer'); // <-- KEPT (For Gmail fallback)
+const nodemailer = require('nodemailer');
 
 const app = express();
 app.set('trust proxy', 1);
@@ -110,17 +109,15 @@ const supabase = createClient(supabaseUrl, supabaseAnonKey);
 const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
 
 // ============================================
-// EMAIL SETUP (UPDATED: Brevo REMOVED, Resend ADDED)
+// EMAIL SETUP (REPLACED WITH GMAIL SMTP + IPv4 FIX)
 // ============================================
 
-// 1. Instantiate Resend
-const resend = new Resend(process.env.RESEND_API_KEY);
-
-// 2. Gmail SMTP Transporter (KEPT for fallback)
+// 1. Gmail SMTP Transporter (with IPv4 forced)
 const transporter = nodemailer.createTransport({
     host: 'smtp.gmail.com',
     port: 587,
     secure: false,
+    family: 4,   // <-- Forces IPv4, fixes Render timeout
     auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS
@@ -132,53 +129,22 @@ const transporter = nodemailer.createTransport({
     requireTLS: true
 });
 
-// 3. NEW: Send email with Resend (Replaces Brevo)
-async function sendEmailResend(to, subject, htmlContent) {
-    const apiKey = process.env.RESEND_API_KEY;
-    if (!apiKey) {
-        console.log('⚠️ RESEND_API_KEY not set – skipping Resend.');
-        return false;
-    }
-
-    try {
-        const { data, error } = await resend.emails.send({
-            from: process.env.EMAIL_FROM || 'PayPoint <onboarding@resend.dev>',
-            to: [to],
-            subject: subject,
-            html: htmlContent,
-        });
-
-        if (error) {
-            console.error('❌ Resend error:', error);
-            return false;
-        }
-
-        console.log(`✅ Resend email sent to ${to}`);
-        return true;
-    } catch (err) {
-        console.error('❌ Resend fetch error:', err.message);
-        return false;
-    }
-}
-
-// 4. UPDATED: Unified sender (Now tries Resend first, then Gmail)
+// 2. Email sender with retry
 async function sendEmailWithRetry(to, subject, html, retries = 2) {
-    // 1. Try Resend (primary)
-    if (process.env.RESEND_API_KEY) {
-        const sent = await sendEmailResend(to, subject, html);
-        if (sent) return true;
-        console.log('⚠️ Resend failed – falling back to Gmail SMTP.');
-    }
+    const mailOptions = {
+        from: process.env.EMAIL_USER,
+        to: to,
+        subject: subject,
+        html: html
+    };
 
-    // 2. Fallback to Gmail SMTP with retry
-    const mailOptions = { from: process.env.EMAIL_USER, to, subject, html };
     for (let attempt = 1; attempt <= retries; attempt++) {
         try {
             await transporter.sendMail(mailOptions);
-            console.log(`📧 Gmail fallback sent (attempt ${attempt})`);
+            console.log(`✅ Email sent to ${to} (attempt ${attempt})`);
             return true;
         } catch (err) {
-            console.log(`📧 Gmail attempt ${attempt} failed:`, err.message);
+            console.log(`⚠️ Email attempt ${attempt} failed:`, err.message);
             if (attempt === retries) {
                 console.error('❌ All email attempts failed.');
                 return false;
@@ -972,7 +938,7 @@ app.get('/api/payments/verify/:reference', authenticate, async (req, res) => {
 });
 
 // ============================================
-// INVOICE ROUTES (UNCHANGED - but uses new email sender)
+// INVOICE ROUTES (UNCHANGED - uses sendEmailWithRetry)
 // ============================================
 
 app.post('/api/invoices/create', authenticate, async (req, res) => {
@@ -1051,7 +1017,7 @@ app.post('/api/invoices/create', authenticate, async (req, res) => {
         `;
         const subject = `📄 Invoice #${invNumber} from ${deal.brand_name}`;
 
-        // *** THIS IS THE LINE THAT SENDS THE EMAIL USING THE NEW RESEND FUNCTION ***
+        // ** THIS IS WHERE THE EMAIL IS SENT **
         const sent = await sendEmailWithRetry(brandEmail, subject, html);
 
         if (sent) {
@@ -1699,6 +1665,6 @@ app.use((req, res) => {
 app.listen(port, () => {
     console.log(`🚀 PayPoint API running on port ${port}`);
     console.log(`🔒 Security: Helmet, CORS, Rate Limiting enabled`);
-    console.log(`📧 Email: Resend (Primary) + Gmail (Fallback)`);
+    console.log(`📧 Email: Gmail SMTP (IPv4 forced)`);
     console.log(`🌐 Allowed origins: ${allowedOrigins.join(', ')}`);
 });
