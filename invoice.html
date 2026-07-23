@@ -575,10 +575,13 @@ function formatCurrency(amount, currency) {
                 const result = await res.json();
 
                 if (result.success) {
-    // Get the full payment link from the response
-    const paymentLink = result.portal_link || 'No link generated';
+    // The backend sends the full link as "portal_link"
+    const paymentLink = result.portal_link || 'No link generated (backend missing portal_link)';
     
-    // Use prompt() so they can select and copy the link
+    // Log it to the console for debugging
+    console.log('🔗 Payment Link:', paymentLink);
+    
+    // Show the prompt so the user can copy it
     prompt(
         '✅ Invoice created!\n\n' +
         '📋 COPY THIS LINK AND SEND IT TO THE BRAND:\n' +
