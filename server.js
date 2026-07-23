@@ -1002,11 +1002,12 @@ app.post('/api/invoices/create', authenticate, async (req, res) => {
         }
 
         res.status(201).json({
-            success: true,
-            data: newInvoice,
-            portal_token: portalToken,
-            email_sent: sent
-        });
+    success: true,
+    data: newInvoice,
+    portal_token: portalToken,
+    portal_link: portalLink,  // <-- THIS LINE MUST BE HERE
+    email_sent: sent
+});
 
     } catch (err) {
         console.error('Invoice create error:', err);
