@@ -1466,25 +1466,25 @@ app.get('/portal/:token', async (req, res) => {
             return res.status(400).send('Invalid portal link');
         }
 
-        const { data: invoice, error } = await supabase
-            .from('invoices')
-            .select(`
-                *,
-                deals(
-                    id,
-                    brand_name,
-                    amount,
-                    deliverable,
-                    due_date,
-                    user_id,
-                    users(
-                        email,
-                        user_metadata->name
-                    )
-                )
-            `)
-            .eq('portal_token', token)
-            .single();
+        const { data: invoice, error } = await supabaseAdmin
+    .from('invoices')
+    .select(`
+        *,
+        deals(
+            id,
+            brand_name,
+            amount,
+            deliverable,
+            due_date,
+            user_id,
+            users(
+                email,
+                user_metadata->name
+            )
+        )
+    `)
+    .eq('portal_token', token)
+    .single();
 
         if (error || !invoice) {
             return res.status(404).send('Invoice not found');
