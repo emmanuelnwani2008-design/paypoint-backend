@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin · PayPoint</title>
+    <link rel="icon" type="image/png" href="logo.png">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: #F8FAFC;
+            color: #000000;
+            padding: 24px;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .admin-container {
+            max-width: 500px;
+            width: 100%;
+            background: #FFFFFF;
+            border-radius: 16px;
+            border: 1px solid #E8EDF2;
+            padding: 40px 36px;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.06);
+        }
+        h1 { font-size: 24px; font-weight: 700; margin-bottom: 8px; }
+        p { color: #8A9AAB; font-size: 14px; margin-bottom: 24px; }
+        .form-group { margin-bottom: 16px; }
+        label { display: block; font-size: 13px; font-weight: 500; color: #5E6F82; margin-bottom: 4px; }
+        input {
+            width: 100%;
+            padding: 12px 16px;
+            background: #F8FAFC;
+            border: 1px solid #E8EDF2;
+            border-radius: 10px;
+            font-size: 14px;
+            font-family: 'Inter', sans-serif;
+        }
+        input:focus { outline: none; border-color: #4F7CFF; }
+        .btn-primary {
+            width: 100%;
+            background: #4F7CFF;
+            border: none;
+            padding: 14px;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 15px;
+            color: #FFFFFF;
+            cursor: pointer;
+            font-family: 'Inter', sans-serif;
+            box-shadow: 0 2px 8px rgba(79, 124, 255, 0.25);
+            transition: all 0.2s ease;
+        }
+        .btn-primary:hover { background: #3A5FD9; transform: translateY(-1px); }
+        .message {
+            margin-top: 16px;
+            padding: 12px 16px;
+            border-radius: 8px;
+            display: none;
+        }
+        .message.success { display: block; background: rgba(52, 199, 89, 0.1); color: #34C759; border: 1px solid rgba(52, 199, 89, 0.2); }
+        .message.error { display: block; background: rgba(255, 59, 48, 0.1); color: #FF3B30; border: 1px solid rgba(255, 59, 48, 0.2); }
+        .back-link { display: block; text-align: center; margin-top: 16px; color: #4F7CFF; text-decoration: none; font-size: 14px; }
+        .back-link:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+    <div class="admin-container">
+        <h1>🔑 Admin Panel</h1>
+        <p>Upgrade any user to Pro instantly (free trial).</p>
+
+        <div class="form-group">
+    <label>Admin Secret</label>
+    <input type="password" id="adminSecret" placeholder="Enter the admin secret key">
+    <small style="color: #8A9AAB; font-size: 12px;">Ask the admin for the secret key.</small>
+</div>
+
+        <button class="btn-primary" id="upgradeBtn">⬆️ Upgrade to Pro</button>
+
+        <div class="message" id="adminMessage"></div>
+        <a href="dashboard.html" class="back-link">← Back to Dashboard</a>
+    </div>
+
+    <script>
+        const API_URL = 'https://paypoint-backend-9m63.onrender.com/api';
+
+        function getAuthHeaders() {
+            const token = localStorage.getItem('paypoint_session');
+            return {
+                'Content-Type': 'application/json',
+                ...(token ? { Authorization: `Bearer ${token}` } : {})
+            };
+        }
+
+        document.getElementById('upgradeBtn').addEventListener('click', async () => {
+    const email = document.getElementById('adminEmail').value.trim();
+    const secret = document.getElementById('adminSecret').value.trim(); // <-- NEW
+    const messageEl = document.getElementById('adminMessage');
+
+    if (!email || !secret) {
+        messageEl.className = 'message error';
+        messageEl.textContent = '❌ Please enter both email and secret.';
+        return;
+    }
+
+    messageEl.className = 'message';
+    messageEl.textContent = '⏳ Upgrading...';
+
+    try {
+        const response = await fetch(`${API_URL}/admin/force-pro`, {
+            method: 'POST',
+            headers: getAuthHeaders(),
+            body: JSON.stringify({ 
+                targetEmail: email, 
+                secret: secret 
+            })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            messageEl.className = 'message success';
+            messageEl.textContent = `✅ ${email} is now Pro! Expires: ${data.expires_at}`;
+        } else {
+            messageEl.className = 'message error';
+            messageEl.textContent = `❌ ${data.error || 'Upgrade failed'}`;
+        }
+    } catch (err) {
+        messageEl.className = 'message error';
+        messageEl.textContent = '❌ Could not connect to server.';
+    }
+});
+    </script>
+</body>
+</html>
