@@ -408,13 +408,30 @@ app.get('/api/auth/user', authenticate, async (req, res) => {
 // ============================================
 app.post('/api/admin/force-pro', authenticate, async (req, res) => {
     try {
-        const userId = req.userId;
-        const { email } = req.user;
-        const adminEmails = ['emmysmart850@gmail.com'];
-        if (!adminEmails.includes(email)) {
-            return res.status(403).json({ error: 'Access denied. Admin only.' });
+        // The user must be logged in AND provide the secret
+        const { secret, targetEmail } = req.body;
+        const adminSecret = process.env.ADMIN_SECRET;
+
+        // 1. Check the secret
+        if (!secret || secret !== adminSecret) {
+            return res.status(403).json({ error: 'Invalid admin secret.' });
         }
 
+        // 2. Now we know it's a valid admin request
+        // Find the user by email
+        const { data: user, error: userError } = await supabaseAdmin
+            .from('profiles')
+            .select('id')
+            .eq('email', targetEmail)
+            .single();
+
+        if (userError || !user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        const userId = user.id;
+
+        // 3. Upgrade the user
         const expiresAt = new Date();
         expiresAt.setDate(expiresAt.getDate() + 30);
 
@@ -440,9 +457,10 @@ app.post('/api/admin/force-pro', authenticate, async (req, res) => {
 
         res.json({
             success: true,
-            message: '✅ You are now Pro! (Testing only – expires in 30 days)',
+            message: `✅ ${targetEmail} is now Pro! (Expires: ${expiresAt.toISOString()})`,
             expires_at: expiresAt.toISOString()
         });
+
     } catch (err) {
         console.error('Force Pro error:', err);
         res.status(500).json({ error: 'Internal server error' });
