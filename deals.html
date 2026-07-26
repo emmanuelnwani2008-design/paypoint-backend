@@ -642,6 +642,9 @@
             <label for="modalBrand">Brand Name</label>
             <input type="text" id="modalBrand" placeholder="e.g. Nike, Glossier, Samsung">
 
+            <label for="modalNotes">Notes</label>
+<textarea id="modalNotes" placeholder="Add campaign notes, brand preferences, deadlines..." rows="3"></textarea>
+
             <label for="modalAmount">Amount</label>
             <input type="number" id="modalAmount" placeholder="e.g. 5000">
 
@@ -932,6 +935,7 @@
             modalStatus.value = deal.status || 'pending';
             modalDealId.value = id;
             modal.classList.add('active');
+            document.getElementById('modalNotes').value = deal.notes || '';
         }
 
         // ============================================
@@ -956,6 +960,8 @@
             const due_date = modalDueDate.value;
             const status = modalStatus.value;
             const currency = document.getElementById('dealCurrency').value;
+            const notes = document.getElementById('modalNotes').value.trim();
+            
 
             if (!brand_name || !amount) {
                 alert('Brand Name and Amount are required!');
@@ -968,7 +974,8 @@
                 deliverable: deliverable || '',
                 due_date: due_date || null,
                 status: status || 'pending',
-                currency: currency
+                currency: currency,
+                notes: notes
             };
 
             const isEdit = currentEditId !== null;

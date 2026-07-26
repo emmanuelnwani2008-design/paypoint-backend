@@ -655,7 +655,8 @@ app.put('/api/deals/:id', authenticate, async (req, res) => {
                 due_date: due_date || null,
                 deliverable: sanitizedDeliverable || '',
                 status: status || 'pending',
-                currency: currency || 'NGN'
+                currency: currency || 'NGN',
+                notes: req.body.notes || null   // <-- ADD THIS LINE
             })
             .eq('id', dealId)
             .eq('user_id', userId)
