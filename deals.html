@@ -642,8 +642,52 @@
             <label for="modalBrand">Brand Name</label>
             <input type="text" id="modalBrand" placeholder="e.g. Nike, Glossier, Samsung">
 
-            <label for="modalNotes">Notes</label>
-<textarea id="modalNotes" placeholder="Add campaign notes, brand preferences, deadlines..." rows="3"></textarea>
+            <div class="form-group" style="margin-top: 16px;">
+    <label for="modalNotes" style="display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 14px; color: #1A1A2E; margin-bottom: 6px;">
+        <span style="font-size: 18px;">📝</span> Campaign Brief & Notes
+        <span style="background: #4F7CFF; color: white; font-size: 10px; font-weight: 700; padding: 2px 10px; border-radius: 40px; letter-spacing: 0.5px; text-transform: uppercase;">Pro</span>
+    </label>
+    <textarea 
+        id="modalNotes" 
+        placeholder="Write down important campaign details here...
+Example: 'Brand wants 3 TikTok videos. Must use #GalaxyAI. Sarah is the contact. Budget approved for production.'" 
+        rows="5"
+        style="
+            width: 100%;
+            padding: 16px 18px;
+            background: #FAFBFF;
+            border: 1.5px solid #E2E8F0;
+            border-radius: 12px;
+            font-size: 14px;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            line-height: 1.6;
+            resize: vertical;
+            min-height: 120px;
+            max-height: 300px;
+            transition: all 0.25s ease;
+            color: #1A1A2E;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+        "
+        onfocus="
+            this.style.borderColor='#4F7CFF'; 
+            this.style.boxShadow='0 0 0 4px rgba(79,124,255,0.08), 0 2px 8px rgba(79,124,255,0.05)';
+            this.style.background='#FFFFFF';
+        "
+        onblur="
+            this.style.borderColor='#E2E8F0'; 
+            this.style.boxShadow='0 1px 3px rgba(0,0,0,0.02)';
+            this.style.background='#FAFBFF';
+        "
+    ></textarea>
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px;">
+        <span style="color: #8A9AAB; font-size: 12px; display: flex; align-items: center; gap: 4px;">
+            <span>💡</span> Track brand preferences, revision requests, and collaboration history
+        </span>
+        <span id="noteCounter" style="color: #8A9AAB; font-size: 12px; font-weight: 500; background: #F1F4F9; padding: 2px 12px; border-radius: 40px;">
+            0 characters
+        </span>
+    </div>
+</div>
 
             <label for="modalAmount">Amount</label>
             <input type="number" id="modalAmount" placeholder="e.g. 5000">
