@@ -647,6 +647,12 @@
                 <option value="NGN">₦ NGN</option>
                 <option value="USD">$ USD</option>
             </select>
+            <label for="modalDeal">Linked Deal (Optional)</label>
+<select id="modalDeal">
+    <option value="">— None —</option>
+    <!-- Deals will be loaded here by JavaScript -->
+</select>
+<small style="color: #8A9AAB; font-size: 12px;">Link this expense to a brand deal for profit tracking.</small>
 
             <label for="modalReceipt">Receipt Photo (Optional)</label>
             <input type="file" id="modalReceipt" accept="image/*">
@@ -675,6 +681,26 @@
                 ...(token ? { Authorization: `Bearer ${token}` } : {})
             };
         }
+        async function loadDealsForDropdown() {
+    try {
+        const res = await fetch(`${API_URL}/deals`, { headers: getAuthHeaders() });
+        const result = await res.json();
+        if (result.success) {
+            const select = document.getElementById('modalDeal');
+            // Keep the first "None" option
+            select.innerHTML = '<option value="">— None —</option>';
+            result.data.forEach(deal => {
+                const option = document.createElement('option');
+                option.value = deal.id;
+                // Show brand name and amount
+                option.textContent = `${deal.brand_name} — ₦${Number(deal.amount).toLocaleString()}`;
+                select.appendChild(option);
+            });
+        }
+    } catch (err) {
+        console.error('Error loading deals:', err);
+    }
+}
 
         // ============================================
         // CURRENCY HELPER
@@ -858,6 +884,12 @@
             receiptPreview.style.display = 'none';
             modal.classList.add('active');
         });
+        openModalBtn.addEventListener('click', () => {
+    // ... existing code (clearing fields, etc.) ...
+    loadDealsForDropdown();   // <-- ADD THIS LINE
+    modal.classList.add('active');
+});
+
 
         function closeModal() {
             modal.classList.remove('active');
@@ -878,6 +910,7 @@
                 alert('Vendor and Amount are required!');
                 return;
             }
+            
 
             let receipt_url = '';
             if (modalReceipt.files.length > 0) {
@@ -890,6 +923,7 @@
                     reader.readAsDataURL(file);
                 });
             }
+            
 
             const expenseData = {
                 vendor,
@@ -898,6 +932,7 @@
                 receipt_url: receipt_url || '',
                 currency: currency
             };
+            
 
             try {
                 const res = await fetch(`${API_URL}/expenses`, {
@@ -919,6 +954,14 @@
                 console.error(err);
             }
         });
+        const expenseData = {
+    vendor: vendor,
+    amount: parseFloat(amount),
+    category: category,
+    receipt_url: receipt_url || '',
+    currency: currency,
+    deal_id: document.getElementById('modalDeal').value || null   // <-- ADD THIS LINE
+};
 
         async function deleteExpense(id) {
             if (!confirm('Are you sure you want to delete this expense?')) return;

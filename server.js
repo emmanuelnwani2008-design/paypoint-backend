@@ -757,7 +757,8 @@ app.post('/api/expenses', authenticate, async (req, res) => {
                 amount: parseFloat(amount),
                 category: sanitizedCategory,
                 receipt_url: receipt_url || '',
-                currency: currency || 'NGN'
+                currency: currency || 'NGN',
+                deal_id: req.body.deal_id || null 
             }])
             .select();
         if (error) {
