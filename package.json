@@ -3,11 +3,11 @@
   "name": "paypoint-backend",
   "version": "1.0.0",
   "description": "PayPoint API - Finance OS for Creators",
-  "main": "server.js",
+  "main": "server.cjs",
   "scripts": {
-    "start": "node server.js",
-    "start:prod": "node server.js",
-    "dev": "nodemon server.js"
+    "start": "node server.cjs",
+    "start:prod": "node server.cjs",
+    "dev": "nodemon server.cjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.110.0",
