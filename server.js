@@ -1101,7 +1101,9 @@ app.post('/api/invoices/generate', authenticate, async (req, res) => {
         doc.moveDown(0.5);
 
         doc.fontSize(16).font('Helvetica-Bold');
-        doc.text(`Total Amount: $${Number(deal.amount).toLocaleString()}`, { align: 'right' });
+const currencySymbol = deal.currency === 'USD' ? '$' : '₦';
+doc.text(`Total Amount: ${currencySymbol}${Number(deal.amount).toLocaleString()}`, { align: 'right' });
+doc.moveDown(2);
         doc.moveDown(2);
 
         doc.fontSize(10).font('Helvetica');
