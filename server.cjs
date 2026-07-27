@@ -541,11 +541,37 @@ app.put('/api/auth/update', authenticate, async (req, res) => {
         res.status(500).json({ error: 'Internal server error' });
     }
 });
-const { data, error } = await supabase.auth.updateUser({
-    data: {
-        name: sanitizedName,
-        bio: bio ? sanitizeInput(bio.trim()) : '',
-        default_currency: req.body.default_currency || 'USD'   // <-- ADD THIS
+// ============================================
+// UPDATE PROFILE (FIXED)
+// ============================================
+app.put('/api/auth/update', authenticate, async (req, res) => {
+    try {
+        const { name, bio, default_currency } = req.body;
+        if (!name) return res.status(400).json({ error: 'Name is required' });
+        
+        const sanitizedName = sanitizeInput(name.trim());
+        if (sanitizedName.length < 2 || sanitizedName.length > 50) {
+            return res.status(400).json({ error: 'Name must be between 2 and 50 characters' });
+        }
+        
+        const updateData = {
+            name: sanitizedName,
+            bio: bio ? sanitizeInput(bio.trim()) : '',
+            default_currency: default_currency || 'USD'
+        };
+        
+        const { data, error } = await supabase.auth.updateUser({
+            data: updateData
+        });
+        
+        if (error) {
+            console.error('Update profile error:', error);
+            return res.status(400).json({ error: error.message });
+        }
+        res.json({ success: true, user: data.user, message: 'Profile updated successfully' });
+    } catch (err) {
+        console.error('Update profile server error:', err);
+        res.status(500).json({ error: 'Internal server error' });
     }
 });
 
