@@ -860,7 +860,7 @@ app.post('/api/payments/initialize', authenticate, async (req, res) => {
             body: JSON.stringify({
                 email: customerEmail,
                 amount: totalAmount,
-                currency: deal.currency || 'USD',
+                currency: deal.currency || 'NGN',
                 callback_url: callbackUrl,
                 subaccount: subaccountCode,
                 metadata: {
