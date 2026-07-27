@@ -861,7 +861,7 @@ Example: 'Brand wants 3 TikTok videos. Must use #GalaxyAI. Sarah is the contact.
                 if (deal.status === 'overdue') statusClass = 'overdue';
 
                 tr.innerHTML = `
-                    <td><span class="brand-name">${deal.brand_name}</span></td>
+                    <td><a href="deal-detail.html?id=${deal.id}" style="color: #4F7CFF; text-decoration: none; font-weight: 600;">${deal.brand_name}</a></td>
                     <td>${formatCurrency(deal.amount, deal.currency)}</td>
                     <td>${deal.deliverable || '—'}</td>
                     <td>${dueDate}</td>

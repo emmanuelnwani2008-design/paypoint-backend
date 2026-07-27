@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Deal Detail · PayPoint</title>
+    <link rel="icon" type="image/png" href="logo.png">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: #F8FAFC;
+            color: #000000;
+            padding: 24px;
+            min-height: 100vh;
+        }
+        .container { max-width: 900px; margin: 0 auto; }
+
+        /* --- Navbar (Same as other pages) --- */
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0 28px 0;
+            border-bottom: 1px solid #E8EDF2;
+            margin-bottom: 32px;
+        }
+        .logo {
+            font-size: 24px;
+            font-weight: 700;
+            color: #000000;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .logo img { height: 32px; width: auto; }
+        .logo span { font-weight: 400; color: #8A9AAB; font-size: 14px; }
+        .nav-links {
+            display: flex;
+            gap: 28px;
+            align-items: center;
+        }
+        .nav-links a {
+            color: #5E6F82;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            transition: color 0.2s ease;
+        }
+        .nav-links a:hover { color: #000000; }
+        .nav-links a.logout { color: #FF3B30; }
+        .nav-links a.logout:hover { color: #D32F2F; }
+        .user-badge {
+            background: #F5F7FA;
+            padding: 6px 14px;
+            border-radius: 40px;
+            font-size: 13px;
+            color: #000000;
+            border: 1px solid #E8EDF2;
+        }
+
+        /* --- Back Link --- */
+        .back-link {
+            display: inline-block;
+            margin-bottom: 20px;
+            color: #4F7CFF;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        .back-link:hover { text-decoration: underline; }
+
+        /* --- Main Card --- */
+        .deal-card {
+            background: #FFFFFF;
+            border: 1px solid #E8EDF2;
+            border-radius: 14px;
+            padding: 32px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+            margin-bottom: 24px;
+        }
+        .deal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+        }
+        .deal-title h1 { font-size: 28px; font-weight: 700; color: #000000; }
+        .deal-status {
+            padding: 4px 16px;
+            border-radius: 40px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+        .deal-status.pending { background: #FFF5E6; color: #FF9500; }
+        .deal-status.paid { background: #E8F9EF; color: #34C759; }
+        .deal-status.overdue { background: #FFEBEA; color: #FF3B30; }
+
+        /* --- Details Grid --- */
+        .deal-meta {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 16px;
+            padding: 16px 0;
+            border-top: 1px solid #F0F2F5;
+            border-bottom: 1px solid #F0F2F5;
+            margin: 16px 0;
+        }
+        .meta-item .label { font-size: 12px; color: #8A9AAB; text-transform: uppercase; font-weight: 600; }
+        .meta-item .value { font-size: 18px; font-weight: 600; color: #000000; }
+        .meta-item .value.blue { color: #4F7CFF; }
+
+        /* --- Profit Box (The Star) --- */
+        .profit-box {
+            background: linear-gradient(135deg, #F0F7FF, #E8F0FE);
+            border-radius: 12px;
+            padding: 20px 24px;
+            margin: 16px 0;
+            border: 1px solid #D6E4FF;
+        }
+        .profit-box .label { font-size: 13px; color: #4F7CFF; font-weight: 600; text-transform: uppercase; }
+        .profit-box .value { font-size: 28px; font-weight: 700; color: #4F7CFF; }
+        .profit-box .value.green { color: #34C759; }
+        .profit-box .value.red { color: #FF3B30; }
+        .profit-box .breakdown { font-size: 14px; color: #5E6F82; margin-top: 4px; }
+
+        /* --- Notes --- */
+        .notes-section {
+            margin: 16px 0;
+            padding: 16px;
+            background: #FAFBFF;
+            border-radius: 10px;
+            border: 1px solid #E8EDF2;
+        }
+        .notes-section h3 { font-size: 14px; font-weight: 600; color: #5E6F82; margin-bottom: 8px; }
+        .notes-section p { font-size: 14px; color: #1A1A2E; line-height: 1.6; white-space: pre-wrap; }
+
+        /* --- Expenses List --- */
+        .expense-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #F0F2F5;
+        }
+        .expense-item:last-child { border-bottom: none; }
+        .expense-vendor { font-weight: 500; font-size: 14px; }
+        .expense-amount { font-weight: 600; color: #FF3B30; }
+        .expense-category {
+            font-size: 12px;
+            color: #8A9AAB;
+            background: #F1F4F9;
+            padding: 2px 10px;
+            border-radius: 40px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #8A9AAB;
+        }
+        .empty-state .icon { font-size: 48px; margin-bottom: 16px; }
+        .empty-state h3 { color: #000000; margin-bottom: 8px; }
+
+        .btn-primary {
+            background: #4F7CFF;
+            border: none;
+            padding: 10px 24px;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 14px;
+            color: #FFFFFF;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .btn-primary:hover { background: #3A5FD9; transform: translateY(-1px); }
+        .btn-secondary {
+            background: #F8FAFC;
+            border: 1px solid #E8EDF2;
+            padding: 10px 24px;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 14px;
+            color: #5E6F82;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .btn-secondary:hover { background: #EEF2F7; }
+
+        @media (max-width: 768px) {
+            .navbar { flex-direction: column; gap: 12px; align-items: flex-start; }
+            .nav-links { flex-wrap: wrap; gap: 14px; }
+            .deal-header { flex-direction: column; gap: 12px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Navbar -->
+        <nav class="navbar">
+            <a href="dashboard.html" class="logo">
+                <img src="logo.png" alt="PayPoint" onerror="this.style.display='none'">
+                PayPoint <span>· Deal Detail</span>
+            </a>
+            <div class="nav-links">
+                <a href="dashboard.html">Dashboard</a>
+                <a href="deals.html">Deals</a>
+                <a href="expense.html">Expenses</a>
+                <a href="invoice.html">Invoices</a>
+                <a href="creator.html">Creator</a>
+                <span class="user-badge" id="userBadge">👤 Creator</span>
+                <a href="#" class="logout" id="navLogout">Logout</a>
+            </div>
+        </nav>
+
+        <!-- Back Link -->
+        <a href="deals.html" class="back-link">← Back to all deals</a>
+
+        <!-- Content Area -->
+        <div id="dealContent">
+            <div class="empty-state">
+                <div class="icon">⏳</div>
+                <h3>Loading deal details...</h3>
+                <p>Please wait while we fetch the information.</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ============================================
+        // CONFIGURATION
+        // ============================================
+        const API_URL = 'https://paypoint-backend-9m63.onrender.com/api';
+
+        // ============================================
+        // AUTH HELPERS
+        // ============================================
+        function getAuthHeaders() {
+            const token = localStorage.getItem('paypoint_session');
+            return {
+                'Content-Type': 'application/json',
+                ...(token ? { Authorization: `Bearer ${token}` } : {})
+            };
+        }
+
+        function formatCurrency(amount) {
+            return '₦' + Number(amount).toLocaleString();
+        }
+
+        // ============================================
+        // CHECK AUTH
+        // ============================================
+        function checkAuth() {
+            const user = localStorage.getItem('paypoint_user');
+            if (!user) {
+                window.location.replace('login.html');
+                return false;
+            }
+            try {
+                const userData = JSON.parse(user);
+                const name = userData?.user_metadata?.name || userData?.name || 'Creator';
+                document.getElementById('userBadge').textContent = `👤 ${name}`;
+                return true;
+            } catch (e) {
+                localStorage.removeItem('paypoint_user');
+                localStorage.removeItem('paypoint_session');
+                window.location.replace('login.html');
+                return false;
+            }
+        }
+
+        // ============================================
+        // FETCH DEAL DETAILS
+        // ============================================
+        async function loadDeal() {
+            // Get the deal ID from the URL (e.g., ?id=123)
+            const params = new URLSearchParams(window.location.search);
+            const dealId = params.get('id');
+
+            if (!dealId) {
+                document.getElementById('dealContent').innerHTML = `
+                    <div class="empty-state">
+                        <div class="icon">❌</div>
+                        <h3>No deal selected</h3>
+                        <p>Please go back and select a deal to view.</p>
+                        <a href="deals.html" class="btn-primary" style="margin-top: 16px;">Go to Deals</a>
+                    </div>
+                `;
+                return;
+            }
+
+            try {
+                const res = await fetch(`${API_URL}/deals/${dealId}`, { headers: getAuthHeaders() });
+                const result = await res.json();
+
+                if (!result.success) {
+                    document.getElementById('dealContent').innerHTML = `
+                        <div class="empty-state">
+                            <div class="icon">❌</div>
+                            <h3>Deal not found</h3>
+                            <p>${result.error || 'The deal you are looking for does not exist.'}</p>
+                            <a href="deals.html" class="btn-primary" style="margin-top: 16px;">Go to Deals</a>
+                        </div>
+                    `;
+                    return;
+                }
+
+                const deal = result.data;
+                renderDeal(deal);
+
+            } catch (err) {
+                console.error('Error loading deal:', err);
+                document.getElementById('dealContent').innerHTML = `
+                    <div class="empty-state">
+                        <div class="icon">⚠️</div>
+                        <h3>Connection error</h3>
+                        <p>Could not load deal details. Please try again.</p>
+                    </div>
+                `;
+            }
+        }
+
+        // ============================================
+        // RENDER DEAL (Builds the HTML)
+        // ============================================
+        function renderDeal(deal) {
+            // 1. Status badge
+            const statusClass = deal.status || 'pending';
+            const statusLabel = (deal.status || 'pending').toUpperCase();
+
+            // 2. Profit color (green if positive, red if negative)
+            const profitColor = deal.profit >= 0 ? 'green' : 'red';
+
+            // 3. Build the expenses list HTML
+            let expensesHtml = '';
+            if (deal.expenses && deal.expenses.length > 0) {
+                deal.expenses.forEach(exp => {
+                    expensesHtml += `
+                        <div class="expense-item">
+                            <div>
+                                <span class="expense-vendor">${exp.vendor}</span>
+                                <span class="expense-category">${exp.category || 'uncategorized'}</span>
+                            </div>
+                            <span class="expense-amount">-${formatCurrency(exp.amount)}</span>
+                        </div>
+                    `;
+                });
+            } else {
+                expensesHtml = `
+                    <div style="color: #8A9AAB; font-size: 14px; padding: 12px 0;">
+                        No expenses linked to this deal yet. 
+                        <a href="expense.html" style="color: #4F7CFF;">Add one now</a>.
+                    </div>
+                `;
+            }
+
+            // 4. Notes HTML (if they exist)
+            const notesHtml = deal.notes ? `
+                <div class="notes-section">
+                    <h3>📝 Campaign Brief & Notes</h3>
+                    <p>${deal.notes}</p>
+                </div>
+            ` : '';
+
+            // 5. Assemble the full page
+            const html = `
+                <div class="deal-card">
+                    <div class="deal-header">
+                        <div class="deal-title">
+                            <h1>${deal.brand_name}</h1>
+                            <p style="color: #8A9AAB; font-size: 14px;">Deal ID: ${deal.id}</p>
+                        </div>
+                        <span class="deal-status ${statusClass}">${statusLabel}</span>
+                    </div>
+
+                    ${notesHtml}
+
+                    <div class="deal-meta">
+                        <div class="meta-item">
+                            <div class="label">Amount</div>
+                            <div class="value blue">${formatCurrency(deal.amount)}</div>
+                        </div>
+                        <div class="meta-item">
+                            <div class="label">Deliverable</div>
+                            <div class="value">${deal.deliverable || 'Not specified'}</div>
+                        </div>
+                        <div class="meta-item">
+                            <div class="label">Due Date</div>
+                            <div class="value">${deal.due_date ? new Date(deal.due_date).toLocaleDateString() : 'Not set'}</div>
+                        </div>
+                        <div class="meta-item">
+                            <div class="label">Currency</div>
+                            <div class="value">${deal.currency || 'NGN'}</div>
+                        </div>
+                    </div>
+
+                    <div class="profit-box">
+                        <div class="label">💰 Profit</div>
+                        <div class="value ${profitColor}">${formatCurrency(deal.profit)}</div>
+                        <div class="breakdown">
+                            ${formatCurrency(deal.amount)} deal amount
+                            ${deal.total_expenses > 0 ? `− ${formatCurrency(deal.total_expenses)} expenses` : ''}
+                            = ${formatCurrency(deal.profit)}
+                        </div>
+                    </div>
+
+                    <h3 style="font-size: 16px; font-weight: 600; margin: 20px 0 12px;">🧾 Linked Expenses</h3>
+                    <div class="expenses-list">
+                        ${expensesHtml}
+                    </div>
+
+                    <div style="display: flex; gap: 12px; margin-top: 20px; flex-wrap: wrap;">
+                        <a href="expense.html" class="btn-secondary">➕ Add Expense</a>
+                        <a href="deals.html" class="btn-secondary">← Back to Deals</a>
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('dealContent').innerHTML = html;
+        }
+
+        // ============================================
+        // LOGOUT
+        // ============================================
+        document.getElementById('navLogout')?.addEventListener('click', async (e) => {
+            e.preventDefault();
+            try {
+                await fetch(`${API_URL}/auth/logout`, { method: 'POST', headers: getAuthHeaders() });
+            } catch (err) {}
+            localStorage.removeItem('paypoint_user');
+            localStorage.removeItem('paypoint_session');
+            window.location.replace('login.html');
+        });
+
+        // ============================================
+        // INIT
+        // ============================================
+        if (checkAuth()) {
+            loadDeal();
+        }
+
+        console.log('📄 PayPoint Deal Detail page loaded');
+    </script>
+</body>
+</html>
