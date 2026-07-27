@@ -557,7 +557,7 @@ app.put('/api/auth/update', authenticate, async (req, res) => {
         const updateData = {
             name: sanitizedName,
             bio: bio ? sanitizeInput(bio.trim()) : '',
-            default_currency: default_currency || 'USD'
+            default_currency: default_currency || 'NGN'
         };
         
         const { data, error } = await supabase.auth.updateUser({
@@ -860,6 +860,7 @@ app.post('/api/payments/initialize', authenticate, async (req, res) => {
             body: JSON.stringify({
                 email: customerEmail,
                 amount: totalAmount,
+                currency: deal.currency || 'NGN',
                 callback_url: callbackUrl,
                 subaccount: subaccountCode,
                 metadata: {
