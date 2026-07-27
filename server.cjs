@@ -742,6 +742,60 @@ app.delete('/api/deals/:id', authenticate, async (req, res) => {
 });
 
 // ============================================
+// GET SINGLE DEAL WITH PROFIT (Phase 3)
+// ============================================
+app.get('/api/deals/:id', authenticate, async (req, res) => {
+    try {
+        const dealId = req.params.id;
+        const userId = req.userId;
+
+        // 1. Fetch the specific deal
+        const { data: deal, error: dealError } = await supabase
+            .from('deals')
+            .select('*')
+            .eq('id', dealId)
+            .eq('user_id', userId)
+            .single();
+
+        // If deal doesn't exist or doesn't belong to this user
+        if (dealError || !deal) {
+            return res.status(404).json({ error: 'Deal not found' });
+        }
+
+        // 2. Fetch ALL expenses linked to this deal
+        const { data: expenses, error: expensesError } = await supabase
+            .from('expenses')
+            .select('amount, vendor, category, created_at')
+            .eq('deal_id', dealId)
+            .eq('user_id', userId);
+
+        if (expensesError) {
+            console.error('Error fetching expenses for deal:', expensesError);
+            // We still proceed, just treat expenses as empty.
+        }
+
+        // 3. Calculate Total Expenses and Profit
+        const totalExpenses = (expenses || []).reduce((sum, exp) => sum + Number(exp.amount), 0);
+        const profit = Number(deal.amount) - totalExpenses;
+
+        // 4. Send the response back to the frontend
+        res.json({
+            success: true,
+            data: {
+                ...deal,               // Spread all the deal data (brand_name, amount, notes, etc.)
+                expenses: expenses || [], // List of linked expenses
+                total_expenses: totalExpenses,
+                profit: profit
+            }
+        });
+
+    } catch (err) {
+        console.error('Error in GET /api/deals/:id:', err);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// ============================================
 // EXPENSES ROUTES
 // ============================================
 app.get('/api/expenses', authenticate, async (req, res) => {
