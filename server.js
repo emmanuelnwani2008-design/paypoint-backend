@@ -541,6 +541,13 @@ app.put('/api/auth/update', authenticate, async (req, res) => {
         res.status(500).json({ error: 'Internal server error' });
     }
 });
+const { data, error } = await supabase.auth.updateUser({
+    data: {
+        name: sanitizedName,
+        bio: bio ? sanitizeInput(bio.trim()) : '',
+        default_currency: req.body.default_currency || 'USD'   // <-- ADD THIS
+    }
+});
 
 // ============================================
 // DEALS ROUTES

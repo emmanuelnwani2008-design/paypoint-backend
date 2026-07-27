@@ -516,6 +516,7 @@
                 return false;
             }
 
+
             try {
                 const userData = JSON.parse(user);
                 const name = userData?.user_metadata?.name || userData?.name || 'Creator';
@@ -569,6 +570,9 @@
                 window.location.replace('login.html');
                 return false;
             }
+            // After you get the user data
+const userCurrency = userData?.user_metadata?.default_currency || 'USD';
+document.getElementById('defaultCurrency').value = userCurrency;
         }
 
         // ============================================
@@ -711,6 +715,24 @@
                 console.error(err);
             }
         });
+        <div class="form-group">
+    <label>Preferred Currency</label>
+    <select id="defaultCurrency">
+        <option value="USD">🇺🇸 USD ($)</option>
+        <option value="NGN">🇳🇬 NGN (₦)</option>
+    </select>
+    <small style="color: #8A9AAB; font-size: 12px;">
+        This sets the default currency for all your new deals and expenses.
+    </small>
+</div>
+const currency = document.getElementById('defaultCurrency').value;
+
+// In the fetch body, add:
+body: JSON.stringify({
+    name: name,
+    bio: bio,
+    default_currency: currency   // <-- ADD THIS
+})
 
         // ============================================
         // VERIFY BANK ACCOUNT
