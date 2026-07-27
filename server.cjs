@@ -515,33 +515,6 @@ app.post('/api/auth/upload-avatar', authenticate, upload.single('avatar'), async
 });
 
 // ============================================
-// UPDATE PROFILE
-// ============================================
-app.put('/api/auth/update', authenticate, async (req, res) => {
-    try {
-        const { name, bio } = req.body;
-        if (!name) return res.status(400).json({ error: 'Name is required' });
-        const sanitizedName = sanitizeInput(name.trim());
-        if (sanitizedName.length < 2 || sanitizedName.length > 50) {
-            return res.status(400).json({ error: 'Name must be between 2 and 50 characters' });
-        }
-        const { data, error } = await supabase.auth.updateUser({
-            data: {
-                name: sanitizedName,
-                bio: bio ? sanitizeInput(bio.trim()) : ''
-            }
-        });
-        if (error) {
-            console.error('Update profile error:', error);
-            return res.status(400).json({ error: error.message });
-        }
-        res.json({ success: true, user: data.user, message: 'Profile updated successfully' });
-    } catch (err) {
-        console.error('Update profile server error:', err);
-        res.status(500).json({ error: 'Internal server error' });
-    }
-});
-// ============================================
 // UPDATE PROFILE (FIXED)
 // ============================================
 app.put('/api/auth/update', authenticate, async (req, res) => {
@@ -1192,7 +1165,6 @@ app.post('/api/invoices/generate', authenticate, async (req, res) => {
 const currencySymbol = deal.currency === 'USD' ? '$' : '₦';
 doc.text(`Total Amount: ${currencySymbol}${Number(deal.amount).toLocaleString()}`, { align: 'right' });
 doc.moveDown(2);
-        doc.moveDown(2);
 
         doc.fontSize(10).font('Helvetica');
         doc.text('Thank you for your business!', { align: 'center' });
