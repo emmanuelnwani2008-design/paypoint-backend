@@ -6,13 +6,13 @@
     <title>PayPoint · Expenses</title>
     <link rel="icon" type="image/png" href="logo.png">
     <!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-HFJ9JM358E"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-  gtag('config', 'G-HFJ9JM358E');
-</script>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-HFJ9JM358E"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-HFJ9JM358E');
+    </script>
     <style>
         /* ============================================
            CLEAN WHITE/BLACK/GREY THEME
@@ -390,6 +390,8 @@
             padding: 36px 32px 28px;
             width: 100%;
             max-width: 440px;
+            max-height: 90vh;
+            overflow-y: auto;
             box-shadow: 0 24px 64px rgba(0, 0, 0, 0.12);
         }
 
@@ -647,12 +649,14 @@
                 <option value="NGN">₦ NGN</option>
                 <option value="USD">$ USD</option>
             </select>
-            <label for="modalDeal">Linked Deal (Optional)</label>
-<select id="modalDeal">
-    <option value="">— None —</option>
-    <!-- Deals will be loaded here by JavaScript -->
-</select>
-<small style="color: #8A9AAB; font-size: 12px;">Link this expense to a brand deal for profit tracking.</small>
+
+            <!-- NEW: DEAL DROPDOWN -->
+            <label for="modalDeal">Link to Deal (Optional)</label>
+            <select id="modalDeal">
+                <option value="">— None —</option>
+                <!-- Deals will be loaded by JavaScript -->
+            </select>
+            <small style="color: #8A9AAB; font-size: 12px;">Link this expense to a deal to track profit.</small>
 
             <label for="modalReceipt">Receipt Photo (Optional)</label>
             <input type="file" id="modalReceipt" accept="image/*">
@@ -672,8 +676,11 @@
         // ============================================
         // CONFIGURATION - FIXED URL
         // ============================================
-        const API_URL = window.__API_URL__ || 'https://paypoint-backend-9m63.onrender.com/api';
+        const API_URL = 'https://paypoint-backend-9m63.onrender.com/api';
 
+        // ============================================
+        // AUTH HELPERS
+        // ============================================
         function getAuthHeaders() {
             const token = localStorage.getItem('paypoint_session');
             return {
@@ -681,26 +688,6 @@
                 ...(token ? { Authorization: `Bearer ${token}` } : {})
             };
         }
-        async function loadDealsForDropdown() {
-    try {
-        const res = await fetch(`${API_URL}/deals`, { headers: getAuthHeaders() });
-        const result = await res.json();
-        if (result.success) {
-            const select = document.getElementById('modalDeal');
-            // Keep the first "None" option
-            select.innerHTML = '<option value="">— None —</option>';
-            result.data.forEach(deal => {
-                const option = document.createElement('option');
-                option.value = deal.id;
-                // Show brand name and amount
-                option.textContent = `${deal.brand_name} — ₦${Number(deal.amount).toLocaleString()}`;
-                select.appendChild(option);
-            });
-        }
-    } catch (err) {
-        console.error('Error loading deals:', err);
-    }
-}
 
         // ============================================
         // CURRENCY HELPER
@@ -713,6 +700,34 @@
         }
 
         let allExpenses = [];
+
+        // ============================================
+        // LOAD DEALS FOR DROPDOWN (NEW)
+        // ============================================
+        async function loadDealsForDropdown() {
+            try {
+                const token = localStorage.getItem('paypoint_session');
+                const res = await fetch(`${API_URL}/deals`, {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                const result = await res.json();
+                if (result.success) {
+                    const select = document.getElementById('modalDeal');
+                    select.innerHTML = '<option value="">— None —</option>';
+                    result.data.forEach(deal => {
+                        const option = document.createElement('option');
+                        option.value = deal.id;
+                        option.textContent = `${deal.brand_name} — ₦${Number(deal.amount).toLocaleString()}`;
+                        select.appendChild(option);
+                    });
+                }
+            } catch (err) {
+                console.error('Error loading deals:', err);
+            }
+        }
 
         // DOM REFERENCES
         const tableBody = document.getElementById('expensesTableBody');
@@ -730,6 +745,7 @@
         const modalAmount = document.getElementById('modalAmount');
         const modalCategory = document.getElementById('modalCategory');
         const modalCurrency = document.getElementById('modalCurrency');
+        const modalDeal = document.getElementById('modalDeal');
         const modalReceipt = document.getElementById('modalReceipt');
         const receiptPreview = document.getElementById('receiptPreview');
         const receiptPreviewImg = document.getElementById('receiptPreviewImg');
@@ -741,7 +757,6 @@
                 window.location.replace('login.html');
                 return false;
             }
-            
             try {
                 const userData = JSON.parse(user);
                 const name = userData?.user_metadata?.name || userData?.name || 'Creator';
@@ -754,7 +769,6 @@
                 return false;
             }
         }
-
 
         // LOAD EXPENSES
         async function loadExpenses() {
@@ -875,6 +889,9 @@
             }
         });
 
+        // ============================================
+        // OPEN MODAL (Loads deals for dropdown)
+        // ============================================
         openModalBtn.addEventListener('click', () => {
             modalVendor.value = '';
             modalAmount.value = '';
@@ -882,14 +899,10 @@
             modalCurrency.value = 'NGN';
             modalReceipt.value = '';
             receiptPreview.style.display = 'none';
+            // Load deals into the dropdown
+            loadDealsForDropdown();
             modal.classList.add('active');
         });
-        openModalBtn.addEventListener('click', () => {
-    // ... existing code (clearing fields, etc.) ...
-    loadDealsForDropdown();   // <-- ADD THIS LINE
-    modal.classList.add('active');
-});
-
 
         function closeModal() {
             modal.classList.remove('active');
@@ -900,17 +913,20 @@
             if (e.target === modal) closeModal();
         });
 
+        // ============================================
+        // SAVE EXPENSE (Includes deal_id)
+        // ============================================
         saveExpenseBtn.addEventListener('click', async () => {
             const vendor = modalVendor.value.trim();
             const amount = modalAmount.value;
             const category = modalCategory.value;
             const currency = modalCurrency.value;
+            const deal_id = modalDeal.value || null;
 
             if (!vendor || !amount) {
                 alert('Vendor and Amount are required!');
                 return;
             }
-            
 
             let receipt_url = '';
             if (modalReceipt.files.length > 0) {
@@ -923,16 +939,15 @@
                     reader.readAsDataURL(file);
                 });
             }
-            
 
             const expenseData = {
                 vendor,
                 amount: parseFloat(amount),
                 category: category || 'other',
                 receipt_url: receipt_url || '',
-                currency: currency
+                currency: currency,
+                deal_id: deal_id   // <-- THIS IS THE NEW PIECE
             };
-            
 
             try {
                 const res = await fetch(`${API_URL}/expenses`, {
@@ -954,14 +969,6 @@
                 console.error(err);
             }
         });
-        const expenseData = {
-    vendor: vendor,
-    amount: parseFloat(amount),
-    category: category,
-    receipt_url: receipt_url || '',
-    currency: currency,
-    deal_id: document.getElementById('modalDeal').value || null   // <-- ADD THIS LINE
-};
 
         async function deleteExpense(id) {
             if (!confirm('Are you sure you want to delete this expense?')) return;
