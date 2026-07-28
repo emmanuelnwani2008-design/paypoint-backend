@@ -1,748 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>PayPoint – Finance OS for Creators</title>
-
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&display=swap" rel="stylesheet" />
-
-    <style>
-    * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-    }
-
-    body {
-        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-        background: #FAFBFD;
-        color: #0A0E1A;
-        overflow-x: hidden;
-        -webkit-font-smoothing: antialiased;
-    }
-
-    /* ── Background ── */
-    .bg-premium {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        z-index: -2;
-        background: radial-gradient(ellipse at 20% 50%, #EEF4FF 0%, transparent 60%),
-                    radial-gradient(ellipse at 80% 20%, #DCE7FF 0%, transparent 50%),
-                    radial-gradient(ellipse at 50% 80%, #F0F4FF 0%, transparent 50%),
-                    #FAFBFD;
-    }
-
-    .blobs {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        z-index: -1;
-        pointer-events: none;
-        overflow: hidden;
-    }
-
-    .blob {
-        position: absolute;
-        border-radius: 50%;
-        filter: blur(80px);
-        opacity: 0.3;
-        animation: blobFloat 25s ease-in-out infinite alternate;
-    }
-
-    .blob-1 {
-        width: min(600px, 80vw);
-        height: min(600px, 80vw);
-        background: #4F7CFF;
-        top: -15%;
-        right: -10%;
-        animation-delay: 0s;
-    }
-
-    .blob-2 {
-        width: min(450px, 60vw);
-        height: min(450px, 60vw);
-        background: #7A9AFF;
-        bottom: -10%;
-        left: -10%;
-        animation-delay: 8s;
-    }
-
-    .blob-3 {
-        width: min(300px, 50vw);
-        height: min(300px, 50vw);
-        background: #B3C9FF;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        animation-delay: 16s;
-    }
-
-    @keyframes blobFloat {
-        0% { transform: translate(0, 0) scale(1); }
-        33% { transform: translate(40px, -50px) scale(1.1); }
-        66% { transform: translate(-30px, 40px) scale(0.9); }
-        100% { transform: translate(20px, -20px) scale(1.05); }
-    }
-
-    /* ── Container ── */
-    .container {
-        max-width: 1120px;
-        margin: 0 auto;
-        padding: 0 clamp(16px, 4vw, 48px);
-    }
-
-    /* ── Navbar ── */
-    .navbar {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: clamp(16px, 3vh, 24px) 0;
-        border-bottom: 1px solid rgba(79, 124, 255, 0.06);
-        flex-wrap: wrap;
-        gap: 12px;
-    }
-
-    .logo {
-        font-size: clamp(22px, 3vw, 28px);
-        font-weight: 800;
-        letter-spacing: -0.5px;
-        color: #0A0E1A;
-        text-decoration: none;
-    }
-    .logo span {
-        color: #4F7CFF;
-    }
-
-    .nav-links {
-        display: flex;
-        gap: clamp(12px, 2vw, 32px);
-        align-items: center;
-        flex-wrap: wrap;
-    }
-
-    .nav-links a {
-        text-decoration: none;
-        font-size: clamp(13px, 1.2vw, 15px);
-        font-weight: 500;
-        color: #5E6F82;
-        transition: color 0.2s ease;
-        white-space: nowrap;
-    }
-    .nav-links a:hover {
-        color: #0A0E1A;
-    }
-
-    .btn-outline {
-        background: transparent;
-        border: 1.5px solid #E8EDF2;
-        padding: 8px clamp(16px, 2vw, 24px);
-        border-radius: 40px;
-        font-weight: 600;
-        font-size: clamp(13px, 1.2vw, 14px);
-        color: #0A0E1A;
-        text-decoration: none;
-        transition: all 0.25s ease;
-        white-space: nowrap;
-    }
-    .btn-outline:hover {
-        border-color: #4F7CFF;
-        background: rgba(79, 124, 255, 0.04);
-    }
-
-    .btn-primary-nav {
-        background: #4F7CFF;
-        color: #FFFFFF;
-        padding: 8px clamp(16px, 2vw, 28px);
-        border-radius: 40px;
-        font-weight: 600;
-        font-size: clamp(13px, 1.2vw, 14px);
-        text-decoration: none;
-        box-shadow: 0 2px 16px rgba(79, 124, 255, 0.25);
-        transition: all 0.25s ease;
-        border: none;
-        white-space: nowrap;
-    }
-    .btn-primary-nav:hover {
-        background: #3A5FD9;
-        transform: translateY(-2px);
-        box-shadow: 0 6px 28px rgba(79, 124, 255, 0.35);
-    }
-
-    /* ── Hero ── */
-    .hero {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        text-align: center;
-        padding: clamp(40px, 10vh, 100px) 0 clamp(30px, 6vh, 70px) 0;
-    }
-
-    .hero-badge {
-        background: rgba(79, 124, 255, 0.08);
-        color: #4F7CFF;
-        font-weight: 600;
-        font-size: clamp(12px, 1.2vw, 14px);
-        padding: 6px clamp(14px, 2vw, 20px);
-        border-radius: 40px;
-        border: 1px solid rgba(79, 124, 255, 0.08);
-        margin-bottom: clamp(16px, 2vh, 24px);
-        display: inline-block;
-        animation: fadeUp 0.9s ease forwards;
-        opacity: 0;
-        transform: translateY(24px);
-        white-space: nowrap;
-    }
-
-    .hero h1 {
-        font-size: clamp(32px, 6vw, 64px);
-        font-weight: 800;
-        line-height: 1.06;
-        letter-spacing: clamp(-0.5px, -0.1vw, -2px);
-        color: #0A0E1A;
-        margin-bottom: clamp(12px, 2vh, 20px);
-        animation: fadeUp 0.9s ease 0.15s forwards;
-        opacity: 0;
-        transform: translateY(24px);
-        max-width: 100%;
-    }
-    .hero h1 .highlight {
-        background: linear-gradient(135deg, #4F7CFF 0%, #7A9AFF 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-    }
-
-    .hero p {
-        font-size: clamp(16px, 1.8vw, 20px);
-        color: #5E6F82;
-        max-width: min(560px, 90%);
-        line-height: 1.7;
-        margin-bottom: clamp(24px, 4vh, 36px);
-        animation: fadeUp 0.9s ease 0.3s forwards;
-        opacity: 0;
-        transform: translateY(24px);
-    }
-
-    .hero-actions {
-        display: flex;
-        gap: clamp(12px, 2vw, 16px);
-        flex-wrap: wrap;
-        justify-content: center;
-        animation: fadeUp 0.9s ease 0.45s forwards;
-        opacity: 0;
-        transform: translateY(24px);
-        width: 100%;
-        max-width: 500px;
-    }
-
-    .btn-primary {
-        background: #4F7CFF;
-        color: #FFFFFF;
-        padding: clamp(14px, 1.5vh, 16px) clamp(28px, 4vw, 40px);
-        border-radius: 40px;
-        font-weight: 700;
-        font-size: clamp(15px, 1.5vw, 18px);
-        text-decoration: none;
-        box-shadow: 0 4px 20px rgba(79, 124, 255, 0.30);
-        transition: all 0.25s ease;
-        border: none;
-        text-align: center;
-        flex: 1 1 auto;
-        min-width: 140px;
-    }
-    .btn-primary:hover {
-        background: #3A5FD9;
-        transform: translateY(-3px);
-        box-shadow: 0 8px 36px rgba(79, 124, 255, 0.40);
-    }
-
-    .btn-secondary {
-        background: #FFFFFF;
-        color: #0A0E1A;
-        padding: clamp(14px, 1.5vh, 16px) clamp(28px, 4vw, 40px);
-        border-radius: 40px;
-        font-weight: 600;
-        font-size: clamp(15px, 1.5vw, 18px);
-        text-decoration: none;
-        border: 1.5px solid #E8EDF2;
-        transition: all 0.25s ease;
-        text-align: center;
-        flex: 1 1 auto;
-        min-width: 140px;
-    }
-    .btn-secondary:hover {
-        border-color: #4F7CFF;
-        transform: translateY(-3px);
-        box-shadow: 0 4px 20px rgba(0,0,0,0.04);
-    }
-
-    @keyframes fadeUp {
-        to { opacity: 1; transform: translateY(0); }
-    }
-
-    /* ── Trust Bar ── */
-    .trust-bar {
-        display: flex;
-        justify-content: center;
-        gap: clamp(16px, 3vw, 48px);
-        flex-wrap: wrap;
-        margin: clamp(32px, 6vh, 60px) auto 0 auto;
-        padding-top: clamp(24px, 4vh, 40px);
-        border-top: 1px solid rgba(79, 124, 255, 0.06);
-        animation: fadeUp 0.9s ease 0.6s forwards;
-        opacity: 0;
-        transform: translateY(24px);
-        width: 100%;
-        max-width: 700px;
-    }
-    .trust-item {
-        text-align: center;
-        flex: 0 1 auto;
-        min-width: 80px;
-    }
-    .trust-item .number {
-        font-size: clamp(24px, 3vw, 32px);
-        font-weight: 800;
-        color: #0A0E1A;
-        letter-spacing: -0.5px;
-    }
-    .trust-item .number .accent {
-        color: #4F7CFF;
-    }
-    .trust-item .label {
-        font-size: clamp(12px, 1vw, 14px);
-        color: #8A9AAB;
-        margin-top: 2px;
-    }
-
-    /* ── Section Headers ── */
-    .section-header {
-        text-align: center;
-        margin-bottom: clamp(32px, 5vh, 56px);
-        padding: 0 clamp(12px, 2vw, 0);
-    }
-    .section-header h2 {
-        font-size: clamp(26px, 4vw, 38px);
-        font-weight: 800;
-        letter-spacing: -0.5px;
-        color: #0A0E1A;
-        max-width: 100%;
-    }
-    .section-header p {
-        font-size: clamp(15px, 1.5vw, 18px);
-        color: #8A9AAB;
-        max-width: min(480px, 90%);
-        margin: 8px auto 0 auto;
-    }
-
-    /* ── Features ── */
-    .features-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
-        gap: clamp(20px, 3vw, 32px);
-        margin-bottom: clamp(40px, 8vh, 80px);
-    }
-
-    .feature-card {
-        background: rgba(255, 255, 255, 0.7);
-        backdrop-filter: blur(12px);
-        -webkit-backdrop-filter: blur(12px);
-        border: 1px solid rgba(255, 255, 255, 0.8);
-        border-radius: 20px;
-        padding: clamp(24px, 3vw, 36px) clamp(20px, 2.5vw, 28px);
-        transition: all 0.4s ease;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.02);
-        opacity: 0;
-        transform: translateY(30px);
-        display: flex;
-        flex-direction: column;
-    }
-    .feature-card.visible {
-        opacity: 1;
-        transform: translateY(0);
-        transition: all 0.7s ease;
-    }
-    .feature-card:hover {
-        border-color: #4F7CFF;
-        box-shadow: 0 12px 48px rgba(79, 124, 255, 0.08);
-        transform: translateY(-6px);
-        background: rgba(255, 255, 255, 0.9);
-    }
-
-    .feature-icon {
-        width: clamp(48px, 5vw, 56px);
-        height: clamp(48px, 5vw, 56px);
-        background: rgba(79, 124, 255, 0.08);
-        border-radius: 16px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: clamp(22px, 2.5vw, 26px);
-        margin-bottom: 16px;
-        flex-shrink: 0;
-    }
-    .feature-card h3 {
-        font-size: clamp(18px, 1.8vw, 20px);
-        font-weight: 700;
-        color: #0A0E1A;
-        margin-bottom: 6px;
-    }
-    .feature-card p {
-        font-size: clamp(14px, 1.2vw, 15px);
-        color: #5E6F82;
-        line-height: 1.7;
-        flex: 1;
-    }
-
-    /* ── How It Works ── */
-    .how-section {
-        background: rgba(255, 255, 255, 0.6);
-        backdrop-filter: blur(12px);
-        -webkit-backdrop-filter: blur(12px);
-        border-radius: 24px;
-        padding: clamp(32px, 5vw, 64px) clamp(20px, 3vw, 48px);
-        margin: clamp(20px, 4vh, 40px) 0 clamp(40px, 8vh, 80px) 0;
-        border: 1px solid rgba(255, 255, 255, 0.8);
-    }
-
-    .steps-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(min(100%, 180px), 1fr));
-        gap: clamp(24px, 4vw, 48px);
-        margin-top: clamp(24px, 4vh, 40px);
-    }
-    .step {
-        text-align: center;
-    }
-    .step-number {
-        width: clamp(44px, 5vw, 52px);
-        height: clamp(44px, 5vw, 52px);
-        background: linear-gradient(135deg, #4F7CFF, #7A9AFF);
-        color: #FFFFFF;
-        font-weight: 800;
-        font-size: clamp(18px, 2vw, 20px);
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        margin: 0 auto 14px auto;
-        box-shadow: 0 4px 16px rgba(79, 124, 255, 0.20);
-    }
-    .step h4 {
-        font-size: clamp(17px, 1.6vw, 19px);
-        font-weight: 700;
-        color: #0A0E1A;
-        margin-bottom: 4px;
-    }
-    .step p {
-        font-size: clamp(14px, 1.2vw, 15px);
-        color: #5E6F82;
-        line-height: 1.6;
-        max-width: 280px;
-        margin: 0 auto;
-    }
-
-    /* ── CTA ── */
-    .cta-section {
-        text-align: center;
-        padding: clamp(20px, 4vh, 40px) 0 clamp(40px, 8vh, 80px) 0;
-    }
-    .cta-section h2 {
-        font-size: clamp(28px, 4.5vw, 44px);
-        font-weight: 800;
-        color: #0A0E1A;
-        letter-spacing: clamp(-0.5px, -0.1vw, -1px);
-        margin-bottom: 12px;
-    }
-    .cta-section p {
-        font-size: clamp(16px, 1.6vw, 18px);
-        color: #5E6F82;
-        margin-bottom: clamp(24px, 4vh, 32px);
-        max-width: min(480px, 90%);
-        margin-left: auto;
-        margin-right: auto;
-    }
-
-    /* ── Footer ── */
-    .footer {
-        border-top: 1px solid rgba(79, 124, 255, 0.06);
-        padding: clamp(20px, 3vh, 32px) 0;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        flex-wrap: wrap;
-        gap: 12px 20px;
-    }
-    .footer p {
-        font-size: clamp(13px, 1vw, 14px);
-        color: #8A9AAB;
-    }
-    .footer-links {
-        display: flex;
-        gap: clamp(16px, 2vw, 28px);
-        flex-wrap: wrap;
-    }
-    .footer-links a {
-        font-size: clamp(13px, 1vw, 14px);
-        color: #5E6F82;
-        text-decoration: none;
-        transition: color 0.2s ease;
-        white-space: nowrap;
-    }
-    .footer-links a:hover {
-        color: #4F7CFF;
-    }
-
-    /* ── Extra small screens (<= 400px) ── */
-    @media (max-width: 400px) {
-        .hero h1 {
-            font-size: 24px;
-        }
-        .hero p {
-            font-size: 14px;
-        }
-        .hero-actions {
-            flex-direction: column;
-            align-items: center;
-        }
-        .btn-primary, .btn-secondary {
-            width: 100%;
-            min-width: unset;
-        }
-        .nav-links {
-            gap: 8px;
-        }
-        .nav-links a {
-            font-size: 12px;
-        }
-        .btn-outline, .btn-primary-nav {
-            font-size: 12px;
-            padding: 6px 14px;
-        }
-        .trust-item .number {
-            font-size: 20px;
-        }
-        .features-grid {
-            grid-template-columns: 1fr;
-        }
-        .steps-grid {
-            grid-template-columns: 1fr;
-        }
-        .trust-bar {
-            gap: 12px;
-        }
-        .trust-item {
-            flex: 1 1 40%;
-        }
-    }
-
-    /* ── Tablet (768px) ── */
-    @media (max-width: 768px) {
-        .hero h1 {
-            font-size: 32px;
-        }
-        .navbar {
-            flex-direction: column;
-            align-items: stretch;
-        }
-        .nav-links {
-            justify-content: center;
-            gap: 12px;
-        }
-        .features-grid {
-            grid-template-columns: 1fr 1fr;
-        }
-        .steps-grid {
-            grid-template-columns: 1fr 1fr;
-        }
-        .trust-bar {
-            gap: 24px;
-        }
-    }
-
-    /* ── Large screens (1200px+) ── */
-    @media (min-width: 1200px) {
-        .container {
-            max-width: 1200px;
-        }
-        .hero h1 {
-            font-size: 72px;
-        }
-        .features-grid {
-            gap: 40px;
-        }
-    }
-</style>
-
-</head>
-<body>
-
-    <!-- Premium Background -->
-    <div class="bg-premium"></div>
-    <div class="blobs">
-        <div class="blob blob-1"></div>
-        <div class="blob blob-2"></div>
-        <div class="blob blob-3"></div>
-    </div>
-
-    <!-- ── Navbar ── -->
-    <nav class="container">
-        <div class="navbar">
-            <a href="/" class="logo">Pay<span>Point</span></a>
-            <div class="nav-links">
-                <a href="#features">Features</a>
-                <a href="#how">How It Works</a>
-                <a href="login.html" class="btn-outline">Log In</a>
-                <a href="login.html" class="btn-primary-nav">Start Free</a>
-            </div>
-        </div>
-    </nav>
-
-    <!-- ── Hero ── -->
-    <section class="container">
-        <div class="hero">
-            <span class="hero-badge">🎯 Creator Finance OS</span>
-            <h1>Manage your brand deals<br/>with <span class="highlight">one platform</span></h1>
-            <p>Track deals, send professional invoices, and get paid — all in one place. Designed for creators who want to focus on their craft, not their spreadsheets.</p>
-            <div class="hero-actions">
-                <a href="login.html" class="btn-primary">Get Started →</a>
-                <a href="#features" class="btn-secondary">Explore</a>
-            </div>
-
-            <div class="trust-bar">
-                <div class="trust-item">
-                    <div class="number"><span class="accent">0</span>%</div>
-                    <div class="label">Platform Fee</div>
-                </div>
-                <div class="trust-item">
-                    <div class="number"><span class="accent">∞</span></div>
-                    <div class="label">Deals Unlimited</div>
-                </div>
-                <div class="trust-item">
-                    <div class="number"><span class="accent">0</span></div>
-                    <div class="label">Creators Onboarded</div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- ── Features ── -->
-    <section class="container" id="features">
-        <div class="section-header">
-            <h2>Everything you need to manage your creator business</h2>
-            <p>Stop juggling spreadsheets and emails. PayPoint brings it all together.</p>
-        </div>
-
-        <div class="features-grid">
-            <div class="feature-card">
-                <div class="feature-icon">💼</div>
-                <h3>Track Deals</h3>
-                <p>Log every brand deal, set due dates, and track payments — all from one dashboard.</p>
-            </div>
-            <div class="feature-card">
-                <div class="feature-icon">📄</div>
-                <h3>Send Invoices</h3>
-                <p>Generate professional PDF invoices in seconds and send them directly to brands.</p>
-            </div>
-            <div class="feature-card">
-                <div class="feature-icon">💳</div>
-                <h3>Get Paid</h3>
-                <p>Accept payments via Paystack with a simple 5% platform fee — no hidden costs.</p>
-            </div>
-            <div class="feature-card">
-                <div class="feature-icon">🧾</div>
-                <h3>Track Expenses</h3>
-                <p>Log equipment, travel, and software costs so you're ready for tax season.</p>
-            </div>
-            <div class="feature-card">
-                <div class="feature-icon">📊</div>
-                <h3>Real Dashboard</h3>
-                <p>See your revenue, taxes set aside, and take‑home pay at a glance.</p>
-            </div>
-            <div class="feature-card">
-                <div class="feature-icon">🔒</div>
-                <h3>Secure & Private</h3>
-                <p>Your data is encrypted and only you can see it. We never share your info.</p>
-            </div>
-        </div>
-    </section>
-
-    <!-- ── How It Works ── -->
-    <section class="container" id="how">
-        <div class="how-section">
-            <div class="section-header" style="margin-bottom: 24px;">
-                <h2 style="font-size: 30px;">How it works</h2>
-                <p style="max-width: 100%;">Three simple steps to take control of your finances.</p>
-            </div>
-
-            <div class="steps-grid">
-                <div class="step">
-                    <div class="step-number">1</div>
-                    <h4>Create Account</h4>
-                    <p>Sign up in under 30 seconds. No credit card required.</p>
-                </div>
-                <div class="step">
-                    <div class="step-number">2</div>
-                    <h4>Log Your Deals</h4>
-                    <p>Add brand deals, set amounts, and track each one.</p>
-                </div>
-                <div class="step">
-                    <div class="step-number">3</div>
-                    <h4>Invoice & Collect</h4>
-                    <p>Send invoices and receive payments directly through the platform.</p>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- ── CTA ── -->
-    <section class="container">
-        <div class="cta-section">
-            <h2>Ready to take control of your finances?</h2>
-            <p>Join creators who are already using PayPoint to manage their brand deals and get paid faster.</p>
-            <a href="login.html" class="btn-primary" style="font-size:18px; padding:18px 52px;">Start Free →</a>
-        </div>
-    </section>
-
-    <!-- ── Footer ── -->
-    <footer class="container">
-        <div class="footer">
-            <p>&copy; 2026 PayPoint · Finance OS for Creators</p>
-            <div class="footer-links">
-                <a href="login.html">Log In</a>
-                <a href="#">Privacy</a>
-                <a href="#">Terms</a>
-                <a href="#">Support</a>
-            </div>
-        </div>
-    </footer>
-
-    <!-- ── Scroll Animations ── -->
-    <script>
-        const cards = document.querySelectorAll('.feature-card');
-
-        const observer = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    entry.target.classList.add('visible');
-                }
-            });
-        }, {
-            threshold: 0.15,
-        });
-
-        cards.forEach(card => observer.observe(card));
-    </script>
-
-    <!-- Google Analytics -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PayPoint · Finance OS for Creators</title>
+    <link rel="icon" type="image/png" href="logo.png">
+    <!-- Google tag (gtag.js) -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-HFJ9JM358E"></script>
     <script>
         window.dataLayer = window.dataLayer || [];
@@ -750,6 +13,675 @@
         gtag('js', new Date());
         gtag('config', 'G-HFJ9JM358E');
     </script>
+    <style>
+        /* ============================================
+           RESET & BASE
+        ============================================ */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0A0E1A;
+            color: #FFFFFF;
+            -webkit-font-smoothing: antialiased;
+            overflow-x: hidden;
+        }
+
+        /* ============================================
+           GRADIENT BACKGROUND (Premium Dark)
+        ============================================ */
+        .bg-gradient {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -2;
+            background: radial-gradient(ellipse at 20% 50%, #1A1A3E 0%, #0A0E1A 70%);
+        }
+        .bg-gradient::after {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            background: radial-gradient(ellipse at 80% 20%, #4F7CFF 0%, transparent 60%);
+            opacity: 0.15;
+        }
+
+        /* ============================================
+           CONTAINER
+        ============================================ */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        /* ============================================
+           NAVBAR
+        ============================================ */
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+        .logo {
+            font-size: 28px;
+            font-weight: 800;
+            color: #FFFFFF;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .logo img { height: 36px; width: auto; }
+        .logo span { color: #4F7CFF; }
+        .nav-links {
+            display: flex;
+            gap: 32px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .nav-links a {
+            color: rgba(255,255,255,0.7);
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            transition: color 0.3s ease;
+        }
+        .nav-links a:hover { color: #FFFFFF; }
+        .btn-nav {
+            background: #4F7CFF;
+            color: #FFFFFF;
+            padding: 10px 28px;
+            border-radius: 40px;
+            font-weight: 600;
+            font-size: 14px;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            border: none;
+            box-shadow: 0 4px 20px rgba(79, 124, 255, 0.3);
+        }
+        .btn-nav:hover {
+            background: #3A5FD9;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(79, 124, 255, 0.4);
+        }
+
+        /* ============================================
+           HERO SECTION
+        ============================================ */
+        .hero {
+            padding: 60px 0 40px 0;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 60px;
+            align-items: center;
+            min-height: 70vh;
+        }
+        .hero-content h1 {
+            font-size: 52px;
+            font-weight: 800;
+            line-height: 1.1;
+            letter-spacing: -1px;
+            margin-bottom: 20px;
+        }
+        .hero-content h1 .highlight { color: #4F7CFF; }
+        .hero-content p {
+            font-size: 18px;
+            color: rgba(255,255,255,0.7);
+            line-height: 1.7;
+            max-width: 500px;
+            margin-bottom: 32px;
+        }
+        .hero-buttons {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+        .btn-primary {
+            background: #4F7CFF;
+            color: #FFFFFF;
+            padding: 16px 40px;
+            border-radius: 40px;
+            font-weight: 700;
+            font-size: 18px;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 24px rgba(79, 124, 255, 0.35);
+            border: none;
+            display: inline-block;
+        }
+        .btn-primary:hover {
+            background: #3A5FD9;
+            transform: translateY(-3px);
+            box-shadow: 0 8px 36px rgba(79, 124, 255, 0.5);
+        }
+        .btn-secondary {
+            background: rgba(255,255,255,0.06);
+            color: #FFFFFF;
+            padding: 16px 40px;
+            border-radius: 40px;
+            font-weight: 600;
+            font-size: 18px;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255,255,255,0.12);
+            display: inline-block;
+        }
+        .btn-secondary:hover {
+            background: rgba(255,255,255,0.12);
+            transform: translateY(-3px);
+        }
+        .hero-image {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .hero-image img {
+            max-width: 100%;
+            border-radius: 16px;
+            border: 1px solid rgba(255,255,255,0.08);
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+        }
+        .trust-badge {
+            margin-top: 40px;
+            display: flex;
+            align-items: center;
+            gap: 24px;
+            flex-wrap: wrap;
+            padding-top: 32px;
+            border-top: 1px solid rgba(255,255,255,0.06);
+        }
+        .trust-badge span {
+            color: rgba(255,255,255,0.5);
+            font-size: 14px;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .trust-badge .avatars {
+            display: flex;
+            align-items: center;
+        }
+        .trust-badge .avatars .avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 2px solid #0A0E1A;
+            margin-right: -8px;
+            background: linear-gradient(135deg, #4F7CFF, #7A9AFF);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 14px;
+            color: #FFFFFF;
+        }
+
+        /* ============================================
+           FEATURES GRID
+        ============================================ */
+        .section {
+            padding: 80px 0;
+        }
+        .section-header {
+            text-align: center;
+            max-width: 700px;
+            margin: 0 auto 60px auto;
+        }
+        .section-header h2 {
+            font-size: 40px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            margin-bottom: 16px;
+        }
+        .section-header p {
+            color: rgba(255,255,255,0.6);
+            font-size: 18px;
+            line-height: 1.7;
+        }
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px;
+        }
+        .feature-card {
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 16px;
+            padding: 32px 28px;
+            transition: all 0.3s ease;
+        }
+        .feature-card:hover {
+            background: rgba(255,255,255,0.08);
+            transform: translateY(-4px);
+            border-color: rgba(79,124,255,0.3);
+        }
+        .feature-icon {
+            font-size: 32px;
+            margin-bottom: 16px;
+            display: block;
+        }
+        .feature-card h3 {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+        .feature-card p {
+            color: rgba(255,255,255,0.6);
+            font-size: 15px;
+            line-height: 1.6;
+        }
+
+        /* ============================================
+           HOW IT WORKS
+        ============================================ */
+        .steps-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 40px;
+            margin-top: 40px;
+        }
+        .step {
+            text-align: center;
+        }
+        .step-number {
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #4F7CFF, #7A9AFF);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            font-weight: 800;
+            color: #FFFFFF;
+            margin: 0 auto 20px auto;
+            box-shadow: 0 4px 20px rgba(79, 124, 255, 0.3);
+        }
+        .step h4 {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+        .step p {
+            color: rgba(255,255,255,0.6);
+            font-size: 15px;
+            line-height: 1.6;
+            max-width: 280px;
+            margin: 0 auto;
+        }
+
+        /* ============================================
+           PRICING (Pro / Free)
+        ============================================ */
+        .pricing-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 30px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .pricing-card {
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 16px;
+            padding: 40px 32px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+        .pricing-card:hover {
+            transform: translateY(-4px);
+            border-color: rgba(79,124,255,0.3);
+        }
+        .pricing-card.pro {
+            border-color: #4F7CFF;
+            background: rgba(79,124,255,0.06);
+        }
+        .pricing-card h3 {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+        .pricing-card .price {
+            font-size: 48px;
+            font-weight: 800;
+            color: #4F7CFF;
+            margin: 16px 0 8px 0;
+        }
+        .pricing-card .price span {
+            font-size: 16px;
+            font-weight: 400;
+            color: rgba(255,255,255,0.5);
+        }
+        .pricing-card ul {
+            list-style: none;
+            margin: 24px 0;
+        }
+        .pricing-card ul li {
+            color: rgba(255,255,255,0.7);
+            padding: 8px 0;
+            font-size: 15px;
+            border-bottom: 1px solid rgba(255,255,255,0.04);
+        }
+        .pricing-card ul li:last-child { border-bottom: none; }
+        .pricing-card .btn-pricing {
+            display: inline-block;
+            padding: 12px 40px;
+            border-radius: 40px;
+            font-weight: 600;
+            font-size: 16px;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            width: 100%;
+        }
+        .btn-pricing.free {
+            background: rgba(255,255,255,0.08);
+            color: #FFFFFF;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .btn-pricing.free:hover {
+            background: rgba(255,255,255,0.15);
+        }
+        .btn-pricing.pro-btn {
+            background: #4F7CFF;
+            color: #FFFFFF;
+            box-shadow: 0 4px 20px rgba(79, 124, 255, 0.3);
+        }
+        .btn-pricing.pro-btn:hover {
+            background: #3A5FD9;
+            transform: translateY(-2px);
+        }
+
+        /* ============================================
+           CTA SECTION
+        ============================================ */
+        .cta-section {
+            text-align: center;
+            padding: 80px 0 60px 0;
+        }
+        .cta-section h2 {
+            font-size: 44px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            margin-bottom: 16px;
+        }
+        .cta-section p {
+            color: rgba(255,255,255,0.6);
+            font-size: 18px;
+            max-width: 500px;
+            margin: 0 auto 32px auto;
+            line-height: 1.7;
+        }
+
+        /* ============================================
+           FOOTER
+        ============================================ */
+        .footer {
+            border-top: 1px solid rgba(255,255,255,0.06);
+            padding: 32px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+        .footer p {
+            color: rgba(255,255,255,0.4);
+            font-size: 14px;
+        }
+        .footer-links {
+            display: flex;
+            gap: 28px;
+            flex-wrap: wrap;
+        }
+        .footer-links a {
+            color: rgba(255,255,255,0.4);
+            text-decoration: none;
+            font-size: 14px;
+            transition: color 0.3s ease;
+        }
+        .footer-links a:hover { color: #FFFFFF; }
+
+        /* ============================================
+           RESPONSIVE
+        ============================================ */
+        @media (max-width: 1024px) {
+            .hero { grid-template-columns: 1fr; text-align: center; }
+            .hero-content p { max-width: 100%; margin-left: auto; margin-right: auto; }
+            .hero-buttons { justify-content: center; }
+            .trust-badge { justify-content: center; }
+            .features-grid { grid-template-columns: repeat(2, 1fr); }
+            .steps-grid { grid-template-columns: repeat(2, 1fr); }
+            .pricing-grid { grid-template-columns: 1fr; max-width: 400px; }
+        }
+        @media (max-width: 768px) {
+            .navbar { flex-direction: column; align-items: stretch; }
+            .nav-links { justify-content: center; gap: 16px; }
+            .hero { padding: 40px 0; min-height: auto; }
+            .hero-content h1 { font-size: 32px; }
+            .hero-content p { font-size: 16px; }
+            .btn-primary, .btn-secondary { padding: 14px 28px; font-size: 16px; }
+            .features-grid { grid-template-columns: 1fr; }
+            .steps-grid { grid-template-columns: 1fr; }
+            .section-header h2 { font-size: 28px; }
+            .cta-section h2 { font-size: 30px; }
+            .footer { flex-direction: column; text-align: center; }
+            .footer-links { justify-content: center; }
+        }
+        @media (max-width: 480px) {
+            .container { padding: 0 16px; }
+            .hero-content h1 { font-size: 26px; }
+            .hero-buttons { flex-direction: column; align-items: center; }
+            .btn-primary, .btn-secondary { width: 100%; text-align: center; }
+            .pricing-card .price { font-size: 36px; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Gradient Background -->
+    <div class="bg-gradient"></div>
+
+    <!-- ============================================
+    NAVBAR
+    ============================================ -->
+    <div class="container">
+        <nav class="navbar">
+            <a href="index.html" class="logo">
+                <img src="logo.png" alt="PayPoint" onerror="this.style.display='none'">
+                Pay<span>Point</span>
+            </a>
+            <div class="nav-links">
+                <a href="#features">Features</a>
+                <a href="#how-it-works">How It Works</a>
+                <a href="#pricing">Pricing</a>
+                <a href="login.html" class="btn-nav">Start Free</a>
+            </div>
+        </nav>
+    </div>
+
+    <!-- ============================================
+    HERO SECTION
+    ============================================ -->
+    <div class="container">
+        <section class="hero">
+            <div class="hero-content">
+                <h1>Your Creative Business <br><span class="highlight">Starts Here</span></h1>
+                <p>
+                    PayPoint is the all-in-one finance operating system for creators.
+                    Track brand deals, send professional invoices, manage expenses,
+                    and get paid — all in one place. No spreadsheets. No chaos.
+                </p>
+                <div class="hero-buttons">
+                    <a href="login.html" class="btn-primary">Start Free →</a>
+                    <a href="#features" class="btn-secondary">Explore</a>
+                </div>
+                <div class="trust-badge">
+                    <span>Trusted by creators</span>
+                    <div class="avatars">
+                        <div class="avatar">E</div>
+                        <div class="avatar">S</div>
+                        <div class="avatar">M</div>
+                        <div class="avatar">+</div>
+                    </div>
+                </div>
+            </div>
+            <div class="hero-image">
+                <!-- REPLACE THIS URL WITH YOUR ACTUAL DASHBOARD SCREENSHOT -->
+                <img src="dashboard-screenshot.png" alt="PayPoint Dashboard Preview" onerror="this.style.display='none'">
+                <!-- Fallback if no screenshot exists -->
+                <div style="background: rgba(255,255,255,0.04); border-radius: 16px; padding: 40px; border: 1px solid rgba(255,255,255,0.06); width: 100%; text-align: center; color: rgba(255,255,255,0.3); font-size: 14px;">
+                    📊 Dashboard Preview <br>
+                    <span style="font-size: 12px;">(Upload a screenshot of your PayPoint dashboard)</span>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- ============================================
+    FEATURES SECTION
+    ============================================ -->
+    <div class="container" id="features">
+        <section class="section">
+            <div class="section-header">
+                <h2>Everything You Need to Run Your Creator Business</h2>
+                <p>Stop juggling spreadsheets, emails, and invoices. PayPoint brings it all together in one powerful platform.</p>
+            </div>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <span class="feature-icon">💼</span>
+                    <h3>Brand Deals</h3>
+                    <p>Track every brand deal from pitch to payment. Store deal value, deliverables, due dates, and status — all in one place.</p>
+                </div>
+                <div class="feature-card">
+                    <span class="feature-icon">📄</span>
+                    <h3>Professional Invoices</h3>
+                    <p>Generate beautiful PDF invoices in seconds. Send them directly to brands with a secure payment link. Get paid faster.</p>
+                </div>
+                <div class="feature-card">
+                    <span class="feature-icon">💰</span>
+                    <h3>Profit Tracking</h3>
+                    <p>See exactly how much you actually made on every deal. Link expenses to deals and watch your profit update automatically.</p>
+                </div>
+                <div class="feature-card">
+                    <span class="feature-icon">🧾</span>
+                    <h3>Expense Tracking</h3>
+                    <p>Log equipment, travel, software, and production costs. Upload receipts and link expenses directly to deals for accurate profit.</p>
+                </div>
+                <div class="feature-card">
+                    <span class="feature-icon">📊</span>
+                    <h3>Real-Time Dashboard</h3>
+                    <p>See your total revenue, expenses, taxes set aside, and take-home pay — all at a glance. Know where your money is going.</p>
+                </div>
+                <div class="feature-card">
+                    <span class="feature-icon">🔒</span>
+                    <h3>Secure & Private</h3>
+                    <p>Your financial data is encrypted and stored securely. Only you can access your deals, invoices, and earnings.</p>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- ============================================
+    HOW IT WORKS
+    ============================================ -->
+    <div class="container" id="how-it-works">
+        <section class="section" style="padding-top: 0;">
+            <div class="section-header">
+                <h2>How It Works</h2>
+                <p>Three simple steps to take control of your creator finances.</p>
+            </div>
+            <div class="steps-grid">
+                <div class="step">
+                    <div class="step-number">1</div>
+                    <h4>Create Your Account</h4>
+                    <p>Sign up in under 30 seconds. No credit card required. Start tracking your brand deals immediately.</p>
+                </div>
+                <div class="step">
+                    <div class="step-number">2</div>
+                    <h4>Log Your Deals & Expenses</h4>
+                    <p>Add brand deals with deliverables, due dates, and amounts. Track every expense and link it to the right deal.</p>
+                </div>
+                <div class="step">
+                    <div class="step-number">3</div>
+                    <h4>Invoice & Get Paid</h4>
+                    <p>Send professional invoices with one click. Brands pay through Paystack. Your profit updates automatically.</p>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- ============================================
+    PRICING
+    ============================================ -->
+    <div class="container" id="pricing">
+        <section class="section" style="padding-top: 0;">
+            <div class="section-header">
+                <h2>Simple, Transparent Pricing</h2>
+                <p>Start free and upgrade when you need more power.</p>
+            </div>
+            <div class="pricing-grid">
+                <div class="pricing-card">
+                    <h3>Free</h3>
+                    <div class="price">₦0 <span>/ month</span></div>
+                    <ul>
+                        <li>✅ Track unlimited brand deals</li>
+                        <li>✅ Track expenses with receipts</li>
+                        <li>✅ Generate professional invoices</li>
+                        <li>✅ View revenue & profit</li>
+                        <li>✅ Dashboard with real-time metrics</li>
+                    </ul>
+                    <a href="login.html" class="btn-pricing free">Get Started</a>
+                </div>
+                <div class="pricing-card pro">
+                    <h3>Pro</h3>
+                    <div class="price">₦3,000 <span>/ month</span></div>
+                    <ul>
+                        <li>✅ Everything in Free</li>
+                        <li>✅ Automated invoice reminders</li>
+                        <li>✅ Advanced analytics & insights</li>
+                        <li>✅ Priority support</li>
+                        <li>✅ Early access to new features</li>
+                    </ul>
+                    <a href="login.html" class="btn-pricing pro-btn">Upgrade Now</a>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- ============================================
+    CTA SECTION
+    ============================================ -->
+    <div class="container">
+        <section class="cta-section">
+            <h2>Ready to Take Control of Your Finances?</h2>
+            <p>Join creators who are already using PayPoint to manage their brand deals, track expenses, and get paid faster.</p>
+            <a href="login.html" class="btn-primary" style="font-size: 20px; padding: 18px 56px;">Start Free →</a>
+        </section>
+    </div>
+
+    <!-- ============================================
+    FOOTER
+    ============================================ -->
+    <div class="container">
+        <footer class="footer">
+            <p>&copy; 2026 PayPoint · Finance OS for Creators</p>
+            <div class="footer-links">
+                <a href="login.html">Log In</a>
+                <a href="#">Privacy</a>
+                <a href="#">Terms</a>
+                <a href="#">Support</a>
+            </div>
+        </footer>
+    </div>
 
 </body>
 </html>
