@@ -3,7 +3,6 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" type="image/png" href="logo.png">
     <title>PayPoint · Login</title>
     <!-- Google tag (gtag.js) -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-HFJ9JM358E"></script>
@@ -81,6 +80,58 @@
             box-shadow: 0 2px 8px rgba(79, 124, 255, 0.25);
         }
         .tab-btn:hover:not(.active) { color: #000000; }
+
+        /* Social Login Section */
+        .social-section {
+            margin: 16px 0 20px 0;
+        }
+        .social-section p {
+            text-align: center;
+            color: #8A9AAB;
+            font-size: 13px;
+            margin-bottom: 12px;
+            position: relative;
+        }
+        .social-section p::before,
+        .social-section p::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            width: 30%;
+            height: 1px;
+            background: #E8EDF2;
+        }
+        .social-section p::before { left: 0; }
+        .social-section p::after { right: 0; }
+        .social-buttons {
+            display: flex;
+            gap: 12px;
+        }
+        .social-btn {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 12px 16px;
+            border-radius: 10px;
+            border: 1px solid #E8EDF2;
+            background: #FFFFFF;
+            font-weight: 500;
+            font-size: 14px;
+            color: #000000;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-family: 'Inter', sans-serif;
+            text-decoration: none;
+        }
+        .social-btn:hover {
+            background: #F8FAFC;
+            border-color: #4F7CFF;
+            transform: translateY(-1px);
+        }
+        .social-btn.google svg { width: 20px; height: 20px; }
+
         .form-group {
             margin-bottom: 18px;
             position: relative;
@@ -206,6 +257,10 @@
             margin-top: 6px;
             display: block;
         }
+        @media (max-width: 480px) {
+            .login-container { padding: 32px 20px; }
+            .social-buttons { flex-direction: column; }
+        }
     </style>
 </head>
 <body>
@@ -229,6 +284,17 @@
         <div class="tab-switch">
             <button class="tab-btn active" id="loginTab">Log In</button>
             <button class="tab-btn" id="signupTab">Sign Up</button>
+        </div>
+
+        <!-- Google Sign-In Button -->
+        <div class="social-section">
+            <p>or continue with</p>
+            <div class="social-buttons">
+                <button class="social-btn google" id="googleSignIn">
+                    <svg viewBox="0 0 48 48"><path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20c11.045,0,20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"/><path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"/><path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.202,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z"/><path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.571c0.001-0.001,0.002-0.001,0.003-0.002l6.19,5.238C36.971,39.205,44,34,44,24C44,22.659,43.862,21.35,43.611,20.083z"/></svg>
+                    Google
+                </button>
+            </div>
         </div>
 
         <!-- Login Form -->
@@ -281,13 +347,67 @@
 
     <script>
         // ============================================
-        // CONFIGURATION
+        // 1. SUPABASE CLIENT (for Google OAuth)
+        // ============================================
+        // We use the Supabase JS SDK directly from CDN
+        // The script below loads it dynamically
+
+        const supabaseUrl = 'https://mqggkwhdbwkaftmewdca.supabase.co';
+        const supabaseAnonKey = 'sb_publishable_ulAg_qpF5L8LbHc6ZzYnxQ_z4w3ExhV';
+
+        // Load Supabase SDK dynamically
+        async function loadSupabase() {
+            const { createClient } = await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm');
+            return createClient(supabaseUrl, supabaseAnonKey);
+        }
+
+        // Google Sign-In Handler
+        document.getElementById('googleSignIn')?.addEventListener('click', async () => {
+            try {
+                const supabase = await loadSupabase();
+                const redirectTo = window.location.origin + '/login.html';
+                const { error } = await supabase.auth.signInWithOAuth({
+                    provider: 'google',
+                    options: { redirectTo }
+                });
+                if (error) {
+                    console.error('Google OAuth error:', error);
+                    alert('Google sign-in failed. Please try again.');
+                }
+            } catch (err) {
+                console.error('Error:', err);
+                alert('Could not load Google sign-in. Please try again.');
+            }
+        });
+
+        // Handle OAuth redirect (when user comes back from Google)
+        async function handleOAuthRedirect() {
+            try {
+                const supabase = await loadSupabase();
+                const { data: { session }, error } = await supabase.auth.getSession();
+                if (error) {
+                    console.error('OAuth session error:', error);
+                    return;
+                }
+                if (session) {
+                    // Save exactly like the backend login does
+                    localStorage.setItem('paypoint_session', session.access_token);
+                    localStorage.setItem('paypoint_user', JSON.stringify(session.user));
+                    window.location.href = '/dashboard.html';
+                }
+            } catch (err) {
+                console.error('OAuth redirect error:', err);
+            }
+        }
+
+        // Run on page load
+        handleOAuthRedirect();
+
+        // ============================================
+        // 2. EXISTING EMAIL/PASSWORD LOGIC
         // ============================================
         const API_URL = 'https://paypoint-backend-9m63.onrender.com/api';
 
-        // ============================================
-        // DOM REFERENCES
-        // ============================================
         const loginTab = document.getElementById('loginTab');
         const signupTab = document.getElementById('signupTab');
         const loginForm = document.getElementById('loginForm');
@@ -303,19 +423,13 @@
         const signupError = document.getElementById('signupError');
         const signupSuccess = document.getElementById('signupSuccess');
         const demoLogin = document.getElementById('demoLogin');
-
-        // Email confirmation banner
         const confirmBanner = document.getElementById('confirmBanner');
         const confirmEmail = document.getElementById('confirmEmail');
 
-        // ============================================
-        // PASSWORD TOGGLE FUNCTIONALITY
-        // ============================================
         function setupPasswordToggle(inputId, toggleId) {
             const input = document.getElementById(inputId);
             const toggle = document.getElementById(toggleId);
             if (!input || !toggle) return;
-
             toggle.addEventListener('click', function(e) {
                 e.preventDefault();
                 const isPassword = input.getAttribute('type') === 'password';
@@ -323,13 +437,9 @@
                 toggle.textContent = isPassword ? '🙈' : '👁️';
             });
         }
-
         setupPasswordToggle('loginPassword', 'toggleLoginPassword');
         setupPasswordToggle('signupPassword', 'toggleSignupPassword');
 
-        // ============================================
-        // TAB SWITCHING
-        // ============================================
         loginTab.addEventListener('click', () => {
             loginTab.classList.add('active');
             signupTab.classList.remove('active');
@@ -352,14 +462,10 @@
             confirmBanner.classList.remove('show');
         });
 
-        // ============================================
-        // SIGNUP
-        // ============================================
         signupBtn.addEventListener('click', async () => {
             const name = signupName.value.trim();
             const email = signupEmail.value.trim();
             const password = signupPassword.value;
-
             signupError.style.display = 'none';
             signupSuccess.style.display = 'none';
             confirmBanner.classList.remove('show');
@@ -369,26 +475,21 @@
                 signupError.style.display = 'block';
                 return;
             }
-
             if (password.length < 6) {
                 signupError.textContent = 'Password must be at least 6 characters';
                 signupError.style.display = 'block';
                 return;
             }
-
             try {
                 const res = await fetch(`${API_URL}/auth/signup`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ name, email, password })
                 });
-
                 const data = await res.json();
-
                 if (data.success) {
                     confirmEmail.textContent = email;
                     confirmBanner.classList.add('show');
-
                     signupName.value = '';
                     signupEmail.value = '';
                     signupPassword.value = '';
@@ -403,13 +504,9 @@
             }
         });
 
-        // ============================================
-        // LOGIN
-        // ============================================
         loginBtn.addEventListener('click', async () => {
             const email = loginEmail.value.trim();
             const password = loginPassword.value;
-
             loginError.style.display = 'none';
             confirmBanner.classList.remove('show');
 
@@ -418,16 +515,13 @@
                 loginError.style.display = 'block';
                 return;
             }
-
             try {
                 const res = await fetch(`${API_URL}/auth/login`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ email, password })
                 });
-
                 const data = await res.json();
-
                 if (data.success && data.user) {
                     localStorage.setItem('paypoint_user', JSON.stringify(data.user));
                     if (data.session?.access_token) {
@@ -445,13 +539,9 @@
             }
         });
 
-        // ============================================
-        // DEMO LOGIN
-        // ============================================
         async function demoLoginHandler() {
             const DEMO_EMAIL = 'demo@paypoint.com';
             const DEMO_PASSWORD = 'DemoSecure2026!';
-
             try {
                 let res = await fetch(`${API_URL}/auth/login`, {
                     method: 'POST',
@@ -459,7 +549,6 @@
                     body: JSON.stringify({ email: DEMO_EMAIL, password: DEMO_PASSWORD })
                 });
                 let data = await res.json();
-
                 if (!data.success) {
                     const signupRes = await fetch(`${API_URL}/auth/signup`, {
                         method: 'POST',
@@ -478,7 +567,6 @@
                     });
                     data = await res.json();
                 }
-
                 if (data.success && data.user) {
                     localStorage.setItem('paypoint_user', JSON.stringify(data.user));
                     if (data.session?.access_token) {
@@ -496,9 +584,6 @@
 
         demoLogin.addEventListener('click', demoLoginHandler);
 
-        // ============================================
-        // ENTER KEY SUPPORT
-        // ============================================
         loginPassword.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') loginBtn.click();
         });
@@ -506,9 +591,6 @@
             if (e.key === 'Enter') signupBtn.click();
         });
 
-        // ============================================
-        // AUTO-REDIRECT IF ALREADY LOGGED IN
-        // ============================================
         const user = localStorage.getItem('paypoint_user');
         if (user) {
             try {
@@ -522,7 +604,7 @@
             }
         }
 
-        console.log('🔐 PayPoint Login page loaded');
+        console.log('🔐 PayPoint Login page loaded (with Google Sign-In)');
         console.log('📡 Connected to:', API_URL);
     </script>
 </body>
