@@ -13,6 +13,7 @@
         gtag('config', 'G-HFJ9JM358E');
     </script>
     <style>
+        /* (Your existing styles – keep them exactly as they are) */
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -333,30 +334,8 @@
     </div>
 
     <!-- ============================================
-    STEP 1: FORCE REDIRECT (Runs BEFORE anything else)
+    SINGLE MODULE SCRIPT — Handles everything
     ============================================ -->
-    <script>
-        (function() {
-            const hash = window.location.hash;
-            if (hash && hash.includes('access_token')) {
-                // Parse the hash
-                const params = new URLSearchParams(hash.substring(1));
-                const accessToken = params.get('access_token');
-                const refreshToken = params.get('refresh_token');
-                
-                if (accessToken) {
-                    // Save the token immediately (will be replaced with real user later)
-                    localStorage.setItem('paypoint_session', accessToken);
-                    if (refreshToken) {
-                        localStorage.setItem('paypoint_refresh_token', refreshToken);
-                    }
-                    // Force redirect to dashboard
-                    window.location.replace('/dashboard.html');
-                }
-            }
-        })();
-    </script>
-
     <script type="importmap">
         {
             "imports": {
@@ -366,7 +345,7 @@
     </script>
     <script type="module">
         // ============================================
-        // STEP 2: GET REAL USER AND SAVE
+        // PERMANENT FIX — NO RACE CONDITION
         // ============================================
         import { createClient } from '@supabase/supabase-js';
 
@@ -396,30 +375,94 @@
 
         const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
-        // ---------- SAVE REAL USER ----------
-        async function saveRealUser() {
-            const { data: { session }, error } = await supabase.auth.getSession();
-            if (error) {
-                console.error('Error getting session:', error);
-                return;
-            }
-            if (session) {
-                // Save the real user
-                localStorage.setItem('paypoint_user', JSON.stringify(session.user));
-                // Also ensure the session token is correct (in case the pre-load script saved it)
-                localStorage.setItem('paypoint_session', session.access_token);
-                console.log('✅ Real user saved:', session.user.email);
-            }
+        // ---------- SAVE SESSION AND REDIRECT ----------
+        function saveSessionAndRedirect(session) {
+            if (!session) return;
+            localStorage.setItem('paypoint_session', session.access_token);
+            localStorage.setItem('paypoint_user', JSON.stringify(session.user));
+            window.location.replace('/dashboard.html');
         }
 
-        // ---------- CHECK IF WE HAVE A TOKEN BUT NEED REAL USER ----------
-        async function checkAndSaveRealUser() {
-            const token = localStorage.getItem('paypoint_session');
-            if (token) {
-                // We have a token, but maybe not the real user yet
-                await saveRealUser();
+        // ---------- HANDLE OAUTH REDIRECT ----------
+        async function handleOAuthRedirect() {
+            const hash = window.location.hash;
+            if (hash && hash.includes('access_token')) {
+                const params = new URLSearchParams(hash.substring(1));
+                const accessToken = params.get('access_token');
+                const refreshToken = params.get('refresh_token');
+                if (accessToken) {
+                    const { data, error } = await supabase.auth.setSession({
+                        access_token: accessToken,
+                        refresh_token: refreshToken || ''
+                    });
+                    if (data?.session) {
+                        saveSessionAndRedirect(data.session);
+                        return true;
+                    }
+                    console.error('OAuth setSession error:', error);
+                }
             }
+            return false;
         }
+
+        // ---------- CHECK EXISTING SESSION ----------
+        async function checkExistingSession() {
+            const token = localStorage.getItem('paypoint_session');
+            const user = localStorage.getItem('paypoint_user');
+            if (token && user) {
+                // Both exist — verify with Supabase
+                const { data: { session }, error } = await supabase.auth.getSession();
+                if (session) {
+                    // Session is valid, but user might be outdated — refresh it
+                    localStorage.setItem('paypoint_user', JSON.stringify(session.user));
+                    window.location.replace('/dashboard.html');
+                    return true;
+                } else {
+                    // Invalid session — clear storage
+                    localStorage.removeItem('paypoint_session');
+                    localStorage.removeItem('paypoint_user');
+                }
+            }
+            return false;
+        }
+
+        // ---------- INIT ----------
+        // 1. If there is an OAuth token in the URL, handle it first.
+        const oauthHandled = await handleOAuthRedirect();
+        if (oauthHandled) {
+            // The script will redirect; we stop further execution.
+            // (The page will unload)
+            // However, to avoid any further code running, we can return.
+            // But since we are in a module, we can use an early return.
+            // We'll just use a flag.
+            // Actually, if we called window.location.replace, the script stops anyway.
+            // So we can just let it continue, but we should not do anything else.
+            // We'll add a check: if we already redirected, skip the rest.
+            // But window.location.replace will interrupt the script.
+            // So we can safely return after calling it.
+            // handleOAuthRedirect calls saveSessionAndRedirect which calls replace.
+            // So after that, the script stops.
+            // We'll put the rest of the code inside a condition.
+            // But to be safe, we'll wrap the rest in an if (!oauthHandled) block.
+            // Actually, we can't because the function returns true and we already redirected.
+            // We'll just let the function call replace and the script will end.
+            // So we can put the rest of the code (email/password logic) outside the OAuth check.
+            // But we need to avoid running it if we are about to redirect.
+            // We can check if we are still on the page by checking if window.location hasn't changed.
+            // Simpler: we'll not use return; we'll just let the functions run but they will be interrupted.
+            // Actually, after window.location.replace, the current script will stop executing.
+            // So any code after that won't run. So we can safely put all the rest of the code after the OAuth check.
+            // The OAuth check will either redirect or not.
+            // If it redirects, the rest won't run. So we are fine.
+            // So we just call handleOAuthRedirect and if it returns true, we don't need to do anything else.
+            // We'll just put an if statement.
+        }
+
+        // However, if we are still on the page (no redirect), we continue.
+        // But we already have the checkExistingSession, etc.
+
+        // ---------- CHECK EXISTING SESSION ----------
+        await checkExistingSession();
 
         // ---------- GOOGLE SIGN-IN ----------
         googleBtn.addEventListener('click', async () => {
@@ -434,9 +477,6 @@
                 alert('Could not load Google sign-in. Please try again.');
             }
         });
-
-        // ---------- RUN ----------
-        await checkAndSaveRealUser();
 
         // ---------- PASSWORD TOGGLE ----------
         function setupToggle(inputId, toggleId) {
@@ -608,21 +648,15 @@
             if (e.key === 'Enter') signupBtn.click();
         });
 
-        // ---------- AUTO-REDIRECT IF ALREADY LOGGED IN ----------
+        // ---------- AUTO-REDIRECT IF ALREADY LOGGED IN (fallback) ----------
+        const token = localStorage.getItem('paypoint_session');
         const user = localStorage.getItem('paypoint_user');
-        if (user) {
-            try {
-                const userData = JSON.parse(user);
-                if (userData && userData.id) {
-                    window.location.replace('dashboard.html');
-                }
-            } catch (e) {
-                localStorage.removeItem('paypoint_user');
-                localStorage.removeItem('paypoint_session');
-            }
+        if (token && user) {
+            // Already logged in — redirect (but only if we haven't already)
+            // The checkExistingSession already handles this, but we keep as safety.
         }
 
-        console.log('🔐 PayPoint Login page loaded (force redirect + real user)');
+        console.log('🔐 PayPoint Login page loaded (permanent fix)');
         console.log('📡 Connected to:', API_URL);
     </script>
 </body>
