@@ -341,7 +341,7 @@
         </div>
     </div>
 
-    <script>
+        <script>
         // ============================================
         // COMPLETE LOGIN SCRIPT (Google + Email)
         // ============================================
@@ -381,16 +381,44 @@
             return supabaseClient;
         }
 
-        // ---------- OAUTH REDIRECT HANDLING (USING onAuthStateChange) ----------
+        // ---------- HANDLE SESSION (SAVE AND REDIRECT) ----------
+        function handleSession(session) {
+            if (!session) return false;
+            localStorage.setItem('paypoint_session', session.access_token);
+            localStorage.setItem('paypoint_user', JSON.stringify(session.user));
+            window.location.href = '/dashboard.html';
+            return true;
+        }
+
+        // ---------- OAUTH REDIRECT HANDLING (EVENT LISTENER + FALLBACK) ----------
         async function setupOAuthListener() {
             const supabase = await loadSupabase();
+            // 1. Listen for auth state changes
             const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
                 if (event === 'SIGNED_IN' && session) {
-                    localStorage.setItem('paypoint_session', session.access_token);
-                    localStorage.setItem('paypoint_user', JSON.stringify(session.user));
-                    window.location.href = '/dashboard.html';
+                    handleSession(session);
                 }
             });
+
+            // 2. FALLBACK: Check URL hash directly
+            const hashParams = new URLSearchParams(window.location.hash.substring(1));
+            const accessToken = hashParams.get('access_token');
+            if (accessToken) {
+                // We have a token in the hash; try to get the session
+                const { data: { session }, error } = await supabase.auth.getSession();
+                if (session) {
+                    handleSession(session);
+                    return;
+                }
+                // If getSession fails, try to set session from token manually
+                const { data, error: setError } = await supabase.auth.setSession({
+                    access_token: accessToken,
+                    refresh_token: hashParams.get('refresh_token') || ''
+                });
+                if (data?.session) {
+                    handleSession(data.session);
+                }
+            }
             return subscription;
         }
 
@@ -601,8 +629,9 @@
 
         // ---------- INIT ----------
         (async function init() {
-            // Set up the OAuth listener first
-            const subscription = await setupOAuthListener();
+            // Set up the OAuth listener + fallback
+            await setupOAuthListener();
+
             // Also check if there's already a session (in case the page loads with a session)
             const supabase = await loadSupabase();
             const { data: { session } } = await supabase.auth.getSession();
