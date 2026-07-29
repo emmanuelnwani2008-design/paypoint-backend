@@ -618,7 +618,9 @@
     }, 1000);
 
     // ---------- RUN OAUTH REDIRECT ----------
+(async function init() {
     await handleOAuthRedirect();
+})();
 
     console.log('🔐 PayPoint Login page loaded (Google Sign-In + Email/Password)');
     console.log('📡 Connected to:', API_URL);
