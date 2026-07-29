@@ -5,40 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PayPoint · Login</title>
     <link rel="icon" type="image/png" href="logo.png">
-    
-    <!-- ============================================
-    ULTIMATE OAUTH REDIRECT (Runs BEFORE anything else)
-    ============================================ -->
-    <script>
-        (function() {
-            const hash = window.location.hash;
-            if (hash && hash.includes('access_token')) {
-                const params = new URLSearchParams(hash.substring(1));
-                const accessToken = params.get('access_token');
-                const refreshToken = params.get('refresh_token');
-                
-                if (accessToken) {
-                    // Build a minimal user object
-                    const user = {
-                        id: 'oauth-user',
-                        email: 'google-user@example.com',
-                        user_metadata: { name: 'Google User' }
-                    };
-                    
-                    localStorage.setItem('paypoint_session', accessToken);
-                    localStorage.setItem('paypoint_user', JSON.stringify(user));
-                    
-                    if (refreshToken) {
-                        localStorage.setItem('paypoint_refresh_token', refreshToken);
-                    }
-                    
-                    // Force redirect to dashboard
-                    window.location.replace('/dashboard.html');
-                }
-            }
-        })();
-    </script>
-    
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-HFJ9JM358E"></script>
     <script>
         window.dataLayer = window.dataLayer || [];
@@ -376,11 +342,10 @@
     </script>
     <script type="module">
         // ============================================
-        // MAIN SCRIPT — SESSION HANDLING + LOGIN LOGIC
+        // FINAL LOGIN SCRIPT — REAL USER ONLY
         // ============================================
         import { createClient } from '@supabase/supabase-js';
 
-        // ---------- CONFIG ----------
         const supabaseUrl = 'https://xpccuovjcsixpcmudyin.supabase.co';
         const supabaseAnonKey = 'sb_publishable_ulAg_qpF5L8LbHc6ZzYnxQ_z4w3ExhV';
         const API_URL = 'https://paypoint-backend-9m63.onrender.com/api';
@@ -405,70 +370,36 @@
         const confirmEmail = document.getElementById('confirmEmail');
         const googleBtn = document.getElementById('googleSignIn');
 
-        // ---------- SUPABASE CLIENT ----------
         const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
-        // ---------- SAVE SESSION AND REDIRECT ----------
-        function saveSessionAndRedirect(session) {
-            if (!session) return false;
-            console.log('✅ Session found, redirecting to dashboard...');
+        // ---------- SAVE REAL SESSION ----------
+        function saveRealSessionAndRedirect(session) {
+            if (!session) return;
             localStorage.setItem('paypoint_session', session.access_token);
             localStorage.setItem('paypoint_user', JSON.stringify(session.user));
             window.location.replace('/dashboard.html');
-            return true;
         }
 
-        // ---------- CHECK FOR SESSION (RUNS ON EVERY PAGE LOAD) ----------
-        async function checkForSession() {
-            console.log('🔍 Checking for existing session...');
-            
-            // 1. Check URL hash for access token (OAuth redirect)
+        // ---------- CHECK FOR OAUTH SESSION ----------
+        async function checkOAuth() {
+            // Check URL hash for access_token
             const hash = window.location.hash;
             if (hash && hash.includes('access_token')) {
-                console.log('🔑 Found access token in URL hash');
                 const params = new URLSearchParams(hash.substring(1));
                 const accessToken = params.get('access_token');
                 const refreshToken = params.get('refresh_token');
-                
                 if (accessToken) {
                     const { data, error } = await supabase.auth.setSession({
                         access_token: accessToken,
                         refresh_token: refreshToken || ''
                     });
                     if (data?.session) {
-                        saveSessionAndRedirect(data.session);
+                        // Real session with real user
+                        saveRealSessionAndRedirect(data.session);
                         return true;
                     }
-                    if (error) {
-                        console.error('Error setting session from hash:', error);
-                        const { data: { session } } = await supabase.auth.getSession();
-                        if (session) {
-                            saveSessionAndRedirect(session);
-                            return true;
-                        }
-                    }
                 }
             }
-
-            // 2. Check localStorage for existing session
-            const existingToken = localStorage.getItem('paypoint_session');
-            if (existingToken) {
-                console.log('🔑 Found session in localStorage');
-                const { data: { session } } = await supabase.auth.getSession();
-                if (session) {
-                    saveSessionAndRedirect(session);
-                    return true;
-                }
-            }
-
-            // 3. Try to get session from Supabase directly
-            const { data: { session } } = await supabase.auth.getSession();
-            if (session) {
-                saveSessionAndRedirect(session);
-                return true;
-            }
-
-            console.log('❌ No session found');
             return false;
         }
 
@@ -478,26 +409,16 @@
                 const redirectTo = window.location.origin + '/login.html';
                 const { error } = await supabase.auth.signInWithOAuth({
                     provider: 'google',
-                    options: { 
-                        redirectTo,
-                        queryParams: {
-                            access_type: 'offline',
-                            prompt: 'consent'
-                        }
-                    }
+                    options: { redirectTo }
                 });
-                if (error) {
-                    console.error('Google OAuth error:', error);
-                    alert('Google sign-in failed: ' + error.message);
-                }
+                if (error) alert('Google sign-in failed: ' + error.message);
             } catch (err) {
-                console.error('Error:', err);
                 alert('Could not load Google sign-in. Please try again.');
             }
         });
 
-        // ---------- RUN SESSION CHECK ON PAGE LOAD ----------
-        await checkForSession();
+        // ---------- RUN OAUTH CHECK ----------
+        await checkOAuth();
 
         // ---------- PASSWORD TOGGLE ----------
         function setupToggle(inputId, toggleId) {
@@ -683,7 +604,7 @@
             }
         }
 
-        console.log('🔐 PayPoint Login page loaded');
+        console.log('🔐 PayPoint Login page loaded (real user only)');
         console.log('📡 Connected to:', API_URL);
     </script>
 </body>
