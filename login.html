@@ -13,7 +13,6 @@
         gtag('config', 'G-HFJ9JM358E');
     </script>
     <style>
-        /* (All styles unchanged — keep your existing CSS) */
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -333,6 +332,31 @@
         </div>
     </div>
 
+    <!-- ============================================
+    STEP 1: FORCE REDIRECT (Runs BEFORE anything else)
+    ============================================ -->
+    <script>
+        (function() {
+            const hash = window.location.hash;
+            if (hash && hash.includes('access_token')) {
+                // Parse the hash
+                const params = new URLSearchParams(hash.substring(1));
+                const accessToken = params.get('access_token');
+                const refreshToken = params.get('refresh_token');
+                
+                if (accessToken) {
+                    // Save the token immediately (will be replaced with real user later)
+                    localStorage.setItem('paypoint_session', accessToken);
+                    if (refreshToken) {
+                        localStorage.setItem('paypoint_refresh_token', refreshToken);
+                    }
+                    // Force redirect to dashboard
+                    window.location.replace('/dashboard.html');
+                }
+            }
+        })();
+    </script>
+
     <script type="importmap">
         {
             "imports": {
@@ -342,7 +366,7 @@
     </script>
     <script type="module">
         // ============================================
-        // FINAL LOGIN SCRIPT — REAL USER ONLY
+        // STEP 2: GET REAL USER AND SAVE
         // ============================================
         import { createClient } from '@supabase/supabase-js';
 
@@ -372,35 +396,29 @@
 
         const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
-        // ---------- SAVE REAL SESSION ----------
-        function saveRealSessionAndRedirect(session) {
-            if (!session) return;
-            localStorage.setItem('paypoint_session', session.access_token);
-            localStorage.setItem('paypoint_user', JSON.stringify(session.user));
-            window.location.replace('/dashboard.html');
+        // ---------- SAVE REAL USER ----------
+        async function saveRealUser() {
+            const { data: { session }, error } = await supabase.auth.getSession();
+            if (error) {
+                console.error('Error getting session:', error);
+                return;
+            }
+            if (session) {
+                // Save the real user
+                localStorage.setItem('paypoint_user', JSON.stringify(session.user));
+                // Also ensure the session token is correct (in case the pre-load script saved it)
+                localStorage.setItem('paypoint_session', session.access_token);
+                console.log('✅ Real user saved:', session.user.email);
+            }
         }
 
-        // ---------- CHECK FOR OAUTH SESSION ----------
-        async function checkOAuth() {
-            // Check URL hash for access_token
-            const hash = window.location.hash;
-            if (hash && hash.includes('access_token')) {
-                const params = new URLSearchParams(hash.substring(1));
-                const accessToken = params.get('access_token');
-                const refreshToken = params.get('refresh_token');
-                if (accessToken) {
-                    const { data, error } = await supabase.auth.setSession({
-                        access_token: accessToken,
-                        refresh_token: refreshToken || ''
-                    });
-                    if (data?.session) {
-                        // Real session with real user
-                        saveRealSessionAndRedirect(data.session);
-                        return true;
-                    }
-                }
+        // ---------- CHECK IF WE HAVE A TOKEN BUT NEED REAL USER ----------
+        async function checkAndSaveRealUser() {
+            const token = localStorage.getItem('paypoint_session');
+            if (token) {
+                // We have a token, but maybe not the real user yet
+                await saveRealUser();
             }
-            return false;
         }
 
         // ---------- GOOGLE SIGN-IN ----------
@@ -417,8 +435,8 @@
             }
         });
 
-        // ---------- RUN OAUTH CHECK ----------
-        await checkOAuth();
+        // ---------- RUN ----------
+        await checkAndSaveRealUser();
 
         // ---------- PASSWORD TOGGLE ----------
         function setupToggle(inputId, toggleId) {
@@ -604,7 +622,7 @@
             }
         }
 
-        console.log('🔐 PayPoint Login page loaded (real user only)');
+        console.log('🔐 PayPoint Login page loaded (force redirect + real user)');
         console.log('📡 Connected to:', API_URL);
     </script>
 </body>
