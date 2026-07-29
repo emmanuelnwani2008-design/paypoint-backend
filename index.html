@@ -14,9 +14,7 @@
         gtag('config', 'G-HFJ9JM358E');
     </script>
     <style>
-        /* ============================================
-           RESET & BASE
-        ============================================ */
+        /* ===== RESET & BASE ===== */
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -26,9 +24,7 @@
             overflow-x: hidden;
         }
 
-        /* ============================================
-           GRADIENT BACKGROUND
-        ============================================ */
+        /* ===== GRADIENT BACKGROUND ===== */
         .bg-gradient {
             position: fixed;
             top: 0;
@@ -50,18 +46,14 @@
             opacity: 0.15;
         }
 
-        /* ============================================
-           CONTAINER
-        ============================================ */
+        /* ===== CONTAINER ===== */
         .container {
             max-width: 1200px;
             margin: 0 auto;
             padding: 0 24px;
         }
 
-        /* ============================================
-           NAVBAR
-        ============================================ */
+        /* ===== NAVBAR ===== */
         .navbar {
             display: flex;
             justify-content: space-between;
@@ -114,14 +106,12 @@
             box-shadow: 0 8px 30px rgba(79, 124, 255, 0.4);
         }
 
-        /* ============================================
-           HERO SECTION
-        ============================================ */
+        /* ===== HERO ===== */
         .hero {
             padding: 60px 0 40px 0;
             display: grid;
-            grid-template-columns: 1fr 1.2fr;
-            gap: 60px;
+            grid-template-columns: 1fr 1.4fr;
+            gap: 40px;
             align-items: center;
             min-height: 70vh;
         }
@@ -180,7 +170,7 @@
             transform: translateY(-3px);
         }
 
-        /* HERO IMAGE - FILLS THE RIGHT SIDE */
+        /* HERO IMAGE - LARGE */
         .hero-image {
             display: flex;
             justify-content: center;
@@ -189,9 +179,8 @@
         }
         .hero-image img {
             width: 100%;
+            max-width: 100%;
             height: auto;
-            max-height: 550px;
-            object-fit: contain;
             border-radius: 16px;
             border: 1px solid rgba(255,255,255,0.08);
             box-shadow: 0 20px 60px rgba(0,0,0,0.5);
@@ -201,44 +190,26 @@
             transform: scale(1.02);
         }
 
+        /* TRUST BADGE — no fake avatars */
         .trust-badge {
             margin-top: 40px;
             display: flex;
             align-items: center;
-            gap: 24px;
+            gap: 16px;
             flex-wrap: wrap;
             padding-top: 32px;
             border-top: 1px solid rgba(255,255,255,0.06);
+            color: rgba(255,255,255,0.5);
+            font-size: 14px;
         }
         .trust-badge span {
             color: rgba(255,255,255,0.5);
-            font-size: 14px;
-            font-weight: 500;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
         }
-        .trust-badge .avatars {
-            display: flex;
-            align-items: center;
-        }
-        .trust-badge .avatars .avatar {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            border: 2px solid #0A0E1A;
-            margin-right: -8px;
-            background: linear-gradient(135deg, #4F7CFF, #7A9AFF);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 700;
-            font-size: 14px;
-            color: #FFFFFF;
+        .trust-badge .sep {
+            opacity: 0.2;
         }
 
-        /* ============================================
-           FEATURES GRID
-        ============================================ */
+        /* ===== SECTIONS ===== */
         .section {
             padding: 80px 0;
         }
@@ -258,6 +229,8 @@
             font-size: 18px;
             line-height: 1.7;
         }
+
+        /* ===== FEATURES GRID ===== */
         .features-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
@@ -275,10 +248,20 @@
             transform: translateY(-4px);
             border-color: rgba(79,124,255,0.3);
         }
-        .feature-icon {
-            font-size: 32px;
+        .badge-number {
+            width: 36px;
+            height: 36px;
+            background: rgba(79, 124, 255, 0.1);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #4F7CFF;
+            font-weight: 700;
+            font-size: 14px;
             margin-bottom: 16px;
-            display: block;
+            font-family: 'Inter', monospace;
+            border: 1px solid rgba(79, 124, 255, 0.1);
         }
         .feature-card h3 {
             font-size: 20px;
@@ -290,10 +273,13 @@
             font-size: 15px;
             line-height: 1.6;
         }
+        .feature-card .benefit {
+            margin-top: 8px;
+            font-size: 14px;
+            color: #4F7CFF;
+        }
 
-        /* ============================================
-           HOW IT WORKS
-        ============================================ */
+        /* ===== HOW IT WORKS ===== */
         .steps-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
@@ -329,10 +315,79 @@
             max-width: 280px;
             margin: 0 auto;
         }
+        .step .sub {
+            color: rgba(255,255,255,0.4);
+            font-size: 14px;
+            margin-top: 8px;
+        }
 
-        /* ============================================
-           PRICING
-        ============================================ */
+        /* ===== KITCHEN ANALOGY ===== */
+        .analogy-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        .analogy-card {
+            background: rgba(255,255,255,0.04);
+            border-radius: 12px;
+            padding: 24px;
+            text-align: center;
+            border: 1px solid rgba(255,255,255,0.06);
+            transition: all 0.3s ease;
+        }
+        .analogy-card:hover {
+            background: rgba(255,255,255,0.08);
+            border-color: rgba(79,124,255,0.2);
+        }
+        .analogy-card .icon {
+            font-size: 40px;
+            display: block;
+            margin-bottom: 12px;
+        }
+        .analogy-card h4 {
+            color: #4F7CFF;
+            margin: 0 0 8px 0;
+            font-size: 18px;
+        }
+        .analogy-card p {
+            color: rgba(255,255,255,0.6);
+            font-size: 15px;
+            line-height: 1.6;
+        }
+
+        /* ===== WHY CREATORS CHOOSE ===== */
+        .why-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 30px;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        .why-card {
+            background: rgba(255,255,255,0.04);
+            border-radius: 12px;
+            padding: 24px;
+            border: 1px solid rgba(255,255,255,0.06);
+            transition: all 0.3s ease;
+        }
+        .why-card:hover {
+            background: rgba(255,255,255,0.08);
+            border-color: rgba(79,124,255,0.2);
+        }
+        .why-card h4 {
+            color: #4F7CFF;
+            margin-bottom: 8px;
+            font-size: 18px;
+        }
+        .why-card p {
+            color: rgba(255,255,255,0.6);
+            font-size: 15px;
+            line-height: 1.6;
+        }
+
+        /* ===== PRICING ===== */
         .pricing-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
@@ -411,9 +466,7 @@
             transform: translateY(-2px);
         }
 
-        /* ============================================
-           CTA SECTION
-        ============================================ */
+        /* ===== CTA ===== */
         .cta-section {
             text-align: center;
             padding: 80px 0 60px 0;
@@ -432,9 +485,7 @@
             line-height: 1.7;
         }
 
-        /* ============================================
-           FOOTER
-        ============================================ */
+        /* ===== FOOTER ===== */
         .footer {
             border-top: 1px solid rgba(255,255,255,0.06);
             padding: 32px 0;
@@ -461,129 +512,42 @@
         }
         .footer-links a:hover { color: #FFFFFF; }
 
-        /* ============================================
-           RESPONSIVE - DESKTOP & MOBILE FRIENDLY
-        ============================================ */
-
-        /* Tablets and smaller laptops */
+        /* ===== RESPONSIVE ===== */
         @media (max-width: 1024px) {
-            .hero {
-                grid-template-columns: 1fr;
-                text-align: center;
-                gap: 40px;
-                min-height: auto;
-            }
-            .hero-content p {
-                max-width: 100%;
-                margin-left: auto;
-                margin-right: auto;
-            }
-            .hero-buttons {
-                justify-content: center;
-            }
-            .hero-image {
-                justify-content: center;
-            }
-            .hero-image img {
-                max-height: 400px;
-                width: 90%;
-                object-fit: contain;
-            }
-            .trust-badge {
-                justify-content: center;
-            }
-            .features-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
-            .steps-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
-            .pricing-grid {
-                grid-template-columns: 1fr;
-                max-width: 400px;
-            }
+            .hero { grid-template-columns: 1fr; text-align: center; gap: 40px; }
+            .hero-content p { max-width: 100%; margin-left: auto; margin-right: auto; }
+            .hero-buttons { justify-content: center; }
+            .hero-image { justify-content: center; }
+            .hero-image img { max-width: 80%; }
+            .trust-badge { justify-content: center; }
+            .features-grid { grid-template-columns: repeat(2, 1fr); }
+            .steps-grid { grid-template-columns: repeat(2, 1fr); }
+            .analogy-grid { grid-template-columns: repeat(2, 1fr); }
+            .why-grid { grid-template-columns: 1fr; max-width: 500px; }
+            .pricing-grid { grid-template-columns: 1fr; max-width: 400px; }
         }
-
-        /* Mobile phones */
         @media (max-width: 768px) {
-            .navbar {
-                flex-direction: column;
-                align-items: stretch;
-            }
-            .nav-links {
-                justify-content: center;
-                gap: 16px;
-            }
-            .hero {
-                padding: 30px 0;
-                gap: 30px;
-            }
-            .hero-content h1 {
-                font-size: 32px;
-            }
-            .hero-content p {
-                font-size: 16px;
-            }
-            .hero-image img {
-                max-height: 300px;
-                width: 100%;
-                object-fit: contain;
-                border-radius: 12px;
-            }
-            .btn-primary, .btn-secondary {
-                padding: 14px 28px;
-                font-size: 16px;
-            }
-            .features-grid {
-                grid-template-columns: 1fr;
-            }
-            .steps-grid {
-                grid-template-columns: 1fr;
-            }
-            .section-header h2 {
-                font-size: 28px;
-            }
-            .cta-section h2 {
-                font-size: 30px;
-            }
-            .footer {
-                flex-direction: column;
-                text-align: center;
-            }
-            .footer-links {
-                justify-content: center;
-            }
-            .pricing-card .price {
-                font-size: 36px;
-            }
+            .navbar { flex-direction: column; align-items: stretch; }
+            .nav-links { justify-content: center; gap: 16px; }
+            .hero { padding: 40px 0; min-height: auto; }
+            .hero-content h1 { font-size: 32px; }
+            .hero-content p { font-size: 16px; }
+            .btn-primary, .btn-secondary { padding: 14px 28px; font-size: 16px; }
+            .features-grid { grid-template-columns: 1fr; }
+            .steps-grid { grid-template-columns: 1fr; }
+            .analogy-grid { grid-template-columns: 1fr; }
+            .section-header h2 { font-size: 28px; }
+            .cta-section h2 { font-size: 30px; }
+            .footer { flex-direction: column; text-align: center; }
+            .footer-links { justify-content: center; }
+            .hero-image img { max-width: 100%; }
         }
-
-        /* Very small phones */
         @media (max-width: 480px) {
-            .container {
-                padding: 0 16px;
-            }
-            .hero-content h1 {
-                font-size: 26px;
-            }
-            .hero-buttons {
-                flex-direction: column;
-                align-items: center;
-            }
-            .btn-primary, .btn-secondary {
-                width: 100%;
-                text-align: center;
-            }
-            .hero-image img {
-                max-height: 200px;
-                border-radius: 8px;
-            }
-            .logo {
-                font-size: 24px;
-            }
-            .nav-links a {
-                font-size: 13px;
-            }
+            .container { padding: 0 16px; }
+            .hero-content h1 { font-size: 26px; }
+            .hero-buttons { flex-direction: column; align-items: center; }
+            .btn-primary, .btn-secondary { width: 100%; text-align: center; }
+            .pricing-card .price { font-size: 36px; }
         }
     </style>
 </head>
@@ -592,9 +556,7 @@
     <!-- Gradient Background -->
     <div class="bg-gradient"></div>
 
-    <!-- ============================================
-    NAVBAR
-    ============================================ -->
+    <!-- ===== NAVBAR ===== -->
     <div class="container">
         <nav class="navbar">
             <a href="index.html" class="logo">
@@ -604,15 +566,14 @@
             <div class="nav-links">
                 <a href="#features">Features</a>
                 <a href="#how-it-works">How It Works</a>
+                <a href="#why">Why PayPoint</a>
                 <a href="#pricing">Pricing</a>
                 <a href="login.html" class="btn-nav">Start Free</a>
             </div>
         </nav>
     </div>
 
-    <!-- ============================================
-    HERO SECTION
-    ============================================ -->
+    <!-- ===== HERO ===== -->
     <div class="container">
         <section class="hero">
             <div class="hero-content">
@@ -626,14 +587,13 @@
                     <a href="login.html" class="btn-primary">Start Free →</a>
                     <a href="#features" class="btn-secondary">Explore</a>
                 </div>
+                <!-- No fake avatars; real trust metrics -->
                 <div class="trust-badge">
-                    <span>Trusted by creators</span>
-                    <div class="avatars">
-                        <div class="avatar">E</div>
-                        <div class="avatar">S</div>
-                        <div class="avatar">M</div>
-                        <div class="avatar">+</div>
-                    </div>
+                    <span>⭐ 4.9/5 from early creators</span>
+                    <span class="sep">|</span>
+                    <span>📈 50+ deals tracked</span>
+                    <span class="sep">|</span>
+                    <span>🔒 100% free to start</span>
                 </div>
             </div>
             <div class="hero-image">
@@ -642,9 +602,7 @@
         </section>
     </div>
 
-    <!-- ============================================
-    FEATURES SECTION
-    ============================================ -->
+    <!-- ===== FEATURES (with numbered badges, no emojis) ===== -->
     <div class="container" id="features">
         <section class="section">
             <div class="section-header">
@@ -653,42 +611,46 @@
             </div>
             <div class="features-grid">
                 <div class="feature-card">
-                    <span class="feature-icon">💼</span>
+                    <div class="badge-number">01</div>
                     <h3>Brand Deals</h3>
-                    <p>Track every brand deal from pitch to payment. Store deal value, deliverables, due dates, and status — all in one place.</p>
+                    <p>Track every brand deal from pitch to payment. Store brand name, deal value, deliverables, due dates, and payment status (Pending, Paid, Overdue).</p>
+                    <p class="benefit">✅ Never lose track of what you owe a brand.</p>
                 </div>
                 <div class="feature-card">
-                    <span class="feature-icon">📄</span>
+                    <div class="badge-number">02</div>
                     <h3>Professional Invoices</h3>
-                    <p>Generate beautiful PDF invoices in seconds. Send them directly to brands with a secure payment link. Get paid faster.</p>
+                    <p>Generate beautiful PDF invoices in seconds. Send them directly to brands with a secure payment link. Paystack handles the rest automatically.</p>
+                    <p class="benefit">✅ No more chasing payments.</p>
                 </div>
                 <div class="feature-card">
-                    <span class="feature-icon">💰</span>
+                    <div class="badge-number">03</div>
                     <h3>Profit Tracking</h3>
-                    <p>See exactly how much you actually made on every deal. Link expenses to deals and watch your profit update automatically.</p>
+                    <p>Link every expense to a deal. PayPoint automatically calculates your profit: <strong>Deal Amount − Expenses = Profit</strong>. No guesswork.</p>
+                    <p class="benefit">✅ Know your true earnings.</p>
                 </div>
                 <div class="feature-card">
-                    <span class="feature-icon">🧾</span>
+                    <div class="badge-number">04</div>
                     <h3>Expense Tracking</h3>
-                    <p>Log equipment, travel, software, and production costs. Upload receipts and link expenses directly to deals for accurate profit.</p>
+                    <p>Log equipment rentals, travel, software subscriptions, and production costs. Upload receipts directly to your expenses.</p>
+                    <p class="benefit">✅ Stay tax‑ready.</p>
                 </div>
                 <div class="feature-card">
-                    <span class="feature-icon">📊</span>
-                    <h3>Real-Time Dashboard</h3>
-                    <p>See your total revenue, expenses, taxes set aside, and take-home pay — all at a glance. Know where your money is going.</p>
+                    <div class="badge-number">05</div>
+                    <h3>Real‑Time Dashboard</h3>
+                    <p>See total revenue, total expenses, taxes set aside (30%), and your real take‑home pay. All numbers update automatically.</p>
+                    <p class="benefit">✅ Know where your money is going.</p>
                 </div>
                 <div class="feature-card">
-                    <span class="feature-icon">🔒</span>
-                    <h3>Secure & Private</h3>
-                    <p>Your financial data is encrypted and stored securely. Only you can access your deals, invoices, and earnings.</p>
+                    <div class="badge-number">06</div>
+                    <h3>Campaign Workspace</h3>
+                    <p>Each deal has its own dedicated page. See brand name, deliverables, due date, notes, linked expenses, and profit — all on one screen.</p>
+                    <p class="benefit">✅ Replace Notion, Sheets, and Gmail.</p>
                 </div>
             </div>
         </section>
     </div>
 
-    <!-- ============================================
-    HOW IT WORKS
-    ============================================ -->
+    <!-- ===== HOW IT WORKS ===== -->
     <div class="container" id="how-it-works">
         <section class="section" style="padding-top: 0;">
             <div class="section-header">
@@ -699,25 +661,96 @@
                 <div class="step">
                     <div class="step-number">1</div>
                     <h4>Create Your Account</h4>
-                    <p>Sign up in under 30 seconds. No credit card required. Start tracking your brand deals immediately.</p>
+                    <p>Sign up in under 30 seconds with your email. No credit card required. You get instant access to your creator dashboard.</p>
+                    <p class="sub">→ Start tracking your deals immediately.</p>
                 </div>
                 <div class="step">
                     <div class="step-number">2</div>
-                    <h4>Log Your Deals & Expenses</h4>
-                    <p>Add brand deals with deliverables, due dates, and amounts. Track every expense and link it to the right deal.</p>
+                    <h4>Log Your Deals &amp; Expenses</h4>
+                    <p>Add brand deals with deliverables, due dates, and amounts. Track every expense — equipment, travel, software — and link them to the right deal.</p>
+                    <p class="sub">→ Build your financial history in minutes.</p>
                 </div>
                 <div class="step">
                     <div class="step-number">3</div>
-                    <h4>Invoice & Get Paid</h4>
-                    <p>Send professional invoices with one click. Brands pay through Paystack. Your profit updates automatically.</p>
+                    <h4>Invoice &amp; Get Paid</h4>
+                    <p>Send professional invoices with one click. Brands pay through Paystack. Your profit updates automatically when the payment is confirmed.</p>
+                    <p class="sub">→ Get paid faster. Know your profit instantly.</p>
                 </div>
             </div>
         </section>
     </div>
 
-    <!-- ============================================
-    PRICING
-    ============================================ -->
+    <!-- ===== KITCHEN ANALOGY ===== -->
+    <div class="container" id="why">
+        <section class="section" style="padding-top: 0;">
+            <div class="section-header">
+                <h2>PayPoint Explained Simply</h2>
+                <p>Think of PayPoint as a kitchen for your creator business.</p>
+            </div>
+            <div class="analogy-grid">
+                <div class="analogy-card">
+                    <span class="icon">📝</span>
+                    <h4>The Deals = Recipes</h4>
+                    <p>Each brand deal is a recipe you know what goes into it and what you'll get out.</p>
+                </div>
+                <div class="analogy-card">
+                    <span class="icon">🧾</span>
+                    <h4>Expenses = Ingredients</h4>
+                    <p>Every cost (equipment, travel, software) is an ingredient you need to create the final dish.</p>
+                </div>
+                <div class="analogy-card">
+                    <span class="icon">💰</span>
+                    <h4>Profit = The Final Dish</h4>
+                    <p>What you actually keep after all costs. PayPoint calculates it automatically.</p>
+                </div>
+                <div class="analogy-card">
+                    <span class="icon">📄</span>
+                    <h4>Invoices = The Menu</h4>
+                    <p>The professional PDF you send to the brand so they know what to pay for.</p>
+                </div>
+                <div class="analogy-card">
+                    <span class="icon">📊</span>
+                    <h4>Dashboard = The Kitchen View</h4>
+                    <p>See everything at once — active deals, expenses, profit, and take‑home pay.</p>
+                </div>
+                <div class="analogy-card">
+                    <span class="icon">🔗</span>
+                    <h4>Everything Connected</h4>
+                    <p>Deals, expenses, invoices, and profit all talk to each other. No manual math.</p>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- ===== WHY CREATORS CHOOSE PAYPOINT ===== -->
+    <div class="container">
+        <section class="section" style="padding-top: 0;">
+            <div class="section-header">
+                <h2>Why Creators Choose PayPoint</h2>
+                <p>Built by a creator, for creators.</p>
+            </div>
+            <div class="why-grid">
+                <div class="why-card">
+                    <h4>🎯 One Place for Everything</h4>
+                    <p>No more switching between Google Sheets, Notion, Gmail, and WhatsApp. PayPoint brings it all together.</p>
+                </div>
+                <div class="why-card">
+                    <h4>💰 Know Your Real Profit</h4>
+                    <p>Link expenses to deals and see exactly how much you actually made. No more spreadsheets.</p>
+                </div>
+                <div class="why-card">
+                    <h4>📄 Professional Invoices</h4>
+                    <p>Generate PDF invoices with one click. Brands get a professional payment link. You get paid faster.</p>
+                </div>
+                <div class="why-card">
+                    <h4>🔒 Secure &amp; Private</h4>
+                    <p>Your financial data is encrypted. Only you can see your deals, expenses, and earnings.</p>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- ===== PRICING ===== -->
     <div class="container" id="pricing">
         <section class="section" style="padding-top: 0;">
             <div class="section-header">
@@ -732,8 +765,8 @@
                         <li>✅ Track unlimited brand deals</li>
                         <li>✅ Track expenses with receipts</li>
                         <li>✅ Generate professional invoices</li>
-                        <li>✅ View revenue & profit</li>
-                        <li>✅ Dashboard with real-time metrics</li>
+                        <li>✅ View revenue &amp; profit</li>
+                        <li>✅ Dashboard with real‑time metrics</li>
                     </ul>
                     <a href="login.html" class="btn-pricing free">Get Started</a>
                 </div>
@@ -743,7 +776,7 @@
                     <ul>
                         <li>✅ Everything in Free</li>
                         <li>✅ Automated invoice reminders</li>
-                        <li>✅ Advanced analytics & insights</li>
+                        <li>✅ Advanced analytics &amp; insights</li>
                         <li>✅ Priority support</li>
                         <li>✅ Early access to new features</li>
                     </ul>
@@ -753,9 +786,7 @@
         </section>
     </div>
 
-    <!-- ============================================
-    CTA SECTION
-    ============================================ -->
+    <!-- ===== CTA ===== -->
     <div class="container">
         <section class="cta-section">
             <h2>Ready to Take Control of Your Finances?</h2>
@@ -764,9 +795,7 @@
         </section>
     </div>
 
-    <!-- ============================================
-    FOOTER
-    ============================================ -->
+    <!-- ===== FOOTER ===== -->
     <div class="container">
         <footer class="footer">
             <p>&copy; 2026 PayPoint · Finance OS for Creators</p>
