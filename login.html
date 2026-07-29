@@ -13,7 +13,7 @@
         gtag('config', 'G-HFJ9JM358E');
     </script>
     <style>
-        /* (Your existing styles – keep them unchanged) */
+        /* (All styles unchanged — keep your existing CSS) */
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -291,7 +291,6 @@
             </div>
         </div>
 
-        <!-- Login Form -->
         <div id="loginForm">
             <div class="form-group">
                 <label>Email Address</label>
@@ -308,7 +307,6 @@
             <div class="error-msg" id="loginError">Invalid email or password</div>
         </div>
 
-        <!-- Signup Form -->
         <div id="signupForm" class="form-hidden">
             <div class="form-group">
                 <label>Full Name</label>
@@ -344,7 +342,7 @@
     </script>
     <script type="module">
         // ============================================
-        // BULLETPROOF OAUTH REDIRECT + EMAIL LOGIN
+        // ULTIMATE LOGIN SCRIPT
         // ============================================
         import { createClient } from '@supabase/supabase-js';
 
@@ -379,20 +377,25 @@
         // ---------- SAVE SESSION AND REDIRECT ----------
         function saveSessionAndRedirect(session) {
             if (!session) return false;
+            console.log('✅ Session found, redirecting to dashboard...');
             localStorage.setItem('paypoint_session', session.access_token);
             localStorage.setItem('paypoint_user', JSON.stringify(session.user));
             window.location.href = '/dashboard.html';
             return true;
         }
 
-        // ---------- CHECK OAUTH SESSION (IMMEDIATE) ----------
-        async function checkOAuthSession() {
-            // 1. Check URL fragment for access_token
+        // ---------- CHECK FOR SESSION (RUNS ON EVERY PAGE LOAD) ----------
+        async function checkForSession() {
+            console.log('🔍 Checking for existing session...');
+            
+            // 1. Check URL hash for access token
             const hash = window.location.hash;
             if (hash && hash.includes('access_token')) {
+                console.log('🔑 Found access token in URL hash');
                 const params = new URLSearchParams(hash.substring(1));
                 const accessToken = params.get('access_token');
                 const refreshToken = params.get('refresh_token');
+                
                 if (accessToken) {
                     const { data, error } = await supabase.auth.setSession({
                         access_token: accessToken,
@@ -402,28 +405,31 @@
                         saveSessionAndRedirect(data.session);
                         return true;
                     }
+                    if (error) console.error('Error setting session:', error);
                 }
             }
 
-            // 2. Check existing session
+            // 2. Check localStorage for existing session
+            const existingToken = localStorage.getItem('paypoint_session');
+            if (existingToken) {
+                console.log('🔑 Found session in localStorage');
+                const { data: { session }, error } = await supabase.auth.getSession();
+                if (session) {
+                    saveSessionAndRedirect(session);
+                    return true;
+                }
+            }
+
+            // 3. Try to get session from Supabase directly
             const { data: { session } } = await supabase.auth.getSession();
             if (session) {
                 saveSessionAndRedirect(session);
                 return true;
             }
 
-            // 3. Listen for auth state changes (fallback)
-            supabase.auth.onAuthStateChange((event, session) => {
-                if (event === 'SIGNED_IN' && session) {
-                    saveSessionAndRedirect(session);
-                }
-            });
-
+            console.log('❌ No session found');
             return false;
         }
-
-        // ---------- RUN OAUTH CHECK ----------
-        await checkOAuthSession();
 
         // ---------- GOOGLE SIGN-IN ----------
         googleBtn.addEventListener('click', async () => {
@@ -431,7 +437,14 @@
                 const redirectTo = window.location.origin + '/login.html';
                 const { error } = await supabase.auth.signInWithOAuth({
                     provider: 'google',
-                    options: { redirectTo }
+                    options: { 
+                        redirectTo,
+                        // Force the OAuth flow to store the session
+                        queryParams: {
+                            access_type: 'offline',
+                            prompt: 'consent'
+                        }
+                    }
                 });
                 if (error) {
                     console.error('Google OAuth error:', error);
@@ -442,6 +455,9 @@
                 alert('Could not load Google sign-in. Please try again.');
             }
         });
+
+        // ---------- RUN SESSION CHECK ON PAGE LOAD ----------
+        await checkForSession();
 
         // ---------- PASSWORD TOGGLE ----------
         function setupToggle(inputId, toggleId) {
@@ -627,7 +643,7 @@
             }
         }
 
-        console.log('🔐 PayPoint Login page loaded (with importmap)');
+        console.log('🔐 PayPoint Login page loaded');
         console.log('📡 Connected to:', API_URL);
     </script>
 </body>
