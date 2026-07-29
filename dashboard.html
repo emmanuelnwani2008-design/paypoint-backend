@@ -660,69 +660,91 @@
         // CHECK AUTHENTICATION
         // ============================================
         function checkAuth() {
-            const user = localStorage.getItem('paypoint_user');
-            if (!user) {
-                window.location.replace('login.html');
-                return false;
-            }
+    const token = localStorage.getItem('paypoint_session');
+    const user = localStorage.getItem('paypoint_user');
+    
+    // If no token or user, redirect to login
+    if (!token || !user) {
+        localStorage.removeItem('paypoint_user');
+        localStorage.removeItem('paypoint_session');
+        window.location.replace('login.html');
+        return false;
+    }
 
-            try {
-                const userData = JSON.parse(user);
-                if (!userData.id) {
-                    throw new Error('Invalid user - missing id');
-                }
-                const name = userData?.user_metadata?.name || userData?.name || 'Creator';
-                const email = userData?.email || 'creator@paypoint.com';
-                const avatarUrl = userData?.user_metadata?.avatar_url;
-                
-                document.getElementById('sidebarName').textContent = name;
-                document.getElementById('sidebarEmail').textContent = email;
-                
-                // Update sidebar avatar with custom image
-                const sidebarAvatarImg = document.getElementById('sidebarAvatarImg');
-                if (avatarUrl) {
-                    sidebarAvatarImg.src = avatarUrl;
-                } else {
-                    sidebarAvatarImg.src = 'user.png';
-                }
-                
-                return true;
-            } catch (e) {
-                console.error('checkAuth error:', e);
-                localStorage.removeItem('paypoint_user');
-                localStorage.removeItem('paypoint_session');
-                window.location.replace('login.html');
-                return false;
+    try {
+        const userData = JSON.parse(user);
+        
+        // If user has an id, use it directly
+        if (userData.id) {
+            // Update sidebar with user data
+            const name = userData?.user_metadata?.name || userData?.name || 'Creator';
+            const email = userData?.email || 'creator@paypoint.com';
+            const avatarUrl = userData?.user_metadata?.avatar_url;
+            
+            document.getElementById('sidebarName').textContent = name;
+            document.getElementById('sidebarEmail').textContent = email;
+            
+            const sidebarAvatarImg = document.getElementById('sidebarAvatarImg');
+            if (avatarUrl) {
+                sidebarAvatarImg.src = avatarUrl;
+            } else {
+                sidebarAvatarImg.src = 'user.png';
             }
+            
+            return true;
         }
+        
+        // If no id, try to fetch the user from Supabase using the token
+        // This handles OAuth users where the user object might be incomplete
+        console.log('User object missing id, fetching from Supabase...');
+        // We'll handle this in fetchUserWithSubscription
+        // For now, allow the page to load and let fetchUserWithSubscription fix it
+        return true;
+        
+    } catch (e) {
+        console.error('checkAuth error:', e);
+        localStorage.removeItem('paypoint_user');
+        localStorage.removeItem('paypoint_session');
+        window.location.replace('login.html');
+        return false;
+    }
+}
 
         // ============================================
         // FETCH SUBSCRIPTION
         // ============================================
         async function fetchUserWithSubscription() {
-            const token = localStorage.getItem('paypoint_session');
-            if (!token) return;
-            try {
-                const res = await fetch(`${API_URL}/auth/user`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-                const data = await res.json();
-                if (data.success && data.user) {
-                    const tier = data.user.user_metadata?.subscription_tier || 'free';
-                    localStorage.setItem('user_subscription_tier', tier);
-                    localStorage.setItem('paypoint_user', JSON.stringify(data.user));
-                    
-                    // Update avatar after fetching fresh user data
-                    const avatarUrl = data.user.user_metadata?.avatar_url;
-                    const sidebarAvatarImg = document.getElementById('sidebarAvatarImg');
-                    if (avatarUrl) {
-                        sidebarAvatarImg.src = avatarUrl;
-                    }
-                }
-            } catch (err) {
-                console.error('Failed to fetch subscription:', err);
+    const token = localStorage.getItem('paypoint_session');
+    if (!token) return;
+    try {
+        const res = await fetch(`${API_URL}/auth/user`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+        if (data.success && data.user) {
+            const tier = data.user.user_metadata?.subscription_tier || 'free';
+            localStorage.setItem('user_subscription_tier', tier);
+            localStorage.setItem('paypoint_user', JSON.stringify(data.user));
+            
+            // Update avatar and sidebar
+            const avatarUrl = data.user.user_metadata?.avatar_url;
+            const sidebarAvatarImg = document.getElementById('sidebarAvatarImg');
+            if (avatarUrl) {
+                sidebarAvatarImg.src = avatarUrl;
             }
+            
+            const name = data.user?.user_metadata?.name || data.user?.name || 'Creator';
+            const email = data.user?.email || 'creator@paypoint.com';
+            document.getElementById('sidebarName').textContent = name;
+            document.getElementById('sidebarEmail').textContent = email;
+        } else {
+            // If the user fetch fails, the token might be invalid
+            console.warn('Could not fetch user, token may be expired');
         }
+    } catch (err) {
+        console.error('Failed to fetch subscription:', err);
+    }
+}
 
         // ============================================
         // LOAD DEALS
