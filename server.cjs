@@ -563,7 +563,7 @@ app.put('/api/auth/update', authenticate, async (req, res) => {
 app.get('/api/deals', authenticate, async (req, res) => {
     try {
         const userId = req.userId;
-        const { data, error } = await supabase
+        const { data, error } = await supabaseAdmin
             .from('deals')
             .select('*')
             .eq('user_id', userId)
@@ -600,7 +600,8 @@ app.post('/api/deals', authenticate, async (req, res) => {
         if (due_date && isNaN(Date.parse(due_date))) {
             return res.status(400).json({ error: 'Invalid due date format' });
         }
-        const { data, error } = await supabase
+        // Use supabaseAdmin to bypass RLS (route is already protected by authenticate)
+        const { data, error } = await supabaseAdmin
             .from('deals')
             .insert([{
                 user_id: userId,
@@ -612,6 +613,7 @@ app.post('/api/deals', authenticate, async (req, res) => {
                 currency: currency || 'NGN'
             }])
             .select();
+
         if (error) {
             console.error('Supabase error:', error);
             return res.status(500).json({ error: error.message });
