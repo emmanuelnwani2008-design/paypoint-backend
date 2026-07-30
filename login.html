@@ -13,7 +13,7 @@
         gtag('config', 'G-HFJ9JM358E');
     </script>
     <style>
-        /* (Your existing styles – unchanged) */
+        /* (All your existing styles — unchanged) */
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -334,7 +334,7 @@
     </div>
 
     <!-- ============================================
-    FINAL LOGIN SCRIPT — NO GUESSING
+    SINGLE MODULE SCRIPT (NO FAKE USER)
     ============================================ -->
     <script type="importmap">
         {
@@ -349,8 +349,6 @@
         const supabaseUrl = 'https://xpccuovjcsixpcmudyin.supabase.co';
         const supabaseAnonKey = 'sb_publishable_ulAg_qpF5L8LbHc6ZzYnxQ_z4w3ExhV';
         const API_URL = 'https://paypoint-backend-9m63.onrender.com/api';
-
-        const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
         // ---------- DOM REFS ----------
         const loginTab = document.getElementById('loginTab');
@@ -372,16 +370,14 @@
         const confirmEmail = document.getElementById('confirmEmail');
         const googleBtn = document.getElementById('googleSignIn');
 
-        // ---------- SAVE SESSION & REDIRECT ----------
-        function saveAndRedirect(session) {
+        const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
+        // ---------- SAVE REAL SESSION ----------
+        function saveRealSessionAndRedirect(session) {
             if (!session) return;
-            // Save token and user exactly as the dashboard expects
             localStorage.setItem('paypoint_session', session.access_token);
             localStorage.setItem('paypoint_user', JSON.stringify(session.user));
-            // Add a small delay to ensure storage is flushed (rare but safe)
-            setTimeout(() => {
-                window.location.replace('/dashboard.html');
-            }, 100);
+            window.location.replace('/dashboard.html');
         }
 
         // ---------- HANDLE OAUTH REDIRECT ----------
@@ -397,7 +393,7 @@
                         refresh_token: refreshToken || ''
                     });
                     if (data?.session) {
-                        saveAndRedirect(data.session);
+                        saveRealSessionAndRedirect(data.session);
                         return true;
                     }
                     console.error('OAuth setSession error:', error);
@@ -413,12 +409,11 @@
             if (token && user) {
                 const { data: { session }, error } = await supabase.auth.getSession();
                 if (session) {
-                    // Refresh user in case of changes
+                    // Refresh user in localStorage
                     localStorage.setItem('paypoint_user', JSON.stringify(session.user));
                     window.location.replace('/dashboard.html');
                     return true;
                 } else {
-                    // Invalid session — clear storage
                     localStorage.removeItem('paypoint_session');
                     localStorage.removeItem('paypoint_user');
                 }
@@ -434,37 +429,22 @@
                     provider: 'google',
                     options: { redirectTo }
                 });
-                if (error) {
-                    console.error('Google OAuth error:', error);
-                    alert('Google sign-in failed: ' + error.message);
-                }
+                if (error) alert('Google sign-in failed: ' + error.message);
             } catch (err) {
                 alert('Could not load Google sign-in. Please try again.');
             }
         });
 
         // ---------- INIT ----------
-        // 1. If OAuth token in URL, handle it and redirect
+        // 1. Handle OAuth redirect (if coming back from Google)
         const oauthHandled = await handleOAuthRedirect();
-        if (oauthHandled) {
-            // The page will redirect; stop further execution.
-            // (The script will be interrupted by the redirect)
-            // We can't return here because the redirect will stop the script.
-            // But we can just let it continue, but the redirect will happen.
-            // However, the redirect is scheduled with setTimeout, so the script
-            // might continue to run before the redirect fires.
-            // To prevent that, we use a simple flag to skip other checks.
-            // We'll set a global flag and check it.
-            window.__oauthRedirecting = true;
-            // We'll still run the rest but they will be skipped if flag is true.
-        }
-
-        // 2. If already logged in, redirect (only if OAuth not handled)
-        if (!window.__oauthRedirecting) {
+        if (!oauthHandled) {
+            // 2. If not an OAuth redirect, check for existing session
             await checkExistingSession();
         }
 
-        // ---------- PASSWORD TOGGLE ----------
+        // ---------- REST OF LOGIC ----------
+        // (Password toggle, tab switch, signup, login, demo login, enter key — all unchanged)
         function setupToggle(inputId, toggleId) {
             const input = document.getElementById(inputId);
             const toggle = document.getElementById(toggleId);
@@ -479,7 +459,6 @@
         setupToggle('loginPassword', 'toggleLoginPassword');
         setupToggle('signupPassword', 'toggleSignupPassword');
 
-        // ---------- TAB SWITCH ----------
         loginTab.addEventListener('click', () => {
             loginTab.classList.add('active');
             signupTab.classList.remove('active');
@@ -502,7 +481,6 @@
             confirmBanner.classList.remove('show');
         });
 
-        // ---------- SIGNUP ----------
         signupBtn.addEventListener('click', async () => {
             const name = signupName.value.trim();
             const email = signupEmail.value.trim();
@@ -545,7 +523,6 @@
             }
         });
 
-        // ---------- LOGIN ----------
         loginBtn.addEventListener('click', async () => {
             const email = loginEmail.value.trim();
             const password = loginPassword.value;
@@ -581,7 +558,6 @@
             }
         });
 
-        // ---------- DEMO LOGIN ----------
         async function demoLoginHandler() {
             const DEMO_EMAIL = 'demo@paypoint.com';
             const DEMO_PASSWORD = 'DemoSecure2026!';
@@ -626,7 +602,6 @@
         }
         demoLogin.addEventListener('click', demoLoginHandler);
 
-        // ---------- ENTER KEY ----------
         loginPassword.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') loginBtn.click();
         });
@@ -634,7 +609,20 @@
             if (e.key === 'Enter') signupBtn.click();
         });
 
-        console.log('🔐 PayPoint Login page loaded (final no‑guess version)');
+        const user = localStorage.getItem('paypoint_user');
+        if (user) {
+            try {
+                const userData = JSON.parse(user);
+                if (userData && userData.id) {
+                    window.location.replace('dashboard.html');
+                }
+            } catch (e) {
+                localStorage.removeItem('paypoint_user');
+                localStorage.removeItem('paypoint_session');
+            }
+        }
+
+        console.log('🔐 PayPoint Login page loaded (NO FAKE USER)');
         console.log('📡 Connected to:', API_URL);
     </script>
 </body>
