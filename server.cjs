@@ -653,18 +653,8 @@ app.put('/api/deals/:id', authenticate, async (req, res) => {
             return res.status(400).json({ error: 'Invalid due date format' });
         }
 
-        const { data: existing, error: findError } = await supabase
-            .from('deals')
-            .select('id')
-            .eq('id', dealId)
-            .eq('user_id', userId)
-            .single();
-
-        if (findError || !existing) {
-            return res.status(404).json({ error: 'Deal not found or you do not own it' });
-        }
-
-        const { data, error } = await supabase
+        // Use supabaseAdmin for update
+        const { data, error } = await supabaseAdmin
             .from('deals')
             .update({
                 brand_name: sanitizedBrand,
@@ -673,7 +663,7 @@ app.put('/api/deals/:id', authenticate, async (req, res) => {
                 deliverable: sanitizedDeliverable || '',
                 status: status || 'pending',
                 currency: currency || 'NGN',
-                notes: req.body.notes || null   // <-- ADD THIS LINE
+                notes: req.body.notes || null
             })
             .eq('id', dealId)
             .eq('user_id', userId)
@@ -696,18 +686,8 @@ app.delete('/api/deals/:id', authenticate, async (req, res) => {
         const dealId = req.params.id;
         const userId = req.userId;
 
-        const { data: existing, error: findError } = await supabase
-            .from('deals')
-            .select('id')
-            .eq('id', dealId)
-            .eq('user_id', userId)
-            .single();
-
-        if (findError || !existing) {
-            return res.status(404).json({ error: 'Deal not found or you do not own it' });
-        }
-
-        const { error } = await supabase
+        // Use supabaseAdmin for delete
+        const { error } = await supabaseAdmin
             .from('deals')
             .delete()
             .eq('id', dealId)
@@ -724,6 +704,7 @@ app.delete('/api/deals/:id', authenticate, async (req, res) => {
         res.status(500).json({ error: 'Internal server error' });
     }
 });
+        
 
 // ============================================
 // GET SINGLE DEAL WITH PROFIT (Phase 3)
@@ -733,21 +714,19 @@ app.get('/api/deals/:id', authenticate, async (req, res) => {
         const dealId = req.params.id;
         const userId = req.userId;
 
-        // 1. Fetch the specific deal
-        const { data: deal, error: dealError } = await supabase
+        // Fetch the specific deal using supabaseAdmin
+        const { data: deal, error: dealError } = await supabaseAdmin
             .from('deals')
             .select('*')
             .eq('id', dealId)
             .eq('user_id', userId)
             .single();
 
-        // If deal doesn't exist or doesn't belong to this user
         if (dealError || !deal) {
             return res.status(404).json({ error: 'Deal not found' });
         }
 
-        // 2. Fetch ALL expenses linked to this deal
-        const { data: expenses, error: expensesError } = await supabase
+        const { data: expenses, error: expensesError } = await supabaseAdmin
             .from('expenses')
             .select('amount, vendor, category, created_at')
             .eq('deal_id', dealId)
@@ -755,19 +734,16 @@ app.get('/api/deals/:id', authenticate, async (req, res) => {
 
         if (expensesError) {
             console.error('Error fetching expenses for deal:', expensesError);
-            // We still proceed, just treat expenses as empty.
         }
 
-        // 3. Calculate Total Expenses and Profit
         const totalExpenses = (expenses || []).reduce((sum, exp) => sum + Number(exp.amount), 0);
         const profit = Number(deal.amount) - totalExpenses;
 
-        // 4. Send the response back to the frontend
         res.json({
             success: true,
             data: {
-                ...deal,               // Spread all the deal data (brand_name, amount, notes, etc.)
-                expenses: expenses || [], // List of linked expenses
+                ...deal,
+                expenses: expenses || [],
                 total_expenses: totalExpenses,
                 profit: profit
             }
@@ -782,25 +758,6 @@ app.get('/api/deals/:id', authenticate, async (req, res) => {
 // ============================================
 // EXPENSES ROUTES
 // ============================================
-app.get('/api/expenses', authenticate, async (req, res) => {
-    try {
-        const userId = req.userId;
-        const { data, error } = await supabase
-            .from('expenses')
-            .select('*')
-            .eq('user_id', userId)
-            .order('created_at', { ascending: false });
-        if (error) {
-            console.error('Supabase error:', error);
-            return res.status(500).json({ error: error.message });
-        }
-        res.json({ success: true, data: data || [] });
-    } catch (err) {
-        console.error('Expenses GET error:', err);
-        res.status(500).json({ error: 'Internal server error' });
-    }
-});
-
 app.post('/api/expenses', authenticate, async (req, res) => {
     try {
         const userId = req.userId;
@@ -820,7 +777,8 @@ app.post('/api/expenses', authenticate, async (req, res) => {
         if (receipt_url && !receipt_url.startsWith('data:image/')) {
             return res.status(400).json({ error: 'Invalid receipt format' });
         }
-        const { data, error } = await supabase
+        // Use supabaseAdmin
+        const { data, error } = await supabaseAdmin
             .from('expenses')
             .insert([{
                 user_id: userId,
@@ -1033,7 +991,7 @@ app.post('/api/invoices/create', authenticate, async (req, res) => {
         }
 
         const invNumber = invoiceNumber || `INV-${Date.now()}`;
-        const { data, error } = await supabase
+        const { data, error } = await supabaseAdmin
             .from('invoices')
             .insert([{
                 user_id: userId,
@@ -1052,7 +1010,7 @@ app.post('/api/invoices/create', authenticate, async (req, res) => {
         const newInvoice = data[0];
 
         const portalToken = crypto.randomBytes(32).toString('hex');
-        const { error: tokenError } = await supabase
+        const { error: tokenError } = await  supabaseAdmin
             .from('invoices')
             .update({ portal_token: portalToken })
             .eq('id', newInvoice.id);
