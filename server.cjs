@@ -802,6 +802,28 @@ app.post('/api/expenses', authenticate, async (req, res) => {
 });
 
 // ============================================
+// GET EXPENSES (MISSING!)
+// ============================================
+app.get('/api/expenses', authenticate, async (req, res) => {
+    try {
+        const userId = req.userId;
+        const { data, error } = await supabaseAdmin
+            .from('expenses')
+            .select('*')
+            .eq('user_id', userId)
+            .order('created_at', { ascending: false });
+        if (error) {
+            console.error('Supabase error:', error);
+            return res.status(500).json({ error: error.message });
+        }
+        res.json({ success: true, data: data || [] });
+    } catch (err) {
+        console.error('Expenses GET error:', err);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// ============================================
 // PAYSTACK ROUTES
 // ============================================
 const PAYSTACK_SECRET_KEY = process.env.PAYSTACK_SECRET_KEY;
