@@ -666,10 +666,14 @@
 
             try {
                 const res = await fetch(`${API_URL}/auth/update`, {
-                    method: 'PUT',
-                    headers: getAuthHeaders(),
-                    body: JSON.stringify({ name, bio })
-                });
+    method: 'PUT',
+    headers: getAuthHeaders(),
+    body: JSON.stringify({
+        name: name,
+        bio: bio,
+        default_currency: 'USD' // or 'NGN' – send a valid value
+    })
+});
 
                 const result = await res.json();
 
