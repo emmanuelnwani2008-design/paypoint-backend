@@ -515,7 +515,7 @@ app.post('/api/auth/upload-avatar', authenticate, upload.single('avatar'), async
 });
 
 // ============================================
-// UPDATE PROFILE (FIXED)
+// UPDATE PROFILE (FIXED - uses supabaseAdmin)
 // ============================================
 app.put('/api/auth/update', authenticate, async (req, res) => {
     try {
@@ -527,21 +527,30 @@ app.put('/api/auth/update', authenticate, async (req, res) => {
             return res.status(400).json({ error: 'Name must be between 2 and 50 characters' });
         }
         
-        const updateData = {
-            name: sanitizedName,
-            bio: bio ? sanitizeInput(bio.trim()) : '',
-            default_currency: default_currency || 'NGN'
-        };
+        const sanitizedBio = bio ? sanitizeInput(bio.trim()) : '';
         
-        const { data, error } = await supabase.auth.updateUser({
-            data: updateData
-        });
+        // Use supabaseAdmin to update user metadata (bypasses session requirement)
+        const { data, error } = await supabaseAdmin.auth.admin.updateUserById(
+            req.userId,
+            {
+                user_metadata: {
+                    name: sanitizedName,
+                    bio: sanitizedBio,
+                    default_currency: default_currency || 'USD'
+                }
+            }
+        );
         
         if (error) {
             console.error('Update profile error:', error);
             return res.status(400).json({ error: error.message });
         }
-        res.json({ success: true, user: data.user, message: 'Profile updated successfully' });
+        
+        // Fetch the updated user
+        const { data: userData } = await supabaseAdmin.auth.admin.getUserById(req.userId);
+        const user = userData?.user || data.user;
+        
+        res.json({ success: true, user: user, message: 'Profile updated successfully' });
     } catch (err) {
         console.error('Update profile server error:', err);
         res.status(500).json({ error: 'Internal server error' });
