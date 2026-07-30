@@ -334,15 +334,15 @@
     </div>
 
     <!-- ============================================
-    BULLETPROOF: Load Supabase the old-school way (No Import Maps!)
+    ULTIMATE BULLETPROOF: Load Supabase using UMD (No modules, no import maps)
     ============================================ -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm"></script>
+    <script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
     
     <script>
         // ============================================
-        // 1. SUPABASE CLIENT
+        // 1. SUPABASE CLIENT (UMD - works everywhere)
         // ============================================
-        // Because we loaded it via script tag, it's available as window.supabase
+        // supabase-js UMD exposes itself as window.supabase
         const supabase = window.supabase.createClient(
             'https://xpccuovjcsixpcmudyin.supabase.co',
             'sb_publishable_ulAg_qpF5L8LbHc6ZzYnxQ_z4w3ExhV'
@@ -626,7 +626,7 @@
             }
         }
 
-        console.log('🔐 PayPoint Login page loaded (Bulletproof - no import maps)');
+        console.log('🔐 PayPoint Login page loaded (ULTIMATE BULLETPROOF - UMD)');
         console.log('📡 Connected to:', API_URL);
     </script>
 </body>
