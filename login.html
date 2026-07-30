@@ -5,12 +5,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PayPoint · Login</title>
     <link rel="icon" type="image/png" href="logo.png">
+    <!-- Google tag (gtag.js) -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-HFJ9JM358E"></script>
     <script>
         window.dataLayer = window.dataLayer || [];
         function gtag(){dataLayer.push(arguments);}
         gtag('js', new Date());
-        gtag('config', 'G-HFJ9JM358E');
+        gtag('config', 'G-HFJ9JM358E', {
+            // Fix for the cookie domain issue: set cookie_domain to 'auto' or your domain
+            cookie_domain: 'auto',
+            cookie_flags: 'SameSite=None;Secure'
+        });
     </script>
     <style>
         /* (Your existing styles – keep them exactly as they are) */
@@ -334,19 +339,22 @@
     </div>
 
     <!-- ============================================
-    ULTIMATE BULLETPROOF: Load Supabase using UMD (No modules, no import maps)
+    BULLETPROOF: Load Supabase using the UMD build (correct MIME type)
     ============================================ -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
     
     <script>
         // ============================================
-        // 1. SUPABASE CLIENT (UMD - works everywhere)
+        // 1. SUPABASE CLIENT (UMD)
         // ============================================
-        // supabase-js UMD exposes itself as window.supabase
-        const supabase = window.supabase.createClient(
-            'https://xpccuovjcsixpcmudyin.supabase.co',
-            'sb_publishable_ulAg_qpF5L8LbHc6ZzYnxQ_z4w3ExhV'
-        );
+        // Ensure we only create it once
+        if (typeof window.supabaseClient === 'undefined') {
+            window.supabaseClient = window.supabase.createClient(
+                'https://xpccuovjcsixpcmudyin.supabase.co',
+                'sb_publishable_ulAg_qpF5L8LbHc6ZzYnxQ_z4w3ExhV'
+            );
+        }
+        const supabase = window.supabaseClient;
 
         const API_URL = 'https://paypoint-backend-9m63.onrender.com/api';
 
@@ -626,7 +634,7 @@
             }
         }
 
-        console.log('🔐 PayPoint Login page loaded (ULTIMATE BULLETPROOF - UMD)');
+        console.log('🔐 PayPoint Login page loaded (ULTIMATE BULLETPROOF)');
         console.log('📡 Connected to:', API_URL);
     </script>
 </body>
