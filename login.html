@@ -13,7 +13,7 @@
         gtag('config', 'G-HFJ9JM358E');
     </script>
     <style>
-        /* (All your existing styles — unchanged) */
+        /* (Your existing styles – keep them exactly as they are) */
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -334,20 +334,20 @@
     </div>
 
     <!-- ============================================
-    SINGLE MODULE SCRIPT (NO FAKE USER)
+    BULLETPROOF: Load Supabase the old-school way (No Import Maps!)
     ============================================ -->
-    <script type="importmap">
-        {
-            "imports": {
-                "@supabase/supabase-js": "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm"
-            }
-        }
-    </script>
-    <script type="module">
-        import { createClient } from '@supabase/supabase-js';
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm"></script>
+    
+    <script>
+        // ============================================
+        // 1. SUPABASE CLIENT
+        // ============================================
+        // Because we loaded it via script tag, it's available as window.supabase
+        const supabase = window.supabase.createClient(
+            'https://xpccuovjcsixpcmudyin.supabase.co',
+            'sb_publishable_ulAg_qpF5L8LbHc6ZzYnxQ_z4w3ExhV'
+        );
 
-        const supabaseUrl = 'https://xpccuovjcsixpcmudyin.supabase.co';
-        const supabaseAnonKey = 'sb_publishable_ulAg_qpF5L8LbHc6ZzYnxQ_z4w3ExhV';
         const API_URL = 'https://paypoint-backend-9m63.onrender.com/api';
 
         // ---------- DOM REFS ----------
@@ -370,10 +370,8 @@
         const confirmEmail = document.getElementById('confirmEmail');
         const googleBtn = document.getElementById('googleSignIn');
 
-        const supabase = createClient(supabaseUrl, supabaseAnonKey);
-
-        // ---------- SAVE REAL SESSION ----------
-        function saveRealSessionAndRedirect(session) {
+        // ---------- SAVE SESSION AND REDIRECT ----------
+        function saveSessionAndRedirect(session) {
             if (!session) return;
             localStorage.setItem('paypoint_session', session.access_token);
             localStorage.setItem('paypoint_user', JSON.stringify(session.user));
@@ -393,7 +391,7 @@
                         refresh_token: refreshToken || ''
                     });
                     if (data?.session) {
-                        saveRealSessionAndRedirect(data.session);
+                        saveSessionAndRedirect(data.session);
                         return true;
                     }
                     console.error('OAuth setSession error:', error);
@@ -409,7 +407,6 @@
             if (token && user) {
                 const { data: { session }, error } = await supabase.auth.getSession();
                 if (session) {
-                    // Refresh user in localStorage
                     localStorage.setItem('paypoint_user', JSON.stringify(session.user));
                     window.location.replace('/dashboard.html');
                     return true;
@@ -436,15 +433,16 @@
         });
 
         // ---------- INIT ----------
-        // 1. Handle OAuth redirect (if coming back from Google)
-        const oauthHandled = await handleOAuthRedirect();
-        if (!oauthHandled) {
-            // 2. If not an OAuth redirect, check for existing session
-            await checkExistingSession();
-        }
+        (async function init() {
+            // 1. Handle OAuth redirect
+            const oauthHandled = await handleOAuthRedirect();
+            if (!oauthHandled) {
+                // 2. Check existing session
+                await checkExistingSession();
+            }
+        })();
 
-        // ---------- REST OF LOGIC ----------
-        // (Password toggle, tab switch, signup, login, demo login, enter key — all unchanged)
+        // ---------- PASSWORD TOGGLE ----------
         function setupToggle(inputId, toggleId) {
             const input = document.getElementById(inputId);
             const toggle = document.getElementById(toggleId);
@@ -459,6 +457,7 @@
         setupToggle('loginPassword', 'toggleLoginPassword');
         setupToggle('signupPassword', 'toggleSignupPassword');
 
+        // ---------- TAB SWITCH ----------
         loginTab.addEventListener('click', () => {
             loginTab.classList.add('active');
             signupTab.classList.remove('active');
@@ -481,6 +480,7 @@
             confirmBanner.classList.remove('show');
         });
 
+        // ---------- SIGNUP ----------
         signupBtn.addEventListener('click', async () => {
             const name = signupName.value.trim();
             const email = signupEmail.value.trim();
@@ -523,6 +523,7 @@
             }
         });
 
+        // ---------- LOGIN ----------
         loginBtn.addEventListener('click', async () => {
             const email = loginEmail.value.trim();
             const password = loginPassword.value;
@@ -558,6 +559,7 @@
             }
         });
 
+        // ---------- DEMO LOGIN ----------
         async function demoLoginHandler() {
             const DEMO_EMAIL = 'demo@paypoint.com';
             const DEMO_PASSWORD = 'DemoSecure2026!';
@@ -602,6 +604,7 @@
         }
         demoLogin.addEventListener('click', demoLoginHandler);
 
+        // ---------- ENTER KEY ----------
         loginPassword.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') loginBtn.click();
         });
@@ -609,6 +612,7 @@
             if (e.key === 'Enter') signupBtn.click();
         });
 
+        // ---------- AUTO-REDIRECT IF ALREADY LOGGED IN ----------
         const user = localStorage.getItem('paypoint_user');
         if (user) {
             try {
@@ -622,7 +626,7 @@
             }
         }
 
-        console.log('🔐 PayPoint Login page loaded (NO FAKE USER)');
+        console.log('🔐 PayPoint Login page loaded (Bulletproof - no import maps)');
         console.log('📡 Connected to:', API_URL);
     </script>
 </body>
