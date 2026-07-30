@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PayPoint · Dashboard</title>
+    <title>PayPoint · Finance OS for Creators</title>
     <link rel="icon" type="image/png" href="logo.png">
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-HFJ9JM358E"></script>
     <script>
@@ -13,7 +13,7 @@
         gtag('config', 'G-HFJ9JM358E');
     </script>
     <style>
-        /* --- YOUR EXISTING STYLES (Keep them exactly as they are) --- */
+        /* (Your existing styles — keep them exactly as they are) */
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -456,7 +456,7 @@
             else sidebarAvatarImg.src = 'user.png';
         }
 
-        // ----- THE FIXED CHECK AUTH (ASYNC & WAITS) -----
+        // ----- ⭐ THE FIXED CHECK AUTH ⭐ -----
         async function checkAuth() {
             const token = localStorage.getItem('paypoint_session');
             const user = localStorage.getItem('paypoint_user');
@@ -470,13 +470,16 @@
                 return false;
             }
 
-            // 2. If we have a user in localStorage, verify with backend
+            // 2. If we have a user in localStorage
             if (user) {
                 try {
                     const userData = JSON.parse(user);
-                    // If we have a valid ID, update UI and return true
-                    if (userData.id) {
-                        console.log('✅ User found in localStorage:', userData.email);
+                    
+                    // ⭐⭐⭐ FIXED: Check if user has an id OR if it's a Google user (id in metadata)
+                    const userId = userData.id || userData.user_metadata?.id || userData.sub;
+                    
+                    if (userId) {
+                        console.log('✅ User found in localStorage with ID:', userId);
                         updateSidebarUI(userData);
                         return true;
                     }
@@ -485,14 +488,13 @@
                 }
             }
 
-            // 3. ⭐ CRITICAL FIX: WAIT for the backend to respond
+            // 3. Fetch from backend (fallback)
             console.log('⏳ Fetching user from backend...');
             try {
                 const res = await fetch(`${API_URL}/auth/user`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
 
-                // If 401 (Unauthorized), token is invalid
                 if (res.status === 401) {
                     console.warn('🔐 Token invalid, redirecting to login');
                     localStorage.removeItem('paypoint_user');
@@ -503,13 +505,11 @@
 
                 const data = await res.json();
                 if (data.success && data.user) {
-                    // Save the real user and update UI
                     console.log('✅ User fetched from backend:', data.user.email);
                     localStorage.setItem('paypoint_user', JSON.stringify(data.user));
                     updateSidebarUI(data.user);
                     return true;
                 } else {
-                    // Backend says no user, redirect
                     console.warn('⚠️ No user found in backend, redirecting');
                     localStorage.removeItem('paypoint_user');
                     localStorage.removeItem('paypoint_session');
@@ -517,14 +517,13 @@
                     return false;
                 }
             } catch (err) {
-                // Network error — don't redirect, just show error
                 console.error('❌ Error fetching user:', err);
-                // Allow page to load anyway (maybe backend is slow)
+                // Allow page to load anyway
                 return true;
             }
         }
 
-        // ----- LOAD DEALS & EXPENSES (unchanged) -----
+        // ----- LOAD DEALS & EXPENSES -----
         async function loadDeals() {
             try {
                 const res = await fetch(`${API_URL}/deals`, { headers: getAuthHeaders() });
@@ -544,7 +543,6 @@
                         `;
                         list.appendChild(div);
                     });
-                    // Update metrics
                     const totalRevenue = result.data.reduce((sum, d) => sum + Number(d.amount), 0);
                     const taxes = totalRevenue * 0.30;
                     const takeHome = totalRevenue - taxes;
@@ -576,7 +574,6 @@
                         `;
                         list.appendChild(div);
                     });
-                    // Update total expenses
                     const totalNGN = result.data.filter(e => e.currency === 'NGN' || !e.currency).reduce((sum, e) => sum + Number(e.amount), 0);
                     const totalUSD = result.data.filter(e => e.currency === 'USD').reduce((sum, e) => sum + Number(e.amount), 0);
                     let totalText = '';
@@ -666,12 +663,11 @@
         });
 
         // ============================================
-        // ⭐ INIT — WAIT FOR AUTH BEFORE LOADING DATA
+        // ⭐ INIT
         // ============================================
         (async function init() {
             const isAuth = await checkAuth();
             if (isAuth) {
-                // Only load data if authenticated
                 loadDeals();
                 loadExpenses();
                 console.log('🚀 PayPoint Dashboard loaded successfully');
