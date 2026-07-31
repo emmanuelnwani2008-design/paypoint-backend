@@ -311,9 +311,13 @@
         let allDeals = [];
 
         function getAuthHeaders() {
-            const token = localStorage.getItem('paypoint_session');
-            return { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) };
-        }
+    const token = localStorage.getItem('paypoint_session');
+    console.log('🔑 Token in getAuthHeaders:', token ? 'Present (starts with ' + token.substring(0, 15) + '...)' : 'MISSING');
+    return {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {})
+    };
+}
 function formatCurrency(amount, currency) {
     if (!amount) return '₦0';
     const symbols = { USD: '$', NGN: '₦' };
