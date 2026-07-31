@@ -404,6 +404,40 @@ app.get('/api/auth/user', authenticate, async (req, res) => {
 });
 
 // ============================================
+// DELETE USER ACCOUNT
+// ============================================
+app.delete('/api/auth/delete', authenticate, async (req, res) => {
+    try {
+        const userId = req.userId;
+
+        // 1. Delete all data associated with the user (deals, expenses, invoices, etc.)
+        //    You might want to cascade delete in Supabase, but here we manually delete.
+        //    If your tables have ON DELETE CASCADE set up (referencing profiles.id), you can skip this.
+        //    For safety, we delete them explicitly.
+        await supabaseAdmin.from('deals').delete().eq('user_id', userId);
+        await supabaseAdmin.from('expenses').delete().eq('user_id', userId);
+        await supabaseAdmin.from('invoices').delete().eq('user_id', userId);
+        // Add any other tables you have.
+
+        // 2. Delete the profile row
+        await supabaseAdmin.from('profiles').delete().eq('id', userId);
+
+        // 3. Delete the user from auth (this signs them out and removes the account)
+        const { error } = await supabaseAdmin.auth.admin.deleteUser(userId);
+
+        if (error) {
+            console.error('Error deleting user:', error);
+            return res.status(500).json({ error: 'Failed to delete account' });
+        }
+
+        res.json({ success: true, message: 'Account deleted successfully' });
+    } catch (err) {
+        console.error('Delete account error:', err);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// ============================================
 // ADMIN ROUTE – Force Pro
 // ============================================
 app.post('/api/admin/force-pro', authenticate, async (req, res) => {
