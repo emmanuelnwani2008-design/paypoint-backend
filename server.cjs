@@ -335,8 +335,12 @@ app.post('/api/auth/signup', authLimiter, async (req, res) => {
             return res.status(400).json({ error: error.message });
         }
         if (data.user) {
-            await supabaseAdmin.from('profiles').upsert({ id: data.user.id }, { onConflict: 'id' });
-        }
+    await supabaseAdmin.from('profiles').upsert({
+        id: data.user.id,
+        default_currency: 'USD',
+        subscription_tier: 'free'
+    }, { onConflict: 'id' });
+}
         res.json({ success: true, user: data.user });
     } catch (err) {
         console.error('Signup server error:', err);
