@@ -111,7 +111,6 @@ const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
 // EMAIL DISABLED (Console Logger for Testing)
 // ============================================
 async function sendEmailWithRetry(to, subject, html, retries = 2) {
-    // Extract the portal link from the HTML
     const linkMatch = html.match(/https:\/\/[^"]+\/portal\/[a-f0-9]+/);
     
     console.log(`📧 ========== INVOICE READY ==========`);
@@ -125,12 +124,11 @@ async function sendEmailWithRetry(to, subject, html, retries = 2) {
     }
     console.log(`📧 ===================================`);
     
-    // Always return true so the invoice is marked as "sent" in the database
     return true;
 }
 
 // ============================================
-// CRON JOB – Automated Invoice Chasing (Uses Logger)
+// CRON JOB – Automated Invoice Chasing
 // ============================================
 cron.schedule('0 9 * * *', async () => {
     console.log('🔔 Running overdue invoice check...');
@@ -216,7 +214,6 @@ cron.schedule('0 9 * * *', async () => {
                 </div>
             `;
 
-            // This now just logs to console instead of sending real email
             const sent = await sendEmailWithRetry(brandEmail, subject, html);
             if (sent) {
                 await supabase
@@ -335,12 +332,12 @@ app.post('/api/auth/signup', authLimiter, async (req, res) => {
             return res.status(400).json({ error: error.message });
         }
         if (data.user) {
-    await supabaseAdmin.from('profiles').upsert({
-        id: data.user.id,
-        default_currency: 'USD',
-        subscription_tier: 'free'
-    }, { onConflict: 'id' });
-}
+            await supabaseAdmin.from('profiles').upsert({
+                id: data.user.id,
+                default_currency: 'USD',
+                subscription_tier: 'free'
+            }, { onConflict: 'id' });
+        }
         res.json({ success: true, user: data.user });
     } catch (err) {
         console.error('Signup server error:', err);
@@ -414,19 +411,12 @@ app.delete('/api/auth/delete', authenticate, async (req, res) => {
     try {
         const userId = req.userId;
 
-        // 1. Delete all data associated with the user (deals, expenses, invoices, etc.)
-        //    You might want to cascade delete in Supabase, but here we manually delete.
-        //    If your tables have ON DELETE CASCADE set up (referencing profiles.id), you can skip this.
-        //    For safety, we delete them explicitly.
         await supabaseAdmin.from('deals').delete().eq('user_id', userId);
         await supabaseAdmin.from('expenses').delete().eq('user_id', userId);
         await supabaseAdmin.from('invoices').delete().eq('user_id', userId);
-        // Add any other tables you have.
 
-        // 2. Delete the profile row
         await supabaseAdmin.from('profiles').delete().eq('id', userId);
 
-        // 3. Delete the user from auth (this signs them out and removes the account)
         const { error } = await supabaseAdmin.auth.admin.deleteUser(userId);
 
         if (error) {
@@ -446,17 +436,13 @@ app.delete('/api/auth/delete', authenticate, async (req, res) => {
 // ============================================
 app.post('/api/admin/force-pro', authenticate, async (req, res) => {
     try {
-        // The user must be logged in AND provide the secret
         const { secret, targetEmail } = req.body;
         const adminSecret = process.env.ADMIN_SECRET;
 
-        // 1. Check the secret
         if (!secret || secret !== adminSecret) {
             return res.status(403).json({ error: 'Invalid admin secret.' });
         }
 
-        // 2. Now we know it's a valid admin request
-        // Find the user by email
         const { data: user, error: userError } = await supabaseAdmin
             .from('profiles')
             .select('id')
@@ -469,7 +455,6 @@ app.post('/api/admin/force-pro', authenticate, async (req, res) => {
 
         const userId = user.id;
 
-        // 3. Upgrade the user
         const expiresAt = new Date();
         expiresAt.setDate(expiresAt.getDate() + 30);
 
@@ -567,7 +552,6 @@ app.put('/api/auth/update', authenticate, async (req, res) => {
         
         const sanitizedBio = bio ? sanitizeInput(bio.trim()) : '';
         
-        // Use supabaseAdmin to update user metadata (bypasses session requirement)
         const { data, error } = await supabaseAdmin.auth.admin.updateUserById(
             req.userId,
             {
@@ -584,7 +568,6 @@ app.put('/api/auth/update', authenticate, async (req, res) => {
             return res.status(400).json({ error: error.message });
         }
         
-        // Fetch the updated user
         const { data: userData } = await supabaseAdmin.auth.admin.getUserById(req.userId);
         const user = userData?.user || data.user;
         
@@ -638,7 +621,6 @@ app.post('/api/deals', authenticate, async (req, res) => {
         if (due_date && isNaN(Date.parse(due_date))) {
             return res.status(400).json({ error: 'Invalid due date format' });
         }
-        // Use supabaseAdmin to bypass RLS (route is already protected by authenticate)
         const { data, error } = await supabaseAdmin
             .from('deals')
             .insert([{
@@ -691,7 +673,6 @@ app.put('/api/deals/:id', authenticate, async (req, res) => {
             return res.status(400).json({ error: 'Invalid due date format' });
         }
 
-        // Use supabaseAdmin for update
         const { data, error } = await supabaseAdmin
             .from('deals')
             .update({
@@ -724,7 +705,6 @@ app.delete('/api/deals/:id', authenticate, async (req, res) => {
         const dealId = req.params.id;
         const userId = req.userId;
 
-        // Use supabaseAdmin for delete
         const { error } = await supabaseAdmin
             .from('deals')
             .delete()
@@ -752,7 +732,6 @@ app.get('/api/deals/:id', authenticate, async (req, res) => {
         const dealId = req.params.id;
         const userId = req.userId;
 
-        // Fetch the specific deal using supabaseAdmin
         const { data: deal, error: dealError } = await supabaseAdmin
             .from('deals')
             .select('*')
@@ -815,7 +794,6 @@ app.post('/api/expenses', authenticate, async (req, res) => {
         if (receipt_url && !receipt_url.startsWith('data:image/')) {
             return res.status(400).json({ error: 'Invalid receipt format' });
         }
-        // Use supabaseAdmin
         const { data, error } = await supabaseAdmin
             .from('expenses')
             .insert([{
@@ -840,7 +818,7 @@ app.post('/api/expenses', authenticate, async (req, res) => {
 });
 
 // ============================================
-// GET EXPENSES (MISSING!)
+// GET EXPENSES
 // ============================================
 app.get('/api/expenses', authenticate, async (req, res) => {
     try {
@@ -1102,7 +1080,6 @@ app.post('/api/invoices/create', authenticate, async (req, res) => {
         `;
         const subject = `📄 Invoice #${invNumber} from ${deal.brand_name}`;
 
-        // THIS IS WHERE THE LOGGER RUNS (No real email is sent)
         const sent = await sendEmailWithRetry(brandEmail, subject, html);
 
         if (sent) {
@@ -1112,12 +1089,12 @@ app.post('/api/invoices/create', authenticate, async (req, res) => {
         }
 
         res.status(201).json({
-    success: true,
-    data: newInvoice,
-    portal_token: portalToken,
-    portal_link: portalLink,  // <-- THIS LINE MUST BE HERE
-    email_sent: sent
-});
+            success: true,
+            data: newInvoice,
+            portal_token: portalToken,
+            portal_link: portalLink,
+            email_sent: sent
+        });
 
     } catch (err) {
         console.error('Invoice create error:', err);
@@ -1126,7 +1103,7 @@ app.post('/api/invoices/create', authenticate, async (req, res) => {
 });
 
 // ============================================
-// GENERATE INVOICE PDF (MISSING!)
+// GENERATE INVOICE PDF
 // ============================================
 app.post('/api/invoices/generate', authenticate, async (req, res) => {
     try {
@@ -1557,7 +1534,6 @@ app.get('/portal/:token', async (req, res) => {
             return res.status(400).send('Invalid portal link');
         }
 
-        // 1. Fetch the invoice using the token
         const { data: invoice, error: invoiceError } = await supabaseAdmin
             .from('invoices')
             .select('*')
@@ -1569,7 +1545,6 @@ app.get('/portal/:token', async (req, res) => {
             return res.status(404).send('Invoice not found');
         }
 
-        // 2. Fetch the associated deal
         const { data: deal, error: dealError } = await supabaseAdmin
             .from('deals')
             .select('*')
@@ -1581,14 +1556,12 @@ app.get('/portal/:token', async (req, res) => {
             return res.status(404).send('Deal not found');
         }
 
-        // 3. Fetch the creator's profile (name and email)
         const { data: profile, error: profileError } = await supabaseAdmin
             .from('profiles')
             .select('email, user_metadata')
             .eq('id', deal.user_id)
             .single();
 
-        // If profile not found, use fallback values
         const creatorName = profile?.user_metadata?.name || 'Creator';
         const creatorEmail = profile?.email || 'Not provided';
 
@@ -1599,7 +1572,6 @@ app.get('/portal/:token', async (req, res) => {
         const amountFormatted = Number(deal.amount).toLocaleString();
         const dueDateFormatted = deal.due_date ? new Date(deal.due_date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : 'Not set';
 
-        // 4. Render the HTML portal
         res.send(`
             <!DOCTYPE html>
             <html lang="en">
