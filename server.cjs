@@ -1,4 +1,3 @@
-
 const dns = require('dns');
 dns.setDefaultResultOrder('ipv4first');
 
@@ -1009,7 +1008,8 @@ app.get('/api/payments/verify/:reference', authenticate, async (req, res) => {
 // INVOICE ROUTES
 // ============================================
 
-app.post('/api/invoices/create', authenticate, async (req, res) => {
+// ---- extracted handler for invoice creation ----
+async function handleInvoiceCreate(req, res) {
     try {
         const { dealId, invoiceNumber, brandEmail } = req.body;
         const userId = req.userId;
@@ -1105,7 +1105,11 @@ app.post('/api/invoices/create', authenticate, async (req, res) => {
         console.error('Invoice create error:', err);
         res.status(500).json({ error: 'Internal server error' });
     }
-});
+}
+
+// ---- both routes now use the same handler ----
+app.post('/api/invoices/create', authenticate, handleInvoiceCreate);
+app.post('/api/invoices/create/in', authenticate, handleInvoiceCreate);
 
 // ============================================
 // GENERATE INVOICE PDF
