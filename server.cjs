@@ -86,6 +86,11 @@ app.use((req, res, next) => {
 });
 
 app.use((req, res, next) => {
+    console.log(`🔍 EXACT REQUEST: ${req.method} ${req.originalUrl} (raw: ${req.url})`);
+    next();
+});
+
+app.use((req, res, next) => {
     if (req.query && typeof req.query === 'object') {
         for (let key in req.query) {
             if (Array.isArray(req.query[key]) && req.query[key].length > 1) {
