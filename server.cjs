@@ -310,6 +310,10 @@ app.get('/api/db-health', async (req, res) => {
         res.status(500).json({ status: 'error', message: err.message });
     }
 });
+// ---- TEST ROUTE TO VERIFY DEPLOYMENT ----
+app.get('/api/test', (req, res) => {
+    res.json({ status: 'ok', message: 'This is the latest code!' });
+});
 
 // ============================================
 // AUTH ROUTES
