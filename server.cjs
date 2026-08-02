@@ -1112,8 +1112,7 @@ async function handleInvoiceCreate(req, res) {
 }
 
 // ---- both routes now use the same handler ----
-app.post('/api/invoices/create', authenticate, handleInvoiceCreate);
-app.post('/api/invoices/create/in', authenticate, handleInvoiceCreate);
+app.post('/api/invoices/create*', authenticate, handleInvoiceCreate);
 
 // ============================================
 // GENERATE INVOICE PDF
