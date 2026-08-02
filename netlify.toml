@@ -4,7 +4,7 @@
 
 [[redirects]]
   from = "/api/*"
-  to = "https://paypoint-backend-9m63.onrender.com/api/:splat"
+  to = "https://paypoint-7dmc.onrender.com/api/:splat"
   status = 200
   force = true
 

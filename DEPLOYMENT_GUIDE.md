@@ -44,7 +44,7 @@ SUPABASE_URL = https://mqggkwhdbwkaftmewdca.supabase.co
 SUPABASE_ANON_KEY = sb_publishable_ulAg_qpF5L8LbHc6ZzYnxQ_z4w3ExhV
 PAYSTACK_SECRET_KEY = sk_test_272bd56a30ebfb3a214e39c6d7030bb4dc256571
 FRONTEND_URL = YOUR_NETLIFY_URL (fill after Netlify setup)
-ALLOWED_ORIGINS = YOUR_NETLIFY_URL,https://paypoint-backend-9m63.onrender.com
+ALLOWED_ORIGINS = YOUR_NETLIFY_URL,https://paypoint-7dmc.onrender.com
 JWT_SECRET = your_super_secret_jwt_key_12345_change_this_later
 NODE_ENV = production
 PORT = 3000
@@ -53,7 +53,7 @@ PORT = 3000
 6. Click **"Create Web Service"**
 7. Wait 5-10 minutes for deployment. When done, you'll see: **"Live"** in green.
 
-**Your Render URL**: `https://paypoint-backend-9m63.onrender.com`
+**Your Render URL**: `https://paypoint-7dmc.onrender.com`
 
 ---
 
@@ -101,7 +101,7 @@ PORT = 3000
 3. Find **"Webhook URL"** section
 4. Paste this URL:
    ```
-   https://paypoint-backend-9m63.onrender.com/api/payments/webhook
+   https://paypoint-7dmc.onrender.com/api/payments/webhook
    ```
 5. Select **"Events"**: Check these boxes:
    - ✅ charge.success

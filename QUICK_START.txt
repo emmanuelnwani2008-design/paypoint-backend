@@ -3,7 +3,7 @@
 ## 🔴 CRITICAL URLS & KEYS
 ```
 GitHub Repo: https://github.com/emmanuelnwani2008-design/paypoint-backend
-Render Backend: https://paypoint-backend-9m63.onrender.com
+Render Backend: https://paypoint-7dmc.onrender.com
 Render Dashboard: https://render.com/dashboard
 Netlify Dashboard: https://app.netlify.com
 Paystack Dashboard: https://dashboard.paystack.co/settings/developers
@@ -25,7 +25,7 @@ SUPABASE_URL=https://mqggkwhdbwkaftmewdca.supabase.co
 SUPABASE_ANON_KEY=sb_publishable_ulAg_qpF5L8LbHc6ZzYnxQ_z4w3ExhV
 PAYSTACK_SECRET_KEY=sk_test_272bd56a30ebfb3a214e39c6d7030bb4dc256571
 FRONTEND_URL=[YOUR_NETLIFY_URL_HERE]
-ALLOWED_ORIGINS=[YOUR_NETLIFY_URL_HERE],https://paypoint-backend-9m63.onrender.com
+ALLOWED_ORIGINS=[YOUR_NETLIFY_URL_HERE],https://paypoint-7dmc.onrender.com
 JWT_SECRET=paypoint_jwt_secret_key_2024_change_this_in_production
 NODE_ENV=production
 PORT=3000
@@ -33,7 +33,7 @@ PORT=3000
 
 ## 🔗 PAYSTACK WEBHOOK URL
 ```
-https://paypoint-backend-9m63.onrender.com/api/payments/webhook
+https://paypoint-7dmc.onrender.com/api/payments/webhook
 ```
 
 ## 📋 RENDER SETUP CHECKLIST
