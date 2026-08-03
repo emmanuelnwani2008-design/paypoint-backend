@@ -10,6 +10,7 @@ const PDFDocument = require('pdfkit');
 const crypto = require('crypto');
 const cron = require('node-cron');
 const multer = require('multer');
+const { findMatchingAuthUser } = require('./account-reconciliation');
 
 const app = express();
 app.set('trust proxy', 1);
@@ -287,8 +288,22 @@ async function authenticate(req, res, next) {
         if (error || !userData?.user) {
             return res.status(401).json({ error: 'Invalid or expired token' });
         }
+
         req.user = userData.user;
         req.userId = userData.user.id;
+
+        const email = userData.user?.email;
+        if (email) {
+            const { data: userMatches, error: listError } = await supabaseAdmin.auth.admin.listUsers();
+            if (!listError) {
+                const matchingUser = findMatchingAuthUser(userMatches?.users, userData.user.id, email);
+                if (matchingUser) {
+                    req.reconciledUserId = matchingUser.id;
+                    req.reconciledUserEmail = matchingUser.email;
+                }
+            }
+        }
+
         next();
     } catch (err) {
         console.error('Auth error:', err);
@@ -598,10 +613,12 @@ app.put('/api/auth/update', authenticate, async (req, res) => {
 app.get('/api/deals', authenticate, async (req, res) => {
     try {
         const userId = req.userId;
+        const fallbackUserId = req.reconciledUserId || null;
+        const ids = [userId, fallbackUserId].filter(Boolean);
         const { data, error } = await supabaseAdmin
             .from('deals')
             .select('*')
-            .eq('user_id', userId)
+            .in('user_id', ids)
             .order('created_at', { ascending: false });
         if (error) {
             console.error('Supabase error:', error);
@@ -687,6 +704,8 @@ app.put('/api/deals/:id', authenticate, async (req, res) => {
             return res.status(400).json({ error: 'Invalid due date format' });
         }
 
+        const fallbackUserId = req.reconciledUserId || null;
+        const ids = [userId, fallbackUserId].filter(Boolean);
         const { data, error } = await supabaseAdmin
             .from('deals')
             .update({
@@ -699,7 +718,7 @@ app.put('/api/deals/:id', authenticate, async (req, res) => {
                 notes: req.body.notes || null
             })
             .eq('id', dealId)
-            .eq('user_id', userId)
+            .in('user_id', ids)
             .select();
 
         if (error) {
@@ -719,11 +738,13 @@ app.delete('/api/deals/:id', authenticate, async (req, res) => {
         const dealId = req.params.id;
         const userId = req.userId;
 
+        const fallbackUserId = req.reconciledUserId || null;
+        const ids = [userId, fallbackUserId].filter(Boolean);
         const { error } = await supabaseAdmin
             .from('deals')
             .delete()
             .eq('id', dealId)
-            .eq('user_id', userId);
+            .in('user_id', ids);
 
         if (error) {
             console.error('Supabase delete error:', error);
@@ -746,11 +767,13 @@ app.get('/api/deals/:id', authenticate, async (req, res) => {
         const dealId = req.params.id;
         const userId = req.userId;
 
+        const fallbackUserId = req.reconciledUserId || null;
+        const ids = [userId, fallbackUserId].filter(Boolean);
         const { data: deal, error: dealError } = await supabaseAdmin
             .from('deals')
             .select('*')
             .eq('id', dealId)
-            .eq('user_id', userId)
+            .in('user_id', ids)
             .single();
 
         if (dealError || !deal) {
@@ -1032,11 +1055,13 @@ async function handleInvoiceCreate(req, res) {
             return res.status(400).json({ error: 'Invalid brand email format' });
         }
 
+        const fallbackUserId = req.reconciledUserId || null;
+        const ids = [userId, fallbackUserId].filter(Boolean);
         const { data: deal, error: dealError } = await supabase
             .from('deals')
             .select('*')
             .eq('id', dealId)
-            .eq('user_id', userId)
+            .in('user_id', ids)
             .single();
 
         if (dealError || !deal) {
@@ -1132,11 +1157,13 @@ app.post('/api/invoices/generate', authenticate, async (req, res) => {
             return res.status(400).json({ error: 'dealId required' });
         }
 
+        const fallbackUserId = req.reconciledUserId || null;
+        const ids = [userId, fallbackUserId].filter(Boolean);
         const { data: deal, error } = await supabaseAdmin
             .from('deals')
             .select('*')
             .eq('id', dealId)
-            .eq('user_id', userId)
+            .in('user_id', ids)
             .single();
 
         if (error || !deal) {
