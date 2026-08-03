@@ -124,16 +124,21 @@ const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
 async function sendEmailWithRetry(to, subject, html, retries = 2) {
     const linkMatch = html.match(/https:\/\/[^"]+\/portal\/[a-f0-9]+/);
     
-    console.log(`📧 ========== INVOICE READY ==========`);
-    console.log(`📧 Brand Email: ${to}`);
-    console.log(`📧 Subject: ${subject}`);
-    
-    if (linkMatch) {
-        console.log(`🔗 COPY THIS LINK TO PAY: ${linkMatch[0]}`);
+    // ✅ SECURITY: Only log in development, hide in production
+    if (process.env.NODE_ENV !== 'production') {
+        console.log(`📧 ========== INVOICE READY ==========`);
+        console.log(`📧 Brand Email: ${to}`);
+        console.log(`📧 Subject: ${subject}`);
+        
+        if (linkMatch) {
+            console.log(`🔗 COPY THIS LINK TO PAY: ${linkMatch[0]}`);
+        } else {
+            console.log(`📧 No link found in HTML.`);
+        }
+        console.log(`📧 ===================================`);
     } else {
-        console.log(`📧 No link found in HTML.`);
+        console.log(`✅ Invoice prepared (email hidden)`);
     }
-    console.log(`📧 ===================================`);
     
     return true;
 }
@@ -463,10 +468,16 @@ app.delete('/api/auth/delete', authenticate, async (req, res) => {
 // ============================================
 // ADMIN ROUTE – Force Pro
 // ============================================
-app.post('/api/admin/force-pro', authenticate, async (req, res) => {
+app.post('/api/admin/force-pro', authLimiter, authenticate, async (req, res) => {
     try {
         const { secret, targetEmail } = req.body;
         const adminSecret = process.env.ADMIN_SECRET;
+
+        // ✅ FIX: Check if admin secret is configured
+        if (!adminSecret) {
+            console.error('❌ ADMIN_SECRET is not set in environment variables.');
+            return res.status(500).json({ error: 'Admin system not configured.' });
+        }
 
         if (!secret || secret !== adminSecret) {
             return res.status(403).json({ error: 'Invalid admin secret.' });
