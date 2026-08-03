@@ -15,7 +15,7 @@ const app = express();
 app.set('trust proxy', 1);
 
 const port = process.env.PORT || 3000;
-const FRONTEND_URL = process.env.FRONTEND_URL || 'https://your-app.vercel.app';
+const FRONTEND_URL = process.env.FRONTEND_URL || 'https://paypoint-backend.vercel.app';
 console.log(`🌐 Frontend URL: ${FRONTEND_URL}`);
 
 // ============================================
@@ -34,7 +34,8 @@ app.use(helmet({
     crossOriginEmbedderPolicy: false,
 }));
 
-const allowedOrigins = (process.env.ALLOWED_ORIGINS || 'https://paypoint-app.netlify.app,http://localhost:3000')
+const defaultAllowedOrigins = ['https://paypoint-app.netlify.app', 'https://paypoint-backend.vercel.app', 'http://localhost:3000'];
+const allowedOrigins = (process.env.ALLOWED_ORIGINS || defaultAllowedOrigins.join(','))
     .split(',')
     .map(o => o.trim())
     .filter(Boolean);
