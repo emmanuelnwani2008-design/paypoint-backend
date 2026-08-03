@@ -894,11 +894,13 @@ app.post('/api/payments/initialize', authenticate, async (req, res) => {
             return res.status(400).json({ error: 'dealId required' });
         }
 
-        const { data: deal, error: dealError } = await supabase
+        const fallbackUserId = req.reconciledUserId || null;
+        const ids = [userId, fallbackUserId].filter(Boolean);
+        const { data: deal, error: dealError } = await supabaseAdmin
             .from('deals')
             .select('*')
             .eq('id', dealId)
-            .eq('user_id', userId)
+            .in('user_id', ids)
             .single();
 
         if (dealError || !deal) {
@@ -1057,7 +1059,7 @@ async function handleInvoiceCreate(req, res) {
 
         const fallbackUserId = req.reconciledUserId || null;
         const ids = [userId, fallbackUserId].filter(Boolean);
-        const { data: deal, error: dealError } = await supabase
+        const { data: deal, error: dealError } = await supabaseAdmin
             .from('deals')
             .select('*')
             .eq('id', dealId)
