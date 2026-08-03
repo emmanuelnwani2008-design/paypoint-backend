@@ -1117,8 +1117,8 @@ async function handleInvoiceCreate(req, res) {
     }
 }
 
-// ---- both routes now use the same handler ----
-app.post('/api/invoices/create*', authenticate, handleInvoiceCreate);
+// ---- explicit routes to avoid 404s from wildcard matching ----
+app.post(['/api/invoices/create', '/api/invoices/create/'], authenticate, handleInvoiceCreate);
 
 // ============================================
 // GENERATE INVOICE PDF
