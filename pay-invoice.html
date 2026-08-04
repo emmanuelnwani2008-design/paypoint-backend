@@ -60,55 +60,97 @@
     </div>
 
     <script>
-        const API_URL = window.__API_URL__ || (
-            window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-                ? '/api'
-                : 'https://paypoint-7dmc.onrender.com/api'
-        );
-        const params = new URLSearchParams(window.location.search);
-        const dealId = params.get('deal');
+    const API_URL = window.__API_URL__ || (
+        window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+            ? '/api'
+            : 'https://paypoint-7dmc.onrender.com/api'
+    );
+    const params = new URLSearchParams(window.location.search);
+    const dealId = params.get('deal');
 
+    const loadingIndicator = document.getElementById('loadingIndicator');
+    const errorMessage = document.getElementById('errorMessage');
+    const payNowBtn = document.getElementById('payNowBtn');
+    const invoiceInfo = document.getElementById('invoiceInfo');
+
+    async function loadInvoice() {
         if (!dealId) {
-            document.getElementById('errorMessage').textContent = '❌ Invalid invoice link.';
-            document.getElementById('errorMessage').style.display = 'block';
-            document.getElementById('loadingIndicator').style.display = 'none';
+            errorMessage.textContent = '❌ Invalid invoice link.';
+            errorMessage.style.display = 'block';
+            loadingIndicator.style.display = 'none';
+            return;
         }
 
-        document.getElementById('payNowBtn').addEventListener('click', async () => {
-            try {
-                document.getElementById('payNowBtn').disabled = true;
-                document.getElementById('payNowBtn').textContent = '⏳ Processing...';
+        try {
+            const res = await fetch(`${API_URL}/public/deal/${dealId}`);
+            const data = await res.json();
 
-                const token = localStorage.getItem('paypoint_session');
-                const res = await fetch(`${API_URL}/payments/initialize`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        ...(token ? { 'Authorization': `Bearer ${token}` } : {})
-                    },
-                    body: JSON.stringify({
-                        dealId: dealId,
-                        email: 'customer@paypoint.com'
-                    })
-                });
-
-                const data = await res.json();
-
-                if (data.success && data.authorization_url) {
-                    window.location.href = data.authorization_url;
-                } else {
-                    document.getElementById('errorMessage').textContent = '❌ ' + (data.error || 'Payment initialization failed');
-                    document.getElementById('errorMessage').style.display = 'block';
-                    document.getElementById('payNowBtn').disabled = false;
-                    document.getElementById('payNowBtn').textContent = '💳 Proceed to Pay';
-                }
-            } catch (err) {
-                document.getElementById('errorMessage').textContent = '❌ Could not connect to server.';
-                document.getElementById('errorMessage').style.display = 'block';
-                document.getElementById('payNowBtn').disabled = false;
-                document.getElementById('payNowBtn').textContent = '💳 Proceed to Pay';
+            if (!data.success || !data.data) {
+                errorMessage.textContent = '❌ Invoice not found.';
+                errorMessage.style.display = 'block';
+                loadingIndicator.style.display = 'none';
+                return;
             }
-        });
-    </script>
+
+            const deal = data.data;
+            const currencySymbol = deal.currency === 'USD' ? '$' : '₦';
+            const formattedAmount = currencySymbol + Number(deal.amount).toLocaleString();
+
+            invoiceInfo.innerHTML = `
+                <strong>${deal.brand_name}</strong><br>
+                Amount: <span style="font-size: 24px; font-weight: bold; color: #4F7CFF;">${formattedAmount}</span><br>
+                Deliverable: ${deal.deliverable || 'Not specified'}<br>
+                Due: ${deal.due_date ? new Date(deal.due_date).toLocaleDateString() : 'Not set'}
+            `;
+
+            loadingIndicator.style.display = 'none';
+            payNowBtn.style.display = 'block';
+
+        } catch (err) {
+            errorMessage.textContent = '❌ Could not load invoice details. Please try again.';
+            errorMessage.style.display = 'block';
+            loadingIndicator.style.display = 'none';
+        }
+    }
+
+    loadInvoice();
+
+    // Payment button handler (unchanged)
+    payNowBtn.addEventListener('click', async () => {
+        try {
+            payNowBtn.disabled = true;
+            payNowBtn.textContent = '⏳ Processing...';
+
+            const token = localStorage.getItem('paypoint_session');
+            const res = await fetch(`${API_URL}/payments/initialize`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+                },
+                body: JSON.stringify({
+                    dealId: dealId,
+                    email: 'customer@paypoint.com'
+                })
+            });
+
+            const data = await res.json();
+
+            if (data.success && data.authorization_url) {
+                window.location.href = data.authorization_url;
+            } else {
+                errorMessage.textContent = '❌ ' + (data.error || 'Payment initialization failed');
+                errorMessage.style.display = 'block';
+                payNowBtn.disabled = false;
+                payNowBtn.textContent = '💳 Proceed to Pay';
+            }
+        } catch (err) {
+            errorMessage.textContent = '❌ Could not connect to server.';
+            errorMessage.style.display = 'block';
+            payNowBtn.disabled = false;
+            payNowBtn.textContent = '💳 Proceed to Pay';
+        }
+    });
+</script>
 </body>
 </html>

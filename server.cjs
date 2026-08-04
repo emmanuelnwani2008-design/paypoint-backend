@@ -341,6 +341,27 @@ app.get('/api/test', (req, res) => {
     res.json({ status: 'ok', message: 'This is the latest code!' });
 });
 
+// ---- PUBLIC: Get deal details for payment portal (no auth required) ----
+app.get('/api/public/deal/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { data: deal, error } = await supabase
+            .from('deals')
+            .select('id, brand_name, amount, currency, due_date, deliverable, status')
+            .eq('id', id)
+            .single();
+
+        if (error || !deal) {
+            return res.status(404).json({ error: 'Deal not found' });
+        }
+
+        res.json({ success: true, data: deal });
+    } catch (err) {
+        console.error('Public deal fetch error:', err);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
 // ============================================
 // AUTH ROUTES
 // ============================================
