@@ -342,16 +342,18 @@ app.get('/api/test', (req, res) => {
 });
 
 // ---- PUBLIC: Get deal details for payment portal (no auth required) ----
+// Use the service-role (admin) client to avoid RLS denying anonymous reads
 app.get('/api/public/deal/:id', async (req, res) => {
     try {
         const { id } = req.params;
-        const { data: deal, error } = await supabase
+        const { data: deal, error } = await supabaseAdmin
             .from('deals')
             .select('id, brand_name, amount, currency, due_date, deliverable, status')
             .eq('id', id)
             .single();
 
         if (error || !deal) {
+            console.error('Public deal fetch: not found or error', error);
             return res.status(404).json({ error: 'Deal not found' });
         }
 
