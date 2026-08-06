@@ -15,20 +15,19 @@
         display: none !important;
     }
 
-    /* Keep the logo visible, center it */
+    /* ====== 2. LOGO STAYS LEFT-ALIGNED (not centered) ====== */
     .navbar .logo {
         display: flex !important;
-        justify-content: center;
-        width: 100%;
+        /* no centering – just keep it left */
     }
     .navbar {
         flex-direction: row !important;
-        justify-content: center !important;
+        justify-content: flex-start !important;
         padding: 12px 0 !important;
         border-bottom: 1px solid #E8EDF2;
     }
 
-    /* ====== 2. SHOW BOTTOM NAVIGATION ====== */
+    /* ====== 3. SHOW BOTTOM NAVIGATION ====== */
     .bottom-nav {
         display: flex !important;
         position: fixed;
@@ -82,14 +81,14 @@
         font-weight: 500;
     }
 
-    /* ====== 3. ADD PADDING SO CONTENT ISN'T HIDDEN ====== */
+    /* ====== 4. ADD PADDING SO CONTENT ISN'T HIDDEN ====== */
     .app-container,
     .main-content,
     .container {
         padding-bottom: 80px !important;
     }
 
-    /* ====== 4. TOUCH-FRIENDLY INPUTS & BUTTONS ====== */
+    /* ====== 5. TOUCH-FRIENDLY INPUTS & BUTTONS ====== */
     button,
     .btn-primary,
     .btn-secondary,
@@ -98,7 +97,7 @@
     input,
     select,
     textarea {
-        font-size: 16px !important; /* prevents iOS zoom */
+        font-size: 16px !important;
         min-height: 48px;
     }
 
@@ -108,7 +107,7 @@
         padding: 12px 14px;
     }
 
-    /* ====== 5. FULL-WIDTH MODALS (slide up) ====== */
+    /* ====== 6. FULL-WIDTH MODALS (slide up) ====== */
     .modal-overlay.active {
         align-items: flex-end !important;
     }
@@ -126,7 +125,7 @@
         flex-direction: column !important;
     }
 
-    /* ====== 6. COMPACT CARDS & PANELS ====== */
+    /* ====== 7. COMPACT CARDS & PANELS ====== */
     .card,
     .panel,
     .deal-card,
@@ -137,7 +136,7 @@
         margin-bottom: 12px !important;
     }
 
-    /* ====== 7. ADJUST OTHER LAYOUTS ====== */
+    /* ====== 8. ADJUST OTHER LAYOUTS ====== */
     .profile-grid {
         grid-template-columns: 1fr !important;
     }
@@ -181,6 +180,7 @@
         width: 100% !important;
     }
 
+    /* ====== 9. SIDEBAR (if used) ====== */
     .sidebar {
         transform: translateX(-100%);
         width: 280px;
