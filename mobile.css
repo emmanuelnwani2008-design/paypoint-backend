@@ -10,15 +10,16 @@
 
 @media (max-width: 768px) {
 
-    /* ====== 1. HIDE TOP NAVBAR LINKS ON MOBILE ====== */
-    .navbar .nav-links {
+    /* ====== 1. HIDE EVERYTHING IN TOP NAVBAR EXCEPT LOGO ====== */
+    .navbar > *:not(.logo) {
         display: none !important;
     }
 
-    /* ====== 2. LOGO STAYS LEFT-ALIGNED (not centered) ====== */
+    /* ====== 2. LOGO STAYS LEFT-ALIGNED ====== */
     .navbar .logo {
         display: flex !important;
-        /* no centering – just keep it left */
+        justify-content: flex-start;
+        width: auto;
     }
     .navbar {
         flex-direction: row !important;
