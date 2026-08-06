@@ -1,11 +1,36 @@
-/* Mobile bottom navigation – hidden on desktop */
+/* ============================================
+   MOBILE STYLES – only applies on screens ≤ 768px
+   Desktop stays exactly the same
+   ============================================ */
+
+/* ----- Hide bottom nav on desktop ----- */
 .bottom-nav {
     display: none;
 }
 
 @media (max-width: 768px) {
+
+    /* ====== 1. HIDE TOP NAVBAR LINKS ON MOBILE ====== */
+    .navbar .nav-links {
+        display: none !important;
+    }
+
+    /* Keep the logo visible, center it */
+    .navbar .logo {
+        display: flex !important;
+        justify-content: center;
+        width: 100%;
+    }
+    .navbar {
+        flex-direction: row !important;
+        justify-content: center !important;
+        padding: 12px 0 !important;
+        border-bottom: 1px solid #E8EDF2;
+    }
+
+    /* ====== 2. SHOW BOTTOM NAVIGATION ====== */
     .bottom-nav {
-        display: flex;
+        display: flex !important;
         position: fixed;
         bottom: 0;
         left: 0;
@@ -17,6 +42,7 @@
         z-index: 1000;
         box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
     }
+
     .bottom-nav a {
         display: flex;
         flex-direction: column;
@@ -28,9 +54,11 @@
         min-width: 50px;
         padding: 4px 0;
     }
+
     .bottom-nav a.active {
         color: #4F7CFF;
     }
+
     .bottom-nav a .icon {
         font-size: 22px;
         height: 28px;
@@ -38,67 +66,133 @@
         align-items: center;
         justify-content: center;
     }
+
     .bottom-nav a .icon img {
         max-height: 22px;
         max-width: 22px;
         object-fit: contain;
     }
+
     .bottom-nav a .fallback {
         font-size: 22px;
     }
+
     .bottom-nav a span:last-child {
         font-size: 10px;
         font-weight: 500;
     }
 
-    /* Add padding so content isn't hidden behind nav */
-    .app-container, .main-content, .container {
-        padding-bottom: 80px;
+    /* ====== 3. ADD PADDING SO CONTENT ISN'T HIDDEN ====== */
+    .app-container,
+    .main-content,
+    .container {
+        padding-bottom: 80px !important;
     }
 
-    /* Touch-friendly inputs */
-    button, .btn-primary, .btn-secondary, .btn-save, .btn-cancel,
-    input, select, textarea {
-        font-size: 16px !important;
+    /* ====== 4. TOUCH-FRIENDLY INPUTS & BUTTONS ====== */
+    button,
+    .btn-primary,
+    .btn-secondary,
+    .btn-save,
+    .btn-cancel,
+    input,
+    select,
+    textarea {
+        font-size: 16px !important; /* prevents iOS zoom */
         min-height: 48px;
     }
-    input, select, textarea {
+
+    input,
+    select,
+    textarea {
         padding: 12px 14px;
     }
 
-    /* Full-width modals (slide up) */
+    /* ====== 5. FULL-WIDTH MODALS (slide up) ====== */
     .modal-overlay.active {
-        align-items: flex-end;
+        align-items: flex-end !important;
     }
+
     .modal {
         max-height: 90vh;
-        border-radius: 20px 20px 0 0;
-        margin: 0;
-        padding: 24px 20px 32px;
-        width: 100%;
-        max-width: 100%;
+        border-radius: 20px 20px 0 0 !important;
+        margin: 0 !important;
+        padding: 24px 20px 32px !important;
+        width: 100% !important;
+        max-width: 100% !important;
     }
+
     .modal-actions {
-        flex-direction: column;
+        flex-direction: column !important;
     }
 
-    /* Compact cards */
-    .card, .panel, .deal-card, .invoice-card, .profile-card {
-        padding: 16px;
-        border-radius: 12px;
-        margin-bottom: 12px;
+    /* ====== 6. COMPACT CARDS & PANELS ====== */
+    .card,
+    .panel,
+    .deal-card,
+    .invoice-card,
+    .profile-card {
+        padding: 16px !important;
+        border-radius: 12px !important;
+        margin-bottom: 12px !important;
     }
 
-    /* Navbar adjustments */
-    .navbar {
-        flex-direction: column;
-        align-items: stretch;
-        gap: 10px;
-        padding-bottom: 16px;
+    /* ====== 7. ADJUST OTHER LAYOUTS ====== */
+    .profile-grid {
+        grid-template-columns: 1fr !important;
     }
-    .nav-links {
-        flex-wrap: wrap;
-        justify-content: center;
-        gap: 10px;
+
+    .stats-row,
+    .metrics-grid {
+        grid-template-columns: 1fr 1fr !important;
+        gap: 12px !important;
+    }
+
+    .split-panel {
+        grid-template-columns: 1fr !important;
+    }
+
+    .page-header {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 12px !important;
+    }
+
+    .search-filter-row {
+        flex-direction: column !important;
+    }
+
+    .table-container {
+        overflow-x: auto !important;
+    }
+
+    table {
+        font-size: 12px !important;
+    }
+
+    th, td {
+        padding: 10px 12px !important;
+    }
+
+    .form-actions {
+        flex-direction: column !important;
+    }
+    .form-actions button {
+        width: 100% !important;
+    }
+
+    .sidebar {
+        transform: translateX(-100%);
+        width: 280px;
+        box-shadow: 2px 0 24px rgba(0,0,0,0.08);
+    }
+    .sidebar.open {
+        transform: translateX(0);
+    }
+    .sidebar-overlay.active {
+        display: block;
+    }
+    .menu-toggle {
+        display: block !important;
     }
 }
