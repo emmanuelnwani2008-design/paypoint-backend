@@ -10,7 +10,10 @@
 
 @media (max-width: 768px) {
 
-    /* ====== 1. HIDE EVERYTHING IN TOP NAVBAR EXCEPT LOGO ====== */
+    /* ====== 1. HIDE ALL TOP NAVBAR LINKS & BADGES (ONLY LOGO STAYS) ====== */
+    .navbar .nav-links,
+    .navbar .user-badge,
+    .navbar .logout,
     .navbar > *:not(.logo) {
         display: none !important;
     }
@@ -28,7 +31,7 @@
         border-bottom: 1px solid #E8EDF2;
     }
 
-    /* ====== 3. SHOW BOTTOM NAVIGATION ====== */
+    /* ====== 3. SHOW BOTTOM NAVIGATION – BIGGER BUTTONS ====== */
     .bottom-nav {
         display: flex !important;
         position: fixed;
@@ -38,7 +41,7 @@
         background: #FFFFFF;
         border-top: 1px solid #E8EDF2;
         justify-content: space-around;
-        padding: 6px 0 10px;
+        padding: 10px 0 14px;  /* increased vertical padding */
         z-index: 1000;
         box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
     }
@@ -47,12 +50,12 @@
         display: flex;
         flex-direction: column;
         align-items: center;
-        font-size: 10px;
+        font-size: 12px;       /* bigger text */
         color: #8A9AAB;
         text-decoration: none;
-        gap: 2px;
-        min-width: 50px;
-        padding: 4px 0;
+        gap: 4px;              /* more space between icon and label */
+        min-width: 60px;       /* wider tap target */
+        padding: 6px 0;        /* more vertical padding */
     }
 
     .bottom-nav a.active {
@@ -60,25 +63,25 @@
     }
 
     .bottom-nav a .icon {
-        font-size: 22px;
-        height: 28px;
+        font-size: 28px;       /* bigger icons */
+        height: 34px;
         display: flex;
         align-items: center;
         justify-content: center;
     }
 
     .bottom-nav a .icon img {
-        max-height: 22px;
-        max-width: 22px;
+        max-height: 28px;
+        max-width: 28px;
         object-fit: contain;
     }
 
     .bottom-nav a .fallback {
-        font-size: 22px;
+        font-size: 28px;
     }
 
     .bottom-nav a span:last-child {
-        font-size: 10px;
+        font-size: 11px;       /* slightly bigger label */
         font-weight: 500;
     }
 
@@ -86,7 +89,7 @@
     .app-container,
     .main-content,
     .container {
-        padding-bottom: 80px !important;
+        padding-bottom: 90px !important; /* more space for bigger nav */
     }
 
     /* ====== 5. TOUCH-FRIENDLY INPUTS & BUTTONS ====== */
@@ -101,7 +104,6 @@
         font-size: 16px !important;
         min-height: 48px;
     }
-
     input,
     select,
     textarea {
@@ -112,7 +114,6 @@
     .modal-overlay.active {
         align-items: flex-end !important;
     }
-
     .modal {
         max-height: 90vh;
         border-radius: 20px 20px 0 0 !important;
@@ -121,7 +122,6 @@
         width: 100% !important;
         max-width: 100% !important;
     }
-
     .modal-actions {
         flex-direction: column !important;
     }
@@ -141,39 +141,31 @@
     .profile-grid {
         grid-template-columns: 1fr !important;
     }
-
     .stats-row,
     .metrics-grid {
         grid-template-columns: 1fr 1fr !important;
         gap: 12px !important;
     }
-
     .split-panel {
         grid-template-columns: 1fr !important;
     }
-
     .page-header {
         flex-direction: column !important;
         align-items: flex-start !important;
         gap: 12px !important;
     }
-
     .search-filter-row {
         flex-direction: column !important;
     }
-
     .table-container {
         overflow-x: auto !important;
     }
-
     table {
         font-size: 12px !important;
     }
-
     th, td {
         padding: 10px 12px !important;
     }
-
     .form-actions {
         flex-direction: column !important;
     }
