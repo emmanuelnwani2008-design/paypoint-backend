@@ -1,0 +1,104 @@
+/* Mobile bottom navigation – hidden on desktop */
+.bottom-nav {
+    display: none;
+}
+
+@media (max-width: 768px) {
+    .bottom-nav {
+        display: flex;
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: #FFFFFF;
+        border-top: 1px solid #E8EDF2;
+        justify-content: space-around;
+        padding: 6px 0 10px;
+        z-index: 1000;
+        box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
+    }
+    .bottom-nav a {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        font-size: 10px;
+        color: #8A9AAB;
+        text-decoration: none;
+        gap: 2px;
+        min-width: 50px;
+        padding: 4px 0;
+    }
+    .bottom-nav a.active {
+        color: #4F7CFF;
+    }
+    .bottom-nav a .icon {
+        font-size: 22px;
+        height: 28px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .bottom-nav a .icon img {
+        max-height: 22px;
+        max-width: 22px;
+        object-fit: contain;
+    }
+    .bottom-nav a .fallback {
+        font-size: 22px;
+    }
+    .bottom-nav a span:last-child {
+        font-size: 10px;
+        font-weight: 500;
+    }
+
+    /* Add padding so content isn't hidden behind nav */
+    .app-container, .main-content, .container {
+        padding-bottom: 80px;
+    }
+
+    /* Touch-friendly inputs */
+    button, .btn-primary, .btn-secondary, .btn-save, .btn-cancel,
+    input, select, textarea {
+        font-size: 16px !important;
+        min-height: 48px;
+    }
+    input, select, textarea {
+        padding: 12px 14px;
+    }
+
+    /* Full-width modals (slide up) */
+    .modal-overlay.active {
+        align-items: flex-end;
+    }
+    .modal {
+        max-height: 90vh;
+        border-radius: 20px 20px 0 0;
+        margin: 0;
+        padding: 24px 20px 32px;
+        width: 100%;
+        max-width: 100%;
+    }
+    .modal-actions {
+        flex-direction: column;
+    }
+
+    /* Compact cards */
+    .card, .panel, .deal-card, .invoice-card, .profile-card {
+        padding: 16px;
+        border-radius: 12px;
+        margin-bottom: 12px;
+    }
+
+    /* Navbar adjustments */
+    .navbar {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+        padding-bottom: 16px;
+    }
+    .nav-links {
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 10px;
+    }
+}
