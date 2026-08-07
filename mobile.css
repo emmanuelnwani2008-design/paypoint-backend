@@ -3,33 +3,61 @@
    Desktop stays exactly the same
    ============================================ */
 
+/* stylelint-disable */
+
 /* ----- Hide bottom nav on desktop ----- */
 .bottom-nav {
     display: none;
 }
 
-/* ============================================
-   PREMIUM BLUE FLOATING GLASS NAV (Mobile only)
-   ============================================ */
-
-/* stylelint-disable */
-
 @media (max-width: 768px) {
 
+    /* ====== 1. COMPLETELY HIDE TOP NAVBAR LINKS ON MOBILE ====== */
+    .navbar .nav-links,
+    .navbar .user-badge,
+    .navbar .logout,
+    .navbar .upgrade-btn,
+    .navbar > *:not(.logo) {
+        display: none !important;
+        visibility: hidden !important;
+        opacity: 0 !important;
+        height: 0 !important;
+        width: 0 !important;
+        overflow: hidden !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        border: none !important;
+        pointer-events: none !important;
+    }
+
+    /* ====== 2. LOGO STAYS LEFT-ALIGNED ====== */
+    .navbar .logo {
+        display: flex !important;
+        justify-content: flex-start;
+        width: auto;
+    }
+    .navbar {
+        flex-direction: row !important;
+        justify-content: flex-start !important;
+        padding: 12px 0 !important;
+        border-bottom: 1px solid #E8EDF2;
+    }
+
+    /* ====== 3. PREMIUM BLUE FLOATING BOTTOM NAV ====== */
     .bottom-nav {
         display: flex !important;
         position: fixed;
         bottom: 20px;
         left: 16px;
         right: 16px;
-        background: linear-gradient(135deg, rgba(60, 40, 130, 0.55) 0%, rgba(30, 20, 80, 0.55) 100%);
+        background: linear-gradient(135deg, rgba(60, 40, 130, 0.6) 0%, rgba(30, 20, 80, 0.6) 100%);
         backdrop-filter: blur(20px);
         -webkit-backdrop-filter: blur(20px);
         border: 1px solid rgba(255, 255, 255, 0.1);
         border-radius: 50px;
         justify-content: space-around;
         align-items: center;
-        padding: 8px;
+        padding: 10px 12px;
         z-index: 1000;
         box-shadow: 0 8px 32px rgba(30, 10, 80, 0.45);
     }
@@ -38,31 +66,31 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        width: 48px;
-        height: 48px;
+        width: 56px;
+        height: 56px;
         border-radius: 50%;
         text-decoration: none;
         transition: all 0.25s ease;
         position: relative;
     }
 
-    /* ----- Icons (default state, no fading) ----- */
+    /* ----- Icons – LARGER ----- */
     .bottom-nav a .icon,
     .bottom-nav a .fallback {
-        font-size: 22px;
+        font-size: 28px;
         display: flex;
         align-items: center;
         justify-content: center;
-        color: #FFFFFF;
+        color: rgba(255, 255, 255, 0.7);
         opacity: 1;
     }
 
     .bottom-nav a .icon img {
-        max-height: 22px;
-        max-width: 22px;
+        max-height: 28px;
+        max-width: 28px;
         object-fit: contain;
         filter: brightness(0) invert(1);
-        opacity: 1;
+        opacity: 0.8;
     }
 
     /* Hide text labels for icon-only floating style */
@@ -86,22 +114,14 @@
         opacity: 1;
     }
 
-    /* ----- Accent button (e.g. scan/action icon) ----- */
-    .bottom-nav a.accent {
-        background: linear-gradient(135deg, #7B5CFF 0%, #4F46E5 100%);
-        box-shadow: 0 0 20px rgba(123, 92, 255, 0.5);
-    }
-
-    /* ----- Padding for content ----- */
+    /* ====== 4. PADDING FOR CONTENT ====== */
     .app-container,
     .main-content,
     .container {
         padding-bottom: 100px !important;
     }
-}
 
-
-    /* ====== 5. TOUCH-FRIENDLY INPUTS & BUTTONS ====== */
+    /* ====== 5. TOUCH-FRIENDLY INPUTS ====== */
     button,
     .btn-primary,
     .btn-secondary,
@@ -119,7 +139,7 @@
         padding: 12px 14px;
     }
 
-    /* ====== 6. FULL-WIDTH MODALS (slide up) ====== */
+    /* ====== 6. FULL-WIDTH MODALS ====== */
     .modal-overlay.active {
         align-items: flex-end !important;
     }
@@ -135,7 +155,7 @@
         flex-direction: column !important;
     }
 
-    /* ====== 7. COMPACT CARDS & PANELS ====== */
+    /* ====== 7. COMPACT CARDS ====== */
     .card,
     .panel,
     .deal-card,
@@ -146,7 +166,7 @@
         margin-bottom: 12px !important;
     }
 
-    /* ====== 8. ADJUST OTHER LAYOUTS ====== */
+    /* ====== 8. LAYOUT ADJUSTMENTS ====== */
     .profile-grid {
         grid-template-columns: 1fr !important;
     }
@@ -172,7 +192,8 @@
     table {
         font-size: 12px !important;
     }
-    th, td {
+    th,
+    td {
         padding: 10px 12px !important;
     }
     .form-actions {
@@ -182,11 +203,11 @@
         width: 100% !important;
     }
 
-    /* ====== 9. SIDEBAR (if used) ====== */
+    /* ====== 9. SIDEBAR ====== */
     .sidebar {
         transform: translateX(-100%);
         width: 280px;
-        box-shadow: 2px 0 24px rgba(0,0,0,0.08);
+        box-shadow: 2px 0 24px rgba(0, 0, 0, 0.08);
     }
     .sidebar.open {
         transform: translateX(0);
