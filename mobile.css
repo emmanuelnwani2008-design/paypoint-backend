@@ -8,90 +8,100 @@
     display: none;
 }
 
+/* ============================================
+   PREMIUM BLUE BOTTOM NAV (Mobile only)
+   ============================================ */
+
 @media (max-width: 768px) {
 
-    /* ====== 1. HIDE ALL TOP NAVBAR LINKS & BADGES (ONLY LOGO STAYS) ====== */
-    .navbar .nav-links,
-    .navbar .user-badge,
-    .navbar .logout,
-    .navbar > *:not(.logo) {
-        display: none !important;
-    }
-
-    /* ====== 2. LOGO STAYS LEFT-ALIGNED ====== */
-    .navbar .logo {
-        display: flex !important;
-        justify-content: flex-start;
-        width: auto;
-    }
-    .navbar {
-        flex-direction: row !important;
-        justify-content: flex-start !important;
-        padding: 12px 0 !important;
-        border-bottom: 1px solid #E8EDF2;
-    }
-
-    /* ====== 3. SHOW BOTTOM NAVIGATION – BIGGER BUTTONS ====== */
     .bottom-nav {
         display: flex !important;
         position: fixed;
         bottom: 0;
         left: 0;
         right: 0;
-        background: #FFFFFF;
-        border-top: 1px solid #E8EDF2;
+        background: rgba(10, 20, 50, 0.92);     /* deep navy blue */
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border-top: 1px solid rgba(79, 124, 255, 0.15);  /* subtle blue border */
         justify-content: space-around;
-        padding: 10px 0 14px;  /* increased vertical padding */
+        padding: 8px 0 14px;
         z-index: 1000;
-        box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
+        box-shadow: 0 -8px 32px rgba(42, 76, 255, 0.25);
     }
 
     .bottom-nav a {
         display: flex;
         flex-direction: column;
         align-items: center;
-        font-size: 13px;       /* bigger text */
-        color: #8A9AAB;
+        justify-content: center;
+        font-size: 10px;
+        color: rgba(255, 255, 255, 0.45);        /* dim inactive */
         text-decoration: none;
-        gap: 6px;              /* more space between icon and label */
-        min-width: 68px;       /* wider tap target */
-        padding: 10px 0;       /* more vertical padding */
+        gap: 3px;
+        min-width: 60px;
+        padding: 6px 14px;
+        border-radius: 30px;
+        transition: all 0.25s ease;
+        position: relative;
     }
 
+    /* ----- Active: Bright blue pill ----- */
     .bottom-nav a.active {
-        color: #4F7CFF;
+        color: #FFFFFF;
+        background: rgba(79, 124, 255, 0.25);     /* translucent blue pill */
+        box-shadow: 0 0 20px rgba(79, 124, 255, 0.15);
     }
 
+    /* ----- Icons ----- */
     .bottom-nav a .icon {
-        font-size: 34px;       /* bigger icons */
-        height: 42px;
-        width: 42px;
+        font-size: 26px;
+        height: 32px;
         display: flex;
         align-items: center;
         justify-content: center;
     }
 
     .bottom-nav a .icon img {
-        max-height: 34px;
-        max-width: 34px;
+        max-height: 26px;
+        max-width: 26px;
         object-fit: contain;
+        filter: brightness(0) invert(1);           /* makes icons white */
+        opacity: 0.7;
+    }
+
+    .bottom-nav a.active .icon img {
+        opacity: 1;
     }
 
     .bottom-nav a .fallback {
-        font-size: 34px;
+        font-size: 26px;
+        color: inherit;
+        opacity: 0.7;
+    }
+
+    .bottom-nav a.active .fallback {
+        opacity: 1;
     }
 
     .bottom-nav a span:last-child {
-        font-size: 12px;       /* slightly bigger label */
+        font-size: 10px;
         font-weight: 500;
+        letter-spacing: 0.3px;
+        color: rgba(255, 255, 255, 0.5);
     }
 
-    /* ====== 4. ADD PADDING SO CONTENT ISN'T HIDDEN ====== */
+    .bottom-nav a.active span:last-child {
+        color: #FFFFFF;
+    }
+
+    /* ----- Padding for content ----- */
     .app-container,
     .main-content,
     .container {
-        padding-bottom: 90px !important; /* more space for bigger nav */
+        padding-bottom: 85px !important;
     }
+}
 
     /* ====== 5. TOUCH-FRIENDLY INPUTS & BUTTONS ====== */
     button,
