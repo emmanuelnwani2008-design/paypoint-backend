@@ -546,20 +546,20 @@ overflow-y: auto;
         <!-- ==========================================
         NAVBAR
         ========================================== -->
-        <a href="dashboard.html" class="logo">
-    <img src="logo.png" alt="PayPoint" onerror="this.style.display='none'">
-    PayPoint <span>· Deals</span>
-</a>
-            
-<div class="nav-links">
-    <a href="dashboard.html">Dashboard</a>
-    <a href="deals.html" class="active">Deals</a>
-    <a href="expense.html">Expenses</a>
-    <a href="invoice.html">Invoices</a>
-    <a href="creator.html">Creator</a>
-    <span class="user-badge" id="userBadge">👤 Creator</span>
-    <a href="#" class="logout" id="navLogout">Logout</a>
-</div>
+        <nav class="navbar">
+            <a href="dashboard.html" class="logo">
+                <img src="logo.png" alt="PayPoint" onerror="this.style.display='none'">
+                PayPoint <span>· Deals</span>
+            </a>
+            <div class="nav-links">
+                <a href="dashboard.html">Dashboard</a>
+                <a href="deals.html" class="active">Deals</a>
+                <a href="expense.html">Expenses</a>
+                <a href="invoice.html">Invoices</a>
+                <a href="creator.html">Creator</a>
+                <span class="user-badge" id="userBadge">👤 Creator</span>
+                <a href="#" class="logout" id="navLogout">Logout</a>
+            </div>
         </nav>
 
         <!-- ==========================================
@@ -740,14 +740,14 @@ Example: 'Brand wants 3 TikTok videos. Must use #GalaxyAI. Sarah is the contact.
     </a>
     <a href="expense.html">
         <span class="icon">
-            <img src="credit-card.png" alt="Expenses" onerror="this.style.display='none'">
+            <img src="credit-card.png" alt="Expenses" onerror="this.style.display='none'; this.parentElement.querySelector('.fallback').style.display='inline';">
             <span class="fallback" style="display:none;">💳</span>
         </span>
         <span>Expenses</span>
     </a>
     <a href="invoice.html">
         <span class="icon">
-            <img src="file-invoice.png" alt="Invoices" onerror="this.style.display='none'">
+            <img src="file-invoice.png" alt="Invoices" onerror="this.style.display='none'; this.parentElement.querySelector('.fallback').style.display='inline';">
             <span class="fallback" style="display:none;">📄</span>
         </span>
         <span>Invoices</span>
