@@ -9,99 +9,97 @@
 }
 
 /* ============================================
-   PREMIUM BLUE BOTTOM NAV (Mobile only)
+   PREMIUM BLUE FLOATING GLASS NAV (Mobile only)
    ============================================ */
+
+/* stylelint-disable */
 
 @media (max-width: 768px) {
 
     .bottom-nav {
         display: flex !important;
         position: fixed;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        background: rgba(10, 20, 50, 0.92);     /* deep navy blue */
-        backdrop-filter: blur(12px);
-        -webkit-backdrop-filter: blur(12px);
-        border-top: 1px solid rgba(79, 124, 255, 0.15);  /* subtle blue border */
+        bottom: 20px;
+        left: 16px;
+        right: 16px;
+        background: linear-gradient(135deg, rgba(60, 40, 130, 0.55) 0%, rgba(30, 20, 80, 0.55) 100%);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 50px;
         justify-content: space-around;
-        padding: 8px 0 14px;
+        align-items: center;
+        padding: 8px;
         z-index: 1000;
-        box-shadow: 0 -8px 32px rgba(42, 76, 255, 0.25);
+        box-shadow: 0 8px 32px rgba(30, 10, 80, 0.45);
     }
 
     .bottom-nav a {
         display: flex;
-        flex-direction: column;
         align-items: center;
         justify-content: center;
-        font-size: 10px;
-        color: rgba(255, 255, 255, 0.45);        /* dim inactive */
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
         text-decoration: none;
-        gap: 3px;
-        min-width: 60px;
-        padding: 6px 14px;
-        border-radius: 30px;
         transition: all 0.25s ease;
         position: relative;
     }
 
-    /* ----- Active: Bright blue pill ----- */
-    .bottom-nav a.active {
-        color: #FFFFFF;
-        background: rgba(79, 124, 255, 0.25);     /* translucent blue pill */
-        box-shadow: 0 0 20px rgba(79, 124, 255, 0.15);
-    }
-
-    /* ----- Icons ----- */
-    .bottom-nav a .icon {
-        font-size: 26px;
-        height: 32px;
+    /* ----- Icons (default state, no fading) ----- */
+    .bottom-nav a .icon,
+    .bottom-nav a .fallback {
+        font-size: 22px;
         display: flex;
         align-items: center;
         justify-content: center;
+        color: #FFFFFF;
+        opacity: 1;
     }
 
     .bottom-nav a .icon img {
-        max-height: 26px;
-        max-width: 26px;
+        max-height: 22px;
+        max-width: 22px;
         object-fit: contain;
-        filter: brightness(0) invert(1);           /* makes icons white */
-        opacity: 0.7;
+        filter: brightness(0) invert(1);
+        opacity: 1;
+    }
+
+    /* Hide text labels for icon-only floating style */
+    .bottom-nav a span:last-child {
+        display: none;
+    }
+
+    /* ----- Active/current page: solid white circle ----- */
+    .bottom-nav a.active {
+        background: #FFFFFF;
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+    }
+
+    .bottom-nav a.active .icon,
+    .bottom-nav a.active .fallback {
+        color: #1a1035;
     }
 
     .bottom-nav a.active .icon img {
+        filter: none;
         opacity: 1;
     }
 
-    .bottom-nav a .fallback {
-        font-size: 26px;
-        color: inherit;
-        opacity: 0.7;
-    }
-
-    .bottom-nav a.active .fallback {
-        opacity: 1;
-    }
-
-    .bottom-nav a span:last-child {
-        font-size: 10px;
-        font-weight: 500;
-        letter-spacing: 0.3px;
-        color: rgba(255, 255, 255, 0.5);
-    }
-
-    .bottom-nav a.active span:last-child {
-        color: #FFFFFF;
+    /* ----- Accent button (e.g. scan/action icon) ----- */
+    .bottom-nav a.accent {
+        background: linear-gradient(135deg, #7B5CFF 0%, #4F46E5 100%);
+        box-shadow: 0 0 20px rgba(123, 92, 255, 0.5);
     }
 
     /* ----- Padding for content ----- */
     .app-container,
     .main-content,
     .container {
-        padding-bottom: 85px !important;
+        padding-bottom: 100px !important;
     }
 }
+
 
     /* ====== 5. TOUCH-FRIENDLY INPUTS & BUTTONS ====== */
     button,
