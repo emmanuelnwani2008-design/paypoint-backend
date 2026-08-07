@@ -1,11 +1,10 @@
 /* ============================================
-   MOBILE STYLES – only applies on screens ≤ 768px
-   Desktop stays exactly the same
+   PREMIUM BLUE GLASS NAVIGATION (Mobile only)
    ============================================ */
 
 /* stylelint-disable */
 
-/* ----- Hide bottom nav on desktop ----- */
+/* Hide bottom nav on desktop */
 .bottom-nav {
     display: none;
 }
@@ -43,25 +42,27 @@
         border-bottom: 1px solid #E8EDF2;
     }
 
-    /* ====== 3. PREMIUM BLUE FLOATING BOTTOM NAV ====== */
+    /* ====== 3. FLOATING GLASS BOTTOM NAV ====== */
     .bottom-nav {
         display: flex !important;
         position: fixed;
-        bottom: 20px;
-        left: 16px;
-        right: 16px;
-        background: linear-gradient(135deg, rgba(60, 40, 130, 0.6) 0%, rgba(30, 20, 80, 0.6) 100%);
-        backdrop-filter: blur(20px);
-        -webkit-backdrop-filter: blur(20px);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        border-radius: 50px;
+        bottom: 24px;
+        left: 20px;
+        right: 20px;
+        background: rgba(30, 20, 60, 0.65);
+        backdrop-filter: blur(24px);
+        -webkit-backdrop-filter: blur(24px);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 60px;
         justify-content: space-around;
         align-items: center;
-        padding: 10px 12px;
+        padding: 10px 16px;
         z-index: 1000;
-        box-shadow: 0 8px 32px rgba(30, 10, 80, 0.45);
+        box-shadow: 0 8px 40px rgba(30, 10, 80, 0.5);
+        height: 72px;
     }
 
+    /* ----- Each icon wrapper (uniform size) ----- */
     .bottom-nav a {
         display: flex;
         align-items: center;
@@ -70,58 +71,91 @@
         height: 56px;
         border-radius: 50%;
         text-decoration: none;
-        transition: all 0.25s ease;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         position: relative;
+        flex-shrink: 0;
     }
 
-    /* ----- Icons – LARGER ----- */
+    /* ----- Icons – LARGER AND PROPORTIONAL ----- */
     .bottom-nav a .icon,
     .bottom-nav a .fallback {
-        font-size: 28px;
+        font-size: 30px;
         display: flex;
         align-items: center;
         justify-content: center;
-        color: rgba(255, 255, 255, 0.7);
-        opacity: 1;
+        color: rgba(255, 255, 255, 0.6);
+        transition: all 0.3s ease;
+        width: 32px;
+        height: 32px;
     }
 
     .bottom-nav a .icon img {
-        max-height: 28px;
-        max-width: 28px;
+        max-height: 30px;
+        max-width: 30px;
         object-fit: contain;
         filter: brightness(0) invert(1);
-        opacity: 0.8;
+        opacity: 0.7;
+        transition: all 0.3s ease;
     }
 
-    /* Hide text labels for icon-only floating style */
+    /* Hide text labels for icon-only style */
     .bottom-nav a span:last-child {
         display: none;
     }
 
-    /* ----- Active/current page: solid white circle ----- */
+    /* ====== 4. ACTIVE STATE – Premium Blue Glassmorphism ====== */
     .bottom-nav a.active {
-        background: #FFFFFF;
-        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+        background: rgba(79, 124, 255, 0.2);
+        box-shadow: 
+            0 0 30px rgba(79, 124, 255, 0.15),
+            inset 0 0 20px rgba(79, 124, 255, 0.05);
+        border: 1px solid rgba(79, 124, 255, 0.15);
+        transform: scale(1.05);
     }
 
     .bottom-nav a.active .icon,
     .bottom-nav a.active .fallback {
-        color: #1a1035;
+        color: #FFFFFF;
+        transform: scale(1.1);
     }
 
     .bottom-nav a.active .icon img {
-        filter: none;
+        filter: brightness(0) invert(1);
         opacity: 1;
+        transform: scale(1.1);
     }
 
-    /* ====== 4. PADDING FOR CONTENT ====== */
+    /* ====== 5. ICON-SPECIFIC SIZE ADJUSTMENTS ====== */
+    /* Briefcase (Deals) – match visual weight of others */
+    .bottom-nav a[href="deals.html"] .icon img,
+    .bottom-nav a[href="deals.html"] .fallback {
+        transform: scale(1.05);
+    }
+
+    .bottom-nav a[href="deals.html"].active .icon img,
+    .bottom-nav a[href="deals.html"].active .fallback {
+        transform: scale(1.15);
+    }
+
+    /* Credit Card (Expenses) – ensure it's the same size */
+    .bottom-nav a[href="expense.html"] .icon img,
+    .bottom-nav a[href="expense.html"] .fallback {
+        transform: scale(1);
+    }
+
+    .bottom-nav a[href="expense.html"].active .icon img,
+    .bottom-nav a[href="expense.html"].active .fallback {
+        transform: scale(1.1);
+    }
+
+    /* ====== 6. PADDING FOR CONTENT ====== */
     .app-container,
     .main-content,
     .container {
-        padding-bottom: 100px !important;
+        padding-bottom: 110px !important;
     }
 
-    /* ====== 5. TOUCH-FRIENDLY INPUTS ====== */
+    /* ====== 7. TOUCH-FRIENDLY INPUTS ====== */
     button,
     .btn-primary,
     .btn-secondary,
@@ -139,7 +173,7 @@
         padding: 12px 14px;
     }
 
-    /* ====== 6. FULL-WIDTH MODALS ====== */
+    /* ====== 8. FULL-WIDTH MODALS ====== */
     .modal-overlay.active {
         align-items: flex-end !important;
     }
@@ -155,7 +189,7 @@
         flex-direction: column !important;
     }
 
-    /* ====== 7. COMPACT CARDS ====== */
+    /* ====== 9. COMPACT CARDS ====== */
     .card,
     .panel,
     .deal-card,
@@ -166,7 +200,7 @@
         margin-bottom: 12px !important;
     }
 
-    /* ====== 8. LAYOUT ADJUSTMENTS ====== */
+    /* ====== 10. LAYOUT ADJUSTMENTS ====== */
     .profile-grid {
         grid-template-columns: 1fr !important;
     }
@@ -203,7 +237,7 @@
         width: 100% !important;
     }
 
-    /* ====== 9. SIDEBAR ====== */
+    /* ====== 11. SIDEBAR ====== */
     .sidebar {
         transform: translateX(-100%);
         width: 280px;

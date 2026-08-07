@@ -724,20 +724,18 @@ Example: 'Brand wants 3 TikTok videos. Must use #GalaxyAI. Sarah is the contact.
     </div>
     <!-- Mobile Bottom Navigation -->
 <nav class="bottom-nav">
-    <a href="dashboard.html" class="active">
-        <span class="icon">
-            <img src="chart-pie.png" alt="Dashboard" onerror="this.style.display='none'">
-            <span class="fallback" style="display:none;">📊</span>
-        </span>
-        <span>Home</span>
-    </a>
-    <a href="deals.html">
-        <span class="icon">
-            <img src="handshake.png" alt="Deals" onerror="this.style.display='none'">
-            <span class="fallback" style="display:none;">🤝</span>
-        </span>
-        <span>Deals</span>
-    </a>
+    <a href="dashboard.html">
+    <span class="icon">
+        <img src="chart-pie.png" alt="Dashboard" onerror="this.style.display='none'; this.parentElement.querySelector('.fallback').style.display='inline';">
+        <span class="fallback" style="display:none;">📊</span>
+    </span>
+</a>
+<a href="deals.html" class="active">
+    <span class="icon">
+        <img src="handshake.png" alt="Deals" onerror="this.style.display='none'; this.parentElement.querySelector('.fallback').style.display='inline';">
+        <span class="fallback" style="display:none;">🤝</span>
+    </span>
+</a>
     <a href="expense.html">
         <span class="icon">
             <img src="credit-card.png" alt="Expenses" onerror="this.style.display='none'; this.parentElement.querySelector('.fallback').style.display='inline';">

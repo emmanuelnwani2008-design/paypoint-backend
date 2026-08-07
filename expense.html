@@ -688,13 +688,12 @@
         </span>
         <span>Deals</span>
     </a>
-    <a href="expense.html">
-        <span class="icon">
-            <img src="credit-card.png" alt="Expenses" onerror="this.style.display='none'">
-            <span class="fallback" style="display:none;">💳</span>
-        </span>
-        <span>Expenses</span>
-    </a>
+    <a href="expense.html" class="active">
+    <span class="icon">
+        <img src="credit-card.png" alt="Expenses" onerror="this.style.display='none'; this.parentElement.querySelector('.fallback').style.display='inline';">
+        <span class="fallback" style="display:none;">💳</span>
+    </span>
+</a>
     <a href="invoice.html">
         <span class="icon">
             <img src="file-invoice.png" alt="Invoices" onerror="this.style.display='none'">

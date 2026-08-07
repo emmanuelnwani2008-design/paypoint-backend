@@ -445,13 +445,12 @@
         </span>
         <span>Invoices</span>
     </a>
-    <a href="creator.html">
-        <span class="icon">
-            <img src="user.png" alt="Profile" onerror="this.style.display='none'">
-            <span class="fallback" style="display:none;">👤</span>
-        </span>
-        <span>Profile</span>
-    </a>
+    <a href="creator.html" class="active">
+    <span class="icon">
+        <img src="user.png" alt="Profile" onerror="this.style.display='none'; this.parentElement.querySelector('.fallback').style.display='inline';">
+        <span class="fallback" style="display:none;">👤</span>
+    </span>
+</a>
 </nav>
 
     <script>
