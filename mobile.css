@@ -90,8 +90,8 @@
     }
 
     .bottom-nav a .icon img {
-        max-height: 28px;
-        max-width: 28px;
+        max-height: 30px;
+        max-width: 30px;
         object-fit: contain;
         filter: none;
         opacity: 0.6;
