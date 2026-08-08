@@ -1,8 +1,6 @@
 /* ============================================
-   LIGHT BLUE PREMIUM BOTTOM NAV – MOBILE ONLY
+   MOBILE BOTTOM NAV – PREMIUM BLUE
    ============================================ */
-
-/* stylelint-disable */
 
 /* Hide bottom nav on desktop */
 .bottom-nav {
@@ -11,7 +9,7 @@
 
 @media (max-width: 768px) {
 
-    /* ====== 1. HIDE TOP NAVBAR LINKS ON MOBILE ====== */
+    /* ====== HIDE TOP NAVBAR LINKS ON MOBILE ====== */
     .navbar .nav-links,
     .navbar .user-badge,
     .navbar .logout,
@@ -29,7 +27,7 @@
         pointer-events: none !important;
     }
 
-    /* ====== 2. LOGO STAYS LEFT-ALIGNED ====== */
+    /* ====== LOGO LEFT-ALIGNED ====== */
     .navbar .logo {
         display: flex !important;
         justify-content: flex-start;
@@ -42,7 +40,7 @@
         border-bottom: 1px solid #E8EDF2;
     }
 
-    /* ====== 3. BOTTOM NAV – LIGHT BLUE PREMIUM ====== */
+    /* ====== BOTTOM NAV – LIGHT BLUE PREMIUM ====== */
     .bottom-nav {
         display: flex !important;
         position: fixed;
@@ -71,22 +69,21 @@
         color: #8A9AAB;
         font-size: 10px;
         font-weight: 500;
-        min-width: 60px;
-        padding: 4px 16px;
-        border-radius: 30px;
-        transition: all 0.25s ease;
-        position: relative;
+        min-width: 50px;
+        padding: 4px 12px;
+        transition: all 0.2s ease;
     }
 
-    /* ----- Icons (grayish) ----- */
-    .bottom-nav a .icon,
-    .bottom-nav a .fallback {
+    /* ----- Icon (gray inactive) ----- */
+    .bottom-nav a .icon {
         font-size: 28px;
         display: flex;
         align-items: center;
         justify-content: center;
         color: #8A9AAB;
-        transition: all 0.25s ease;
+        transition: all 0.2s ease;
+        width: 28px;
+        height: 28px;
     }
 
     .bottom-nav a .icon img {
@@ -95,44 +92,45 @@
         object-fit: contain;
         filter: none;
         opacity: 0.6;
-        transition: all 0.25s ease;
     }
 
-    /* ----- Labels (grayish) ----- */
+    .bottom-nav a .fallback {
+        font-size: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #8A9AAB;
+    }
+
+    /* ----- Label (gray inactive) ----- */
     .bottom-nav a span:last-child {
         font-size: 10px;
         color: #8A9AAB;
-        transition: all 0.25s ease;
+        transition: all 0.2s ease;
     }
 
-    /* ----- ACTIVE STATE – Premium Blue Pill ----- */
-    .bottom-nav a.active {
-        background: rgba(79, 124, 255, 0.12);
-        box-shadow: 0 0 20px rgba(79, 124, 255, 0.08);
+    /* ----- ACTIVE STATE – Blue icon and label (no pill/background) ----- */
+    .bottom-nav a.active .icon {
+        color: #4F7CFF;
     }
-
-    .bottom-nav a.active .icon,
+    .bottom-nav a.active .icon img {
+        opacity: 1;
+    }
     .bottom-nav a.active .fallback {
         color: #4F7CFF;
     }
-
-    .bottom-nav a.active .icon img {
-        filter: none;
-        opacity: 1;
-    }
-
     .bottom-nav a.active span:last-child {
         color: #4F7CFF;
     }
 
-    /* ====== 4. PADDING FOR CONTENT ====== */
+    /* ====== PADDING SO CONTENT ISN'T HIDDEN ====== */
     .app-container,
     .main-content,
     .container {
         padding-bottom: 80px !important;
     }
 
-    /* ====== 5. TOUCH-FRIENDLY INPUTS ====== */
+    /* ====== TOUCH-FRIENDLY INPUTS ====== */
     button,
     .btn-primary,
     .btn-secondary,
@@ -150,7 +148,7 @@
         padding: 12px 14px;
     }
 
-    /* ====== 6. FULL-WIDTH MODALS ====== */
+    /* ====== MODALS ====== */
     .modal-overlay.active {
         align-items: flex-end !important;
     }
@@ -166,7 +164,7 @@
         flex-direction: column !important;
     }
 
-    /* ====== 7. COMPACT CARDS ====== */
+    /* ====== CARDS ====== */
     .card,
     .panel,
     .deal-card,
@@ -177,7 +175,7 @@
         margin-bottom: 12px !important;
     }
 
-    /* ====== 8. LAYOUT ADJUSTMENTS ====== */
+    /* ====== LAYOUT ====== */
     .profile-grid {
         grid-template-columns: 1fr !important;
     }
@@ -214,7 +212,7 @@
         width: 100% !important;
     }
 
-    /* ====== 9. SIDEBAR ====== */
+    /* ====== SIDEBAR ====== */
     .sidebar {
         transform: translateX(-100%);
         width: 280px;
