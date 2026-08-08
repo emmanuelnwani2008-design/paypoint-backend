@@ -711,26 +711,6 @@
     </a>
 </nav>
 
-<script>
-(function(){
-    const nav = document.querySelector('.bottom-nav');
-    if (!nav) return;
-    const links = Array.from(nav.querySelectorAll('a'));
-    function setActiveByPath(){
-        const path = location.pathname.split('/').pop() || 'dashboard.html';
-        let matched = false;
-        links.forEach(a => {
-            a.classList.remove('active');
-            const href = (a.getAttribute('href')||'');
-            if (href.endsWith(path)) { a.classList.add('active'); matched = true; }
-        });
-        if (!matched) links[0]?.classList.add('active');
-    }
-    links.forEach(a => a.addEventListener('click', function(){ links.forEach(x=>x.classList.remove('active')); this.classList.add('active'); }));
-    setActiveByPath();
-})();
-</script>
-
     <script>
         // ============================================
         // CONFIGURATION - FIXED URL

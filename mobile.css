@@ -81,20 +81,17 @@
     /* ----- Icons (grayish) ----- */
     .bottom-nav a .icon,
     .bottom-nav a .fallback {
-        font-size: 26px;
+        font-size: 24px;
         display: flex;
         align-items: center;
         justify-content: center;
         color: #8A9AAB;
-        transition: all 0.18s ease;
-        width: 48px;
-        height: 48px;
-        border-radius: 50%;
+        transition: all 0.25s ease;
     }
 
     .bottom-nav a .icon img {
-        max-height: 30px;
-        max-width: 30px;
+        max-height: 24px;
+        max-width: 24px;
         object-fit: contain;
         filter: none;
         opacity: 0.6;
@@ -108,28 +105,20 @@
         transition: all 0.25s ease;
     }
 
-    /* ----- ACTIVE STATE – Circular glass behind icon only ----- */
+    /* ----- ACTIVE STATE – Premium Blue Pill ----- */
     .bottom-nav a.active {
-        background: transparent;
-        box-shadow: none;
-    }
-
-    .bottom-nav a .icon {
-        /* ensure transition for background when active */
-        transition: background 0.18s ease, transform 0.18s ease, box-shadow 0.18s ease;
+        background: rgba(79, 124, 255, 0.12);
+        box-shadow: 0 0 20px rgba(79, 124, 255, 0.08);
     }
 
     .bottom-nav a.active .icon,
     .bottom-nav a.active .fallback {
         color: #4F7CFF;
-        background: rgba(79, 124, 255, 0.12);
-        box-shadow: 0 6px 18px rgba(79,124,255,0.08), inset 0 1px 0 rgba(255,255,255,0.6);
     }
 
     .bottom-nav a.active .icon img {
         filter: none;
         opacity: 1;
-        transform: scale(1.03);
     }
 
     .bottom-nav a.active span:last-child {
