@@ -1,151 +1,273 @@
 /* ============================================
-   PREMIUM BLUE GLASS NAVIGATION (Mobile only)
+   PREMIUM LIGHT GLASS BOTTOM NAV
+   REFERENCE-MATCHED MOBILE DESIGN
    ============================================ */
 
-/* stylelint-disable */
-
-/* Hide bottom nav on desktop */
 .bottom-nav {
     display: none;
 }
 
 @media (max-width: 768px) {
 
-    /* ====== 1. COMPLETELY HIDE TOP NAVBAR LINKS ON MOBILE ====== */
-    .navbar .nav-links,
-    .navbar .user-badge,
-    .navbar .logout,
-    .navbar .upgrade-btn,
-    .navbar > *:not(.logo) {
-        display: none !important;
-        visibility: hidden !important;
-        opacity: 0 !important;
-        height: 0 !important;
-        width: 0 !important;
-        overflow: hidden !important;
-        margin: 0 !important;
-        padding: 0 !important;
-        border: none !important;
-        pointer-events: none !important;
-    }
+    /* ==========================================
+       1. FLOATING GLASS CONTAINER
+       ========================================== */
 
-    /* ====== 2. LOGO STAYS LEFT-ALIGNED ====== */
-    .navbar .logo {
-        display: flex !important;
-        justify-content: flex-start;
-        width: auto;
-    }
-    .navbar {
-        flex-direction: row !important;
-        justify-content: flex-start !important;
-        padding: 12px 0 !important;
-        border-bottom: 1px solid #E8EDF2;
-    }
-
-    /* ====== 3. FLOATING GLASS BOTTOM NAV ====== */
     .bottom-nav {
         display: flex !important;
+
         position: fixed;
-        bottom: 24px;
+        z-index: 1000;
+
         left: 20px;
         right: 20px;
-        background: rgba(30, 20, 60, 0.65);
-        backdrop-filter: blur(24px);
-        -webkit-backdrop-filter: blur(24px);
-        border: 1px solid rgba(255, 255, 255, 0.08);
-        border-radius: 60px;
-        justify-content: space-around;
+        bottom: 24px;
+
+        height: 74px;
+
+        padding: 0 18px;
+
+        box-sizing: border-box;
+
         align-items: center;
-        padding: 10px 16px;
-        z-index: 1000;
-        box-shadow: 0 8px 40px rgba(30, 10, 80, 0.5);
-        height: 72px;
+        justify-content: space-between;
+
+        /* LIGHT TRANSPARENT GLASS */
+        background: rgba(248, 250, 255, 0.58);
+
+        backdrop-filter: blur(28px) saturate(140%);
+        -webkit-backdrop-filter: blur(28px) saturate(140%);
+
+        /* WHITE GLASS EDGE */
+        border: 1px solid rgba(255, 255, 255, 0.85);
+
+        border-radius: 50px;
+
+        /* SOFT FLOATING SHADOW */
+        box-shadow:
+            0 14px 35px rgba(75, 95, 145, 0.16),
+            0 5px 14px rgba(75, 95, 145, 0.08),
+            inset 0 1px 2px rgba(255, 255, 255, 0.95);
+
+        overflow: hidden;
     }
 
-    /* ----- Each icon wrapper (uniform size) ----- */
+
+    /* ==========================================
+       2. SUBTLE GLASS HIGHLIGHT
+       ========================================== */
+
+    .bottom-nav::before {
+        content: "";
+
+        position: absolute;
+
+        top: 0;
+        left: 8%;
+        right: 8%;
+
+        height: 1px;
+
+        background: rgba(255, 255, 255, 0.95);
+
+        pointer-events: none;
+    }
+
+
+    /* ==========================================
+       3. NAV ITEMS
+       ========================================== */
+
     .bottom-nav a {
-        display: flex;
+        display: flex !important;
+
+        flex: 1;
+
         align-items: center;
         justify-content: center;
-        width: 56px;
-        height: 56px;
-        border-radius: 50%;
-        text-decoration: none;
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+        width: auto;
+        height: 100%;
+
+        padding: 0;
+
+        margin: 0;
+
         position: relative;
-        flex-shrink: 0;
+
+        text-decoration: none;
+
+        background: transparent !important;
+        border: none !important;
+        border-radius: 0 !important;
+
+        box-shadow: none !important;
+
+        transform: none !important;
+
+        transition: transform 0.2s ease;
     }
 
-    /* ----- Icons – LARGER AND PROPORTIONAL ----- */
+
+    /* ==========================================
+       4. ICON CONTAINER
+       ========================================== */
+
     .bottom-nav a .icon,
     .bottom-nav a .fallback {
-        font-size: 30px;
+
         display: flex;
+
         align-items: center;
         justify-content: center;
-        color: rgba(255, 255, 255, 0.6);
-        transition: all 0.3s ease;
-        width: 32px;
-        height: 32px;
+
+        width: 42px;
+        height: 42px;
+
+        margin: 0;
+
+        font-size: 32px;
+
+        color: #4c566a;
+
+        background: transparent;
+
+        transform: none !important;
+
+        transition:
+            transform 0.2s ease,
+            opacity 0.2s ease;
     }
+
+
+    /* ==========================================
+       5. ACTUAL ICON IMAGES
+       ========================================== */
 
     .bottom-nav a .icon img {
-        max-height: 30px;
-        max-width: 30px;
+
+        display: block;
+
+        width: 38px;
+        height: 38px;
+
+        max-width: 38px;
+        max-height: 38px;
+
         object-fit: contain;
-        filter: brightness(0) invert(1);
-        opacity: 0.7;
-        transition: all 0.3s ease;
+
+        /* KEEP ORIGINAL COLORS */
+        filter: none !important;
+
+        opacity: 1;
+
+        transform: none !important;
+
+        transition: transform 0.2s ease;
     }
 
-    /* Hide text labels for icon-only style */
+
+    /* ==========================================
+       6. HIDE TEXT
+       ========================================== */
+
     .bottom-nav a span:last-child {
-        display: none;
+        display: none !important;
     }
 
-    /* ====== 4. ACTIVE STATE – Premium Blue Glassmorphism ====== */
+
+    /* ==========================================
+       7. ACTIVE STATE
+       ========================================== */
+
     .bottom-nav a.active {
-        background: rgba(79, 124, 255, 0.2);
-        box-shadow: 
-            0 0 30px rgba(79, 124, 255, 0.15),
-            inset 0 0 20px rgba(79, 124, 255, 0.05);
-        border: 1px solid rgba(79, 124, 255, 0.15);
-        transform: scale(1.05);
+
+        background: transparent !important;
+
+        border: none !important;
+
+        box-shadow: none !important;
+
+        transform: none !important;
     }
 
     .bottom-nav a.active .icon,
     .bottom-nav a.active .fallback {
-        color: #FFFFFF;
-        transform: scale(1.1);
+
+        transform: scale(1.06) !important;
     }
 
     .bottom-nav a.active .icon img {
-        filter: brightness(0) invert(1);
+
+        transform: scale(1.06) !important;
+
+        filter: none !important;
+
         opacity: 1;
-        transform: scale(1.1);
     }
 
-    /* ====== 5. ICON-SPECIFIC SIZE ADJUSTMENTS ====== */
-    /* Briefcase (Deals) – match visual weight of others */
-    .bottom-nav a[href="deals.html"] .icon img,
-    .bottom-nav a[href="deals.html"] .fallback {
-        transform: scale(1.05);
+
+    /* ==========================================
+       8. INDIVIDUAL ICON BALANCING
+       ========================================== */
+
+    /* Pie chart */
+    .bottom-nav a:first-child .icon img {
+        width: 40px;
+        height: 40px;
     }
+
+    /* Briefcase */
+    .bottom-nav a[href="deals.html"] .icon img {
+        width: 40px;
+        height: 40px;
+
+        transform: none !important;
+    }
+
+    /* Credit card */
+    .bottom-nav a[href="expense.html"] .icon img {
+        width: 40px;
+        height: 40px;
+
+        transform: none !important;
+    }
+
+    /* Document */
+    .bottom-nav a:nth-child(4) .icon img {
+        width: 38px;
+        height: 38px;
+    }
+
+    /* Profile */
+    .bottom-nav a:last-child .icon img {
+        width: 40px;
+        height: 40px;
+    }
+
+
+    /* ==========================================
+       9. PREVENT OLD TRANSFORMS
+       ========================================== */
 
     .bottom-nav a[href="deals.html"].active .icon img,
-    .bottom-nav a[href="deals.html"].active .fallback {
-        transform: scale(1.15);
-    }
-
-    /* Credit Card (Expenses) – ensure it's the same size */
-    .bottom-nav a[href="expense.html"] .icon img,
-    .bottom-nav a[href="expense.html"] .fallback {
-        transform: scale(1);
-    }
-
+    .bottom-nav a[href="deals.html"].active .fallback,
     .bottom-nav a[href="expense.html"].active .icon img,
     .bottom-nav a[href="expense.html"].active .fallback {
-        transform: scale(1.1);
+
+        transform: scale(1.06) !important;
+    }
+
+
+    /* ==========================================
+       10. CONTENT CLEARANCE
+       ========================================== */
+
+    .app-container,
+    .main-content,
+    .container {
+
+        padding-bottom: 120px !important;
     }
 
     /* ====== 6. PADDING FOR CONTENT ====== */
