@@ -71,8 +71,8 @@
         color: #8A9AAB;
         font-size: 10px;
         font-weight: 500;
-        min-width: 50px;
-        padding: 4px 12px;
+        min-width: 60px;
+        padding: 4px 16px;
         border-radius: 30px;
         transition: all 0.25s ease;
         position: relative;
@@ -81,7 +81,7 @@
     /* ----- Icons (grayish) ----- */
     .bottom-nav a .icon,
     .bottom-nav a .fallback {
-        font-size: 24px;
+        font-size: 28px;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -90,8 +90,8 @@
     }
 
     .bottom-nav a .icon img {
-        max-height: 24px;
-        max-width: 24px;
+        max-height: 28px;
+        max-width: 28px;
         object-fit: contain;
         filter: none;
         opacity: 0.6;
