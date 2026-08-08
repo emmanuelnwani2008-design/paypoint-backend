@@ -1,283 +1,138 @@
 /* ============================================
-   PREMIUM LIGHT GLASS BOTTOM NAV
-   REFERENCE-MATCHED MOBILE DESIGN
+   LIGHT BLUE PREMIUM BOTTOM NAV – MOBILE ONLY
    ============================================ */
 
+/* stylelint-disable */
+
+/* Hide bottom nav on desktop */
 .bottom-nav {
     display: none;
 }
 
 @media (max-width: 768px) {
 
-    /* ==========================================
-       1. FLOATING GLASS CONTAINER
-       ========================================== */
+    /* ====== 1. HIDE TOP NAVBAR LINKS ON MOBILE ====== */
+    .navbar .nav-links,
+    .navbar .user-badge,
+    .navbar .logout,
+    .navbar .upgrade-btn,
+    .navbar > *:not(.logo) {
+        display: none !important;
+        visibility: hidden !important;
+        opacity: 0 !important;
+        height: 0 !important;
+        width: 0 !important;
+        overflow: hidden !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        border: none !important;
+        pointer-events: none !important;
+    }
 
+    /* ====== 2. LOGO STAYS LEFT-ALIGNED ====== */
+    .navbar .logo {
+        display: flex !important;
+        justify-content: flex-start;
+        width: auto;
+    }
+    .navbar {
+        flex-direction: row !important;
+        justify-content: flex-start !important;
+        padding: 12px 0 !important;
+        border-bottom: 1px solid #E8EDF2;
+    }
+
+    /* ====== 3. BOTTOM NAV – LIGHT BLUE PREMIUM ====== */
     .bottom-nav {
         display: flex !important;
-
         position: fixed;
-        z-index: 1000;
-
-        left: 20px;
-        right: 20px;
-        bottom: 24px;
-
-        height: 74px;
-
-        padding: 0 18px;
-
-        box-sizing: border-box;
-
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: rgba(240, 245, 255, 0.92);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        border-top: 1px solid rgba(79, 124, 255, 0.15);
+        justify-content: space-around;
         align-items: center;
-        justify-content: space-between;
-
-        /* LIGHT TRANSPARENT GLASS */
-        background: rgba(248, 250, 255, 0.58);
-
-        backdrop-filter: blur(28px) saturate(140%);
-        -webkit-backdrop-filter: blur(28px) saturate(140%);
-
-        /* WHITE GLASS EDGE */
-        border: 1px solid rgba(255, 255, 255, 0.85);
-
-        border-radius: 50px;
-
-        /* SOFT FLOATING SHADOW */
-        box-shadow:
-            0 14px 35px rgba(75, 95, 145, 0.16),
-            0 5px 14px rgba(75, 95, 145, 0.08),
-            inset 0 1px 2px rgba(255, 255, 255, 0.95);
-
-        overflow: hidden;
+        padding: 8px 0 12px;
+        z-index: 1000;
+        height: 64px;
+        box-shadow: 0 -4px 20px rgba(79, 124, 255, 0.06);
     }
-
-
-    /* ==========================================
-       2. SUBTLE GLASS HIGHLIGHT
-       ========================================== */
-
-    .bottom-nav::before {
-        content: "";
-
-        position: absolute;
-
-        top: 0;
-        left: 8%;
-        right: 8%;
-
-        height: 1px;
-
-        background: rgba(255, 255, 255, 0.95);
-
-        pointer-events: none;
-    }
-
-
-    /* ==========================================
-       3. NAV ITEMS
-       ========================================== */
 
     .bottom-nav a {
-        display: flex !important;
-
-        flex: 1;
-
+        display: flex;
+        flex-direction: column;
         align-items: center;
         justify-content: center;
-
-        width: auto;
-        height: 100%;
-
-        padding: 0;
-
-        margin: 0;
-
-        position: relative;
-
+        gap: 2px;
         text-decoration: none;
-
-        background: transparent !important;
-        border: none !important;
-        border-radius: 0 !important;
-
-        box-shadow: none !important;
-
-        transform: none !important;
-
-        transition: transform 0.2s ease;
+        color: #8A9AAB;
+        font-size: 10px;
+        font-weight: 500;
+        min-width: 50px;
+        padding: 4px 12px;
+        border-radius: 30px;
+        transition: all 0.25s ease;
+        position: relative;
     }
 
-
-    /* ==========================================
-       4. ICON CONTAINER
-       ========================================== */
-
+    /* ----- Icons (grayish) ----- */
     .bottom-nav a .icon,
     .bottom-nav a .fallback {
-
+        font-size: 24px;
         display: flex;
-
         align-items: center;
         justify-content: center;
-
-        width: 42px;
-        height: 42px;
-
-        margin: 0;
-
-        font-size: 32px;
-
-        color: #4c566a;
-
-        background: transparent;
-
-        transform: none !important;
-
-        transition:
-            transform 0.2s ease,
-            opacity 0.2s ease;
+        color: #8A9AAB;
+        transition: all 0.25s ease;
     }
-
-
-    /* ==========================================
-       5. ACTUAL ICON IMAGES
-       ========================================== */
 
     .bottom-nav a .icon img {
-
-        display: block;
-
-        width: 38px;
-        height: 38px;
-
-        max-width: 38px;
-        max-height: 38px;
-
+        max-height: 24px;
+        max-width: 24px;
         object-fit: contain;
-
-        /* KEEP ORIGINAL COLORS */
-        filter: none !important;
-
-        opacity: 1;
-
-        transform: none !important;
-
-        transition: transform 0.2s ease;
+        filter: none;
+        opacity: 0.6;
+        transition: all 0.25s ease;
     }
 
-
-    /* ==========================================
-       6. HIDE TEXT
-       ========================================== */
-
+    /* ----- Labels (grayish) ----- */
     .bottom-nav a span:last-child {
-        display: none !important;
+        font-size: 10px;
+        color: #8A9AAB;
+        transition: all 0.25s ease;
     }
 
-
-    /* ==========================================
-       7. ACTIVE STATE
-       ========================================== */
-
+    /* ----- ACTIVE STATE – Premium Blue Pill ----- */
     .bottom-nav a.active {
-
-        background: transparent !important;
-
-        border: none !important;
-
-        box-shadow: none !important;
-
-        transform: none !important;
+        background: rgba(79, 124, 255, 0.12);
+        box-shadow: 0 0 20px rgba(79, 124, 255, 0.08);
     }
 
     .bottom-nav a.active .icon,
     .bottom-nav a.active .fallback {
-
-        transform: scale(1.06) !important;
+        color: #4F7CFF;
     }
 
     .bottom-nav a.active .icon img {
-
-        transform: scale(1.06) !important;
-
-        filter: none !important;
-
+        filter: none;
         opacity: 1;
     }
 
-
-    /* ==========================================
-       8. INDIVIDUAL ICON BALANCING
-       ========================================== */
-
-    /* Pie chart */
-    .bottom-nav a:first-child .icon img {
-        width: 40px;
-        height: 40px;
+    .bottom-nav a.active span:last-child {
+        color: #4F7CFF;
     }
 
-    /* Briefcase */
-    .bottom-nav a[href="deals.html"] .icon img {
-        width: 40px;
-        height: 40px;
-
-        transform: none !important;
-    }
-
-    /* Credit card */
-    .bottom-nav a[href="expense.html"] .icon img {
-        width: 40px;
-        height: 40px;
-
-        transform: none !important;
-    }
-
-    /* Document */
-    .bottom-nav a:nth-child(4) .icon img {
-        width: 38px;
-        height: 38px;
-    }
-
-    /* Profile */
-    .bottom-nav a:last-child .icon img {
-        width: 40px;
-        height: 40px;
-    }
-
-
-    /* ==========================================
-       9. PREVENT OLD TRANSFORMS
-       ========================================== */
-
-    .bottom-nav a[href="deals.html"].active .icon img,
-    .bottom-nav a[href="deals.html"].active .fallback,
-    .bottom-nav a[href="expense.html"].active .icon img,
-    .bottom-nav a[href="expense.html"].active .fallback {
-
-        transform: scale(1.06) !important;
-    }
-
-
-    /* ==========================================
-       10. CONTENT CLEARANCE
-       ========================================== */
-
+    /* ====== 4. PADDING FOR CONTENT ====== */
     .app-container,
     .main-content,
     .container {
-
-        padding-bottom: 120px !important;
+        padding-bottom: 80px !important;
     }
 
-    /* ====== 6. PADDING FOR CONTENT ====== */
-    .app-container,
-    .main-content,
-    .container {
-        padding-bottom: 110px !important;
-    }
-
-    /* ====== 7. TOUCH-FRIENDLY INPUTS ====== */
+    /* ====== 5. TOUCH-FRIENDLY INPUTS ====== */
     button,
     .btn-primary,
     .btn-secondary,
@@ -295,7 +150,7 @@
         padding: 12px 14px;
     }
 
-    /* ====== 8. FULL-WIDTH MODALS ====== */
+    /* ====== 6. FULL-WIDTH MODALS ====== */
     .modal-overlay.active {
         align-items: flex-end !important;
     }
@@ -311,7 +166,7 @@
         flex-direction: column !important;
     }
 
-    /* ====== 9. COMPACT CARDS ====== */
+    /* ====== 7. COMPACT CARDS ====== */
     .card,
     .panel,
     .deal-card,
@@ -322,7 +177,7 @@
         margin-bottom: 12px !important;
     }
 
-    /* ====== 10. LAYOUT ADJUSTMENTS ====== */
+    /* ====== 8. LAYOUT ADJUSTMENTS ====== */
     .profile-grid {
         grid-template-columns: 1fr !important;
     }
@@ -359,7 +214,7 @@
         width: 100% !important;
     }
 
-    /* ====== 11. SIDEBAR ====== */
+    /* ====== 9. SIDEBAR ====== */
     .sidebar {
         transform: translateX(-100%);
         width: 280px;
