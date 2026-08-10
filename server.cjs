@@ -251,6 +251,117 @@ cron.schedule('0 9 * * *', async () => {
 });
 
 // ============================================
+// DASHBOARD STATS WITH REAL PERCENTAGES
+// ============================================
+
+app.get('/api/dashboard/stats', authenticate, async (req, res) => {
+    try {
+        const userId = req.userId;
+        const now = new Date();
+        const currentMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+
+        // Get all deals
+        const { data: deals } = await supabase
+            .from('deals')
+            .select('amount, currency, created_at')
+            .eq('user_id', userId);
+
+        // Get all expenses
+        const { data: expenses } = await supabase
+            .from('expenses')
+            .select('amount, currency, created_at')
+            .eq('user_id', userId);
+
+        // Calculate revenue for current month
+        const currentRevenue = (deals || [])
+            .filter(d => new Date(d.created_at) >= currentMonth && new Date(d.created_at) < nextMonth)
+            .reduce((sum, d) => sum + Number(d.amount), 0);
+
+        // Calculate revenue for last month
+        const lastRevenue = (deals || [])
+            .filter(d => new Date(d.created_at) >= lastMonth && new Date(d.created_at) < currentMonth)
+            .reduce((sum, d) => sum + Number(d.amount), 0);
+
+        // Calculate expenses for current month
+        const currentExpenses = (expenses || [])
+            .filter(e => new Date(e.created_at) >= currentMonth && new Date(e.created_at) < nextMonth)
+            .reduce((sum, e) => sum + Number(e.amount), 0);
+
+        // Calculate expenses for last month
+        const lastExpenses = (expenses || [])
+            .filter(e => new Date(e.created_at) >= lastMonth && new Date(e.created_at) < currentMonth)
+            .reduce((sum, e) => sum + Number(e.amount), 0);
+
+        // Calculate percentage changes
+        const revenueChange = lastRevenue > 0 ? ((currentRevenue - lastRevenue) / lastRevenue) * 100 : 0;
+        const expensesChange = lastExpenses > 0 ? ((currentExpenses - lastExpenses) / lastExpenses) * 100 : 0;
+
+        // Get user's tax rate from profile
+        const { data: profile } = await supabase
+            .from('profiles')
+            .select('tax_rate')
+            .eq('id', userId)
+            .single();
+
+        const taxRate = profile?.tax_rate || 30; // default 30%
+
+        // Calculate total revenue (all time)
+        const totalRevenue = (deals || []).reduce((sum, d) => sum + Number(d.amount), 0);
+        const totalExpenses = (expenses || []).reduce((sum, e) => sum + Number(e.amount), 0);
+        const taxes = totalRevenue * (taxRate / 100);
+        const takeHome = totalRevenue - taxes - totalExpenses;
+
+        res.json({
+            success: true,
+            data: {
+                totalRevenue,
+                totalExpenses,
+                taxes,
+                takeHome,
+                revenueChange: Math.round(revenueChange),
+                expensesChange: Math.round(expensesChange),
+                taxRate
+            }
+        });
+    } catch (err) {
+        console.error('Dashboard stats error:', err);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+// ============================================
+// UPDATE TAX RATE
+// ============================================
+
+app.put('/api/profile/tax-rate', authenticate, async (req, res) => {
+    try {
+        const userId = req.userId;
+        const { taxRate } = req.body;
+
+        if (!taxRate || taxRate < 0 || taxRate > 100) {
+            return res.status(400).json({ error: 'Tax rate must be between 0 and 100' });
+        }
+
+        const { error } = await supabase
+            .from('profiles')
+            .update({ tax_rate: taxRate })
+            .eq('id', userId);
+
+        if (error) {
+            console.error('Update tax rate error:', error);
+            return res.status(500).json({ error: 'Failed to update tax rate' });
+        }
+
+        res.json({ success: true, message: 'Tax rate updated successfully' });
+    } catch (err) {
+        console.error('Tax rate update error:', err);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+// ============================================
 // HELPERS
 // ============================================
 function isValidEmail(email) {

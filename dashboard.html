@@ -400,12 +400,40 @@
         </header>
 
         <section class="metrics-grid" id="metricsGrid">
-            <div class="metric-card"><div class="label">Total Revenue</div><div class="value blue" id="totalRevenue">₦0</div><div class="sub">↑ 12% this month</div></div>
-            <div class="metric-card"><div class="label">Total Expenses</div><div class="value white" id="totalExpenses">₦0</div><div class="sub">↓ 3% from last month</div></div>
-            <div class="metric-card"><div class="label">Taxes Set Aside</div><div class="value gold" id="totalTaxes">₦0</div><div class="sub">30% of net profit</div></div>
-            <div class="metric-card"><div class="label">Real Take-Home</div><div class="value green" id="takeHome">₦0</div><div class="sub">What you actually keep</div></div>
-        </section>
-
+    <div class="metric-card">
+        <div class="label">Total Revenue</div>
+        <div class="value blue" id="totalRevenue">₦0</div>
+        <div class="sub" id="revenueChange">↑ 0% this month</div>
+    </div>
+    <div class="metric-card">
+        <div class="label">Total Expenses</div>
+        <div class="value white" id="totalExpenses">₦0</div>
+        <div class="sub" id="expensesChange">↓ 0% from last month</div>
+    </div>
+    <div class="metric-card">
+        <div class="label">Taxes Set Aside</div>
+        <div class="value gold" id="totalTaxes">₦0</div>
+        <div class="sub" id="taxRateDisplay">30% tax rate</div>
+    </div>
+    <div class="metric-card">
+        <div class="label">Real Take-Home</div>
+        <div class="value green" id="takeHome">₦0</div>
+        <div class="sub">What you actually keep</div>
+    </div>
+</section>
+<!-- Tax Rate Settings -->
+<div class="panel" style="margin-top: 20px;">
+    <div class="panel-header">
+        <h3>⚙️ Tax Settings</h3>
+    </div>
+    <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+        <label style="font-size: 14px; color: #5E6F82;">Tax Rate (%):</label>
+        <input type="number" id="taxRateInput" value="30" min="0" max="100" style="width: 80px; padding: 8px 12px; border: 1px solid #E8EDF2; border-radius: 8px; font-size: 14px;">
+        <button class="btn-secondary" id="updateTaxBtn" style="padding: 8px 16px;">Update</button>
+        <span id="taxUpdateMessage" style="font-size: 13px; color: #34C759; display: none;">✅ Updated!</span>
+    </div>
+    <p style="color: #8A9AAB; font-size: 12px; margin-top: 8px;">Set your country's tax rate. This affects your "Taxes Set Aside" calculation.</p>
+</div>
         <section class="split-panel">
             <div class="panel"><div class="panel-header"><h3>📋 Active Deals</h3><a href="deals.html">View all →</a></div><div id="dealsList"><div style="color:#8A9AAB; font-size:14px; padding:12px 0;">No deals yet. Add your first one!</div></div></div>
             <div class="panel"><div class="panel-header"><h3>🧾 Recent Expenses</h3><a href="expense.html">View all →</a></div><div id="expensesList"><div style="color:#8A9AAB; font-size:14px; padding:12px 0;">No expenses logged yet.</div></div></div>
@@ -630,6 +658,92 @@
                 console.error('Error loading expenses:', err);
             }
         }
+
+        // ============================================
+// LOAD DASHBOARD STATS (with real percentages)
+// ============================================
+
+async function loadDashboardStats() {
+    try {
+        const res = await fetch(`${API_URL}/dashboard/stats`, { headers: getAuthHeaders() });
+        const result = await res.json();
+
+        if (result.success) {
+            const data = result.data;
+            const currencySymbol = '₦'; // or '$' based on user preference
+
+            document.getElementById('totalRevenue').textContent = currencySymbol + data.totalRevenue.toLocaleString();
+            document.getElementById('totalExpenses').textContent = currencySymbol + data.totalExpenses.toLocaleString();
+            document.getElementById('totalTaxes').textContent = currencySymbol + data.taxes.toLocaleString();
+            document.getElementById('takeHome').textContent = currencySymbol + data.takeHome.toLocaleString();
+
+            // Real percentage changes
+            const revenueChangeEl = document.getElementById('revenueChange');
+            const expensesChangeEl = document.getElementById('expensesChange');
+            const taxRateDisplay = document.getElementById('taxRateDisplay');
+
+            if (data.revenueChange > 0) {
+                revenueChangeEl.textContent = `↑ ${data.revenueChange}% this month`;
+                revenueChangeEl.style.color = '#34C759';
+            } else if (data.revenueChange < 0) {
+                revenueChangeEl.textContent = `↓ ${Math.abs(data.revenueChange)}% this month`;
+                revenueChangeEl.style.color = '#FF3B30';
+            } else {
+                revenueChangeEl.textContent = '↔ 0% this month';
+                revenueChangeEl.style.color = '#8A9AAB';
+            }
+
+            if (data.expensesChange > 0) {
+                expensesChangeEl.textContent = `↑ ${data.expensesChange}% from last month`;
+                expensesChangeEl.style.color = '#FF3B30';
+            } else if (data.expensesChange < 0) {
+                expensesChangeEl.textContent = `↓ ${Math.abs(data.expensesChange)}% from last month`;
+                expensesChangeEl.style.color = '#34C759';
+            } else {
+                expensesChangeEl.textContent = '↔ 0% from last month';
+                expensesChangeEl.style.color = '#8A9AAB';
+            }
+
+            taxRateDisplay.textContent = `${data.taxRate}% tax rate`;
+            document.getElementById('taxRateInput').value = data.taxRate;
+        }
+    } catch (err) {
+        console.error('Error loading dashboard stats:', err);
+    }
+}
+
+// ============================================
+// UPDATE TAX RATE
+// ============================================
+
+document.getElementById('updateTaxBtn').addEventListener('click', async () => {
+    const taxRate = parseInt(document.getElementById('taxRateInput').value);
+    if (isNaN(taxRate) || taxRate < 0 || taxRate > 100) {
+        alert('Please enter a valid tax rate between 0 and 100.');
+        return;
+    }
+
+    try {
+        const res = await fetch(`${API_URL}/profile/tax-rate`, {
+            method: 'PUT',
+            headers: getAuthHeaders(),
+            body: JSON.stringify({ taxRate })
+        });
+        const result = await res.json();
+
+        if (result.success) {
+            const msg = document.getElementById('taxUpdateMessage');
+            msg.style.display = 'block';
+            setTimeout(() => { msg.style.display = 'none'; }, 3000);
+            loadDashboardStats(); // Refresh stats
+        } else {
+            alert('Failed to update tax rate: ' + (result.error || 'Unknown error'));
+        }
+    } catch (err) {
+        alert('Could not connect to server.');
+        console.error(err);
+    }
+});
 
         // ----- MODAL CONTROLS -----
         const modal = document.getElementById('dealModal');
