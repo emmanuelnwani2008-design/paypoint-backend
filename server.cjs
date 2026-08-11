@@ -369,7 +369,7 @@ app.get('/api/settings', authenticate, async (req, res) => {
     try {
         const userId = req.userId;
 
-        const { data: profile, error } = await supabase
+        const { data: profile, error } = await supabaseAdmin
             .from('profiles')
             .select('default_currency, tax_rate')
             .eq('id', userId)
@@ -394,7 +394,7 @@ app.get('/api/settings', authenticate, async (req, res) => {
 });
 
 // ============================================
-// USER SETTINGS – UPDATE
+// USER SETTINGS – UPDATE (FIXED)
 // ============================================
 
 app.put('/api/settings', authenticate, async (req, res) => {
@@ -414,22 +414,40 @@ app.put('/api/settings', authenticate, async (req, res) => {
             return res.status(400).json({ error: 'No valid settings to update' });
         }
 
-        const { error } = await supabase
+        // ✅ USE supabaseAdmin TO BYPASS RLS
+        const { error } = await supabaseAdmin
             .from('profiles')
             .update(updates)
             .eq('id', userId);
 
         if (error) {
             console.error('Settings update error:', error);
-            return res.status(500).json({ error: 'Failed to update settings' });
+            return res.status(500).json({ error: 'Failed to update settings: ' + error.message });
         }
 
-        // Update user metadata in session
-        await supabase.auth.updateUser({
-            data: { default_currency: updates.default_currency }
-        });
+        // Update user metadata in session (for currency)
+        if (updates.default_currency) {
+            await supabase.auth.updateUser({
+                data: { default_currency: updates.default_currency }
+            });
+        }
 
-        res.json({ success: true, message: 'Settings updated successfully' });
+        // Fetch the updated profile to confirm
+        const { data: profile, error: fetchError } = await supabaseAdmin
+            .from('profiles')
+            .select('default_currency, tax_rate')
+            .eq('id', userId)
+            .single();
+
+        if (fetchError) {
+            console.error('Error fetching updated profile:', fetchError);
+        }
+
+        res.json({
+            success: true,
+            message: 'Settings updated successfully',
+            data: profile || null
+        });
     } catch (err) {
         console.error('Settings update error:', err);
         res.status(500).json({ error: 'Server error' });
@@ -1071,6 +1089,45 @@ app.post('/api/expenses', authenticate, async (req, res) => {
     } catch (err) {
         console.error('Expenses POST error:', err);
         res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// ============================================
+// DELETE EXPENSE
+// ============================================
+
+app.delete('/api/expenses/:id', authenticate, async (req, res) => {
+    try {
+        const expenseId = req.params.id;
+        const userId = req.userId;
+
+        // Ensure the expense belongs to the user
+        const { data: expense, error: findError } = await supabaseAdmin
+            .from('expenses')
+            .select('id')
+            .eq('id', expenseId)
+            .eq('user_id', userId)
+            .single();
+
+        if (findError || !expense) {
+            return res.status(404).json({ error: 'Expense not found' });
+        }
+
+        const { error } = await supabaseAdmin
+            .from('expenses')
+            .delete()
+            .eq('id', expenseId)
+            .eq('user_id', userId);
+
+        if (error) {
+            console.error('Delete expense error:', error);
+            return res.status(500).json({ error: 'Failed to delete expense' });
+        }
+
+        res.json({ success: true, message: 'Expense deleted successfully' });
+    } catch (err) {
+        console.error('Expense delete error:', err);
+        res.status(500).json({ error: 'Server error' });
     }
 });
 
