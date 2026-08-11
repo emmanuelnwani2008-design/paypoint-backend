@@ -580,54 +580,58 @@
         // LOAD DASHBOARD STATS (with real percentages)
         // ============================================
         async function loadDashboardStats() {
-            try {
-                const userData = JSON.parse(localStorage.getItem('paypoint_user') || '{}');
-                const currency = userData?.user_metadata?.default_currency || 'NGN';
-                const currencySymbol = currency === 'USD' ? '$' : '₦';
+    try {
+        const userData = JSON.parse(localStorage.getItem('paypoint_user') || '{}');
+        const currency = userData?.user_metadata?.default_currency || 'NGN';
+        const currencySymbol = currency === 'USD' ? '$' : '₦';
 
-                const res = await fetch(`${API_URL}/dashboard/stats`, { headers: getAuthHeaders() });
-                const result = await res.json();
+        // ✅ Force fresh fetch – no caching
+        const res = await fetch(`${API_URL}/dashboard/stats`, { 
+            headers: getAuthHeaders(),
+            cache: 'no-store'  // ✅ prevents browser caching
+        });
+        const result = await res.json();
 
-                if (result.success) {
-                    const data = result.data;
-                    document.getElementById('totalRevenue').textContent = currencySymbol + data.totalRevenue.toLocaleString();
-                    document.getElementById('totalExpenses').textContent = currencySymbol + data.totalExpenses.toLocaleString();
-                    document.getElementById('totalTaxes').textContent = currencySymbol + data.taxes.toLocaleString();
-                    document.getElementById('takeHome').textContent = currencySymbol + data.takeHome.toLocaleString();
+        if (result.success) {
+            const data = result.data;
+            document.getElementById('totalRevenue').textContent = currencySymbol + data.totalRevenue.toLocaleString();
+            document.getElementById('totalExpenses').textContent = currencySymbol + data.totalExpenses.toLocaleString();
+            document.getElementById('totalTaxes').textContent = currencySymbol + data.taxes.toLocaleString();
+            document.getElementById('takeHome').textContent = currencySymbol + data.takeHome.toLocaleString();
 
-                    // Real percentage changes
-                    const revenueChangeEl = document.getElementById('revenueChange');
-                    const expensesChangeEl = document.getElementById('expensesChange');
-                    const taxRateDisplay = document.getElementById('taxRateDisplay');
+            const revenueChangeEl = document.getElementById('revenueChange');
+            const expensesChangeEl = document.getElementById('expensesChange');
+            const taxRateDisplay = document.getElementById('taxRateDisplay');
 
-                    if (data.revenueChange > 0) {
-                        revenueChangeEl.textContent = `↑ ${data.revenueChange}% this month`;
-                        revenueChangeEl.style.color = '#34C759';
-                    } else if (data.revenueChange < 0) {
-                        revenueChangeEl.textContent = `↓ ${Math.abs(data.revenueChange)}% this month`;
-                        revenueChangeEl.style.color = '#FF3B30';
-                    } else {
-                        revenueChangeEl.textContent = '↔ 0% this month';
-                        revenueChangeEl.style.color = '#8A9AAB';
-                    }
-
-                    if (data.expensesChange > 0) {
-                        expensesChangeEl.textContent = `↑ ${data.expensesChange}% from last month`;
-                        expensesChangeEl.style.color = '#FF3B30';
-                    } else if (data.expensesChange < 0) {
-                        expensesChangeEl.textContent = `↓ ${Math.abs(data.expensesChange)}% from last month`;
-                        expensesChangeEl.style.color = '#34C759';
-                    } else {
-                        expensesChangeEl.textContent = '↔ 0% from last month';
-                        expensesChangeEl.style.color = '#8A9AAB';
-                    }
-
-                    taxRateDisplay.textContent = `${data.taxRate}% tax rate`;
-                }
-            } catch (err) {
-                console.error('Error loading dashboard stats:', err);
+            if (data.revenueChange > 0) {
+                revenueChangeEl.textContent = `↑ ${data.revenueChange}% this month`;
+                revenueChangeEl.style.color = '#34C759';
+            } else if (data.revenueChange < 0) {
+                revenueChangeEl.textContent = `↓ ${Math.abs(data.revenueChange)}% this month`;
+                revenueChangeEl.style.color = '#FF3B30';
+            } else {
+                revenueChangeEl.textContent = '↔ 0% this month';
+                revenueChangeEl.style.color = '#8A9AAB';
             }
+
+            if (data.expensesChange > 0) {
+                expensesChangeEl.textContent = `↑ ${data.expensesChange}% from last month`;
+                expensesChangeEl.style.color = '#FF3B30';
+            } else if (data.expensesChange < 0) {
+                expensesChangeEl.textContent = `↓ ${Math.abs(data.expensesChange)}% from last month`;
+                expensesChangeEl.style.color = '#34C759';
+            } else {
+                expensesChangeEl.textContent = '↔ 0% from last month';
+                expensesChangeEl.style.color = '#8A9AAB';
+            }
+
+            // ✅ Always show the latest tax rate from the backend
+            taxRateDisplay.textContent = `${data.taxRate}% tax rate`;
         }
+    } catch (err) {
+        console.error('Error loading dashboard stats:', err);
+    }
+}
 
         // ----- LOAD DEALS & EXPENSES -----
         async function loadDeals() {
