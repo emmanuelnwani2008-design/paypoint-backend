@@ -362,6 +362,81 @@ app.put('/api/profile/tax-rate', authenticate, async (req, res) => {
 });
 
 // ============================================
+// USER SETTINGS – GET
+// ============================================
+
+app.get('/api/settings', authenticate, async (req, res) => {
+    try {
+        const userId = req.userId;
+
+        const { data: profile, error } = await supabase
+            .from('profiles')
+            .select('default_currency, tax_rate')
+            .eq('id', userId)
+            .single();
+
+        if (error) {
+            console.error('Settings fetch error:', error);
+            return res.status(500).json({ error: 'Failed to fetch settings' });
+        }
+
+        res.json({
+            success: true,
+            data: {
+                currency: profile?.default_currency || 'NGN',
+                taxRate: profile?.tax_rate || 30
+            }
+        });
+    } catch (err) {
+        console.error('Settings error:', err);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+// ============================================
+// USER SETTINGS – UPDATE
+// ============================================
+
+app.put('/api/settings', authenticate, async (req, res) => {
+    try {
+        const userId = req.userId;
+        const { currency, taxRate } = req.body;
+
+        const updates = {};
+        if (currency && ['NGN', 'USD'].includes(currency)) {
+            updates.default_currency = currency;
+        }
+        if (taxRate !== undefined && taxRate >= 0 && taxRate <= 100) {
+            updates.tax_rate = taxRate;
+        }
+
+        if (Object.keys(updates).length === 0) {
+            return res.status(400).json({ error: 'No valid settings to update' });
+        }
+
+        const { error } = await supabase
+            .from('profiles')
+            .update(updates)
+            .eq('id', userId);
+
+        if (error) {
+            console.error('Settings update error:', error);
+            return res.status(500).json({ error: 'Failed to update settings' });
+        }
+
+        // Update user metadata in session
+        await supabase.auth.updateUser({
+            data: { default_currency: updates.default_currency }
+        });
+
+        res.json({ success: true, message: 'Settings updated successfully' });
+    } catch (err) {
+        console.error('Settings update error:', err);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+// ============================================
 // HELPERS
 // ============================================
 function isValidEmail(email) {

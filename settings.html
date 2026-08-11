@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settings · PayPoint</title>
+    <link rel="icon" type="image/png" href="logo.png">
+    <link rel="stylesheet" href="mobile.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: #F8FAFC;
+            color: #000000;
+            padding: 24px;
+            min-height: 100vh;
+        }
+        .app-container { max-width: 800px; margin: 0 auto; }
+
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0 28px 0;
+            border-bottom: 1px solid #E8EDF2;
+            margin-bottom: 32px;
+        }
+        .logo {
+            font-size: 24px;
+            font-weight: 700;
+            color: #000000;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .logo img { height: 32px; width: auto; }
+        .logo span { font-weight: 400; color: #8A9AAB; font-size: 14px; }
+
+        .nav-links {
+            display: flex;
+            gap: 28px;
+            align-items: center;
+        }
+        .nav-links a {
+            color: #5E6F82;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            transition: color 0.2s ease;
+        }
+        .nav-links a:hover { color: #000000; }
+        .nav-links a.active { color: #000000; font-weight: 600; }
+        .nav-links a.logout { color: #FF3B30; }
+        .nav-links a.logout:hover { color: #D32F2F; }
+        .user-badge {
+            background: #F5F7FA;
+            padding: 6px 14px;
+            border-radius: 40px;
+            font-size: 13px;
+            color: #000000;
+            border: 1px solid #E8EDF2;
+        }
+
+        .page-header { margin-bottom: 32px; }
+        .page-header h1 { font-size: 28px; font-weight: 700; color: #000000; }
+        .page-header p { color: #8A9AAB; font-size: 14px; margin-top: 4px; }
+
+        .settings-card {
+            background: #FFFFFF;
+            border: 1px solid #E8EDF2;
+            border-radius: 14px;
+            padding: 28px 32px;
+            margin-bottom: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+        }
+        .settings-card h3 {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 4px;
+            color: #000000;
+        }
+        .settings-card .description {
+            color: #8A9AAB;
+            font-size: 13px;
+            margin-bottom: 16px;
+        }
+        .settings-card .form-group {
+            display: flex;
+            gap: 16px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .settings-card label {
+            font-size: 14px;
+            font-weight: 500;
+            color: #5E6F82;
+            min-width: 100px;
+        }
+        .settings-card select,
+        .settings-card input {
+            padding: 10px 14px;
+            background: #F8FAFC;
+            border: 1px solid #E8EDF2;
+            border-radius: 10px;
+            font-size: 14px;
+            font-family: 'Inter', sans-serif;
+            color: #000000;
+            min-width: 120px;
+        }
+        .settings-card select:focus,
+        .settings-card input:focus {
+            outline: none;
+            border-color: #4F7CFF;
+        }
+        .btn-primary {
+            background: #4F7CFF;
+            border: none;
+            padding: 10px 24px;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 14px;
+            color: #FFFFFF;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-family: 'Inter', sans-serif;
+            box-shadow: 0 2px 8px rgba(79, 124, 255, 0.25);
+        }
+        .btn-primary:hover { background: #3A5FD9; transform: translateY(-1px); }
+        .btn-secondary {
+            background: #F8FAFC;
+            border: 1px solid #E8EDF2;
+            padding: 10px 24px;
+            border-radius: 10px;
+            font-weight: 500;
+            font-size: 14px;
+            color: #5E6F82;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-family: 'Inter', sans-serif;
+        }
+        .btn-secondary:hover { background: #EEF2F7; }
+
+        .message {
+            padding: 10px 14px;
+            border-radius: 8px;
+            font-size: 13px;
+            margin-top: 12px;
+            display: none;
+        }
+        .message.success { display: block; background: rgba(52, 199, 89, 0.1); color: #34C759; border: 1px solid rgba(52, 199, 89, 0.2); }
+        .message.error { display: block; background: rgba(255, 59, 48, 0.1); color: #FF3B30; border: 1px solid rgba(255, 59, 48, 0.2); }
+
+        @media (max-width: 768px) {
+            .settings-card { padding: 20px; }
+            .settings-card .form-group { flex-direction: column; align-items: stretch; }
+            .settings-card label { min-width: auto; }
+            .navbar { flex-direction: column; gap: 12px; align-items: flex-start; }
+            .nav-links { flex-wrap: wrap; gap: 14px; }
+            .btn-primary, .btn-secondary { width: 100%; text-align: center; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="app-container">
+        <!-- Navbar (no Settings link here) -->
+        <nav class="navbar">
+            <a href="dashboard.html" class="logo">
+                <img src="logo.png" alt="PayPoint">
+                PayPoint <span>· Settings</span>
+            </a>
+            <div class="nav-links">
+                <a href="dashboard.html">Dashboard</a>
+                <a href="deals.html">Deals</a>
+                <a href="expense.html">Expenses</a>
+                <a href="invoice.html">Invoices</a>
+                <a href="creator.html">Creator</a>
+                <!-- Settings is NOT in the top navbar -->
+                <span class="user-badge" id="userBadge">👤 Creator</span>
+                <a href="#" class="logout" id="navLogout">Logout</a>
+            </div>
+        </nav>
+
+        <!-- Page Header -->
+        <div class="page-header">
+            <h1>⚙️ Settings</h1>
+            <p>Manage your preferences and account configuration.</p>
+        </div>
+
+        <!-- Currency Settings -->
+        <div class="settings-card">
+            <h3>💱 Currency</h3>
+            <p class="description">Choose your preferred currency for all amounts.</p>
+            <div class="form-group">
+                <label for="currencySelect">Currency</label>
+                <select id="currencySelect">
+                    <option value="NGN">₦ NGN (Nigeria)</option>
+                    <option value="USD">$ USD (International)</option>
+                </select>
+                <button class="btn-primary" id="saveCurrencyBtn">Save Currency</button>
+            </div>
+            <div class="message success" id="currencyMessage">✅ Currency updated!</div>
+        </div>
+
+        <!-- Tax Settings -->
+        <div class="settings-card">
+            <h3>🧾 Tax Rate</h3>
+            <p class="description">Set your country's tax rate. This affects the "Taxes Set Aside" calculation on your dashboard.</p>
+            <div class="form-group">
+                <label for="taxRateInput">Tax Rate (%)</label>
+                <input type="number" id="taxRateInput" placeholder="30" min="0" max="100">
+                <button class="btn-primary" id="saveTaxBtn">Save Tax Rate</button>
+            </div>
+            <div class="message success" id="taxMessage">✅ Tax rate updated!</div>
+        </div>
+
+        <!-- Danger Zone -->
+        <div class="settings-card" style="border-color: rgba(255, 59, 48, 0.2);">
+            <h3 style="color: #FF3B30;">⚠️ Danger Zone</h3>
+            <p class="description" style="color: #FF3B30;">Delete your account and all data. This cannot be undone.</p>
+            <button class="btn-secondary" id="deleteAccountBtn" style="color: #FF3B30; border-color: rgba(255, 59, 48, 0.2);">🗑️ Delete Account</button>
+        </div>
+    </div>
+
+    <!-- ❌ NO BOTTOM NAVIGATION HERE – Settings only accessible from sidebar -->
+
+    <script>
+        const API_URL = '/api';
+
+        function getAuthHeaders() {
+            const token = localStorage.getItem('paypoint_session');
+            return {
+                'Content-Type': 'application/json',
+                ...(token ? { Authorization: `Bearer ${token}` } : {})
+            };
+        }
+
+        function checkAuth() {
+            const user = localStorage.getItem('paypoint_user');
+            if (!user) {
+                window.location.replace('login.html');
+                return false;
+            }
+            try {
+                const userData = JSON.parse(user);
+                const name = userData?.user_metadata?.name || userData?.name || 'Creator';
+                document.getElementById('userBadge').textContent = `👤 ${name}`;
+                return true;
+            } catch (e) {
+                window.location.replace('login.html');
+                return false;
+            }
+        }
+
+        async function loadSettings() {
+            try {
+                const res = await fetch(`${API_URL}/settings`, { headers: getAuthHeaders() });
+                const result = await res.json();
+                if (result.success) {
+                    document.getElementById('currencySelect').value = result.data.currency || 'NGN';
+                    document.getElementById('taxRateInput').value = result.data.taxRate || 30;
+                }
+            } catch (err) {
+                console.error('Error loading settings:', err);
+            }
+        }
+
+        function showMessage(id, text, type) {
+            const el = document.getElementById(id);
+            el.textContent = text;
+            el.className = `message ${type}`;
+            setTimeout(() => { el.className = 'message'; }, 3000);
+        }
+
+        // Save Currency
+        document.getElementById('saveCurrencyBtn').addEventListener('click', async () => {
+            const currency = document.getElementById('currencySelect').value;
+            try {
+                const res = await fetch(`${API_URL}/settings`, {
+                    method: 'PUT',
+                    headers: getAuthHeaders(),
+                    body: JSON.stringify({ currency })
+                });
+                const result = await res.json();
+                if (result.success) {
+                    showMessage('currencyMessage', '✅ Currency updated to ' + currency + '!', 'success');
+                    const user = JSON.parse(localStorage.getItem('paypoint_user'));
+                    if (user) {
+                        user.user_metadata = user.user_metadata || {};
+                        user.user_metadata.default_currency = currency;
+                        localStorage.setItem('paypoint_user', JSON.stringify(user));
+                    }
+                } else {
+                    showMessage('currencyMessage', '❌ ' + (result.error || 'Failed to update'), 'error');
+                }
+            } catch (err) {
+                showMessage('currencyMessage', '❌ Could not connect to server.', 'error');
+            }
+        });
+
+        // Save Tax Rate
+        document.getElementById('saveTaxBtn').addEventListener('click', async () => {
+            const taxRate = parseInt(document.getElementById('taxRateInput').value);
+            if (isNaN(taxRate) || taxRate < 0 || taxRate > 100) {
+                showMessage('taxMessage', '❌ Please enter a valid tax rate (0-100).', 'error');
+                return;
+            }
+            try {
+                const res = await fetch(`${API_URL}/settings`, {
+                    method: 'PUT',
+                    headers: getAuthHeaders(),
+                    body: JSON.stringify({ taxRate })
+                });
+                const result = await res.json();
+                if (result.success) {
+                    showMessage('taxMessage', '✅ Tax rate updated to ' + taxRate + '%!', 'success');
+                } else {
+                    showMessage('taxMessage', '❌ ' + (result.error || 'Failed to update'), 'error');
+                }
+            } catch (err) {
+                showMessage('taxMessage', '❌ Could not connect to server.', 'error');
+            }
+        });
+
+        // Delete Account
+        document.getElementById('deleteAccountBtn').addEventListener('click', async () => {
+            if (!confirm('⚠️ Are you sure you want to delete your account? This cannot be undone!')) return;
+            if (!confirm('Type "yes" to confirm deletion')) return;
+
+            try {
+                const res = await fetch(`${API_URL}/auth/delete`, {
+                    method: 'DELETE',
+                    headers: getAuthHeaders()
+                });
+                const result = await res.json();
+                if (result.success) {
+                    alert('🗑️ Account deleted successfully.');
+                    localStorage.removeItem('paypoint_user');
+                    localStorage.removeItem('paypoint_session');
+                    window.location.replace('login.html');
+                } else {
+                    alert('❌ Error: ' + (result.error || 'Failed to delete account'));
+                }
+            } catch (err) {
+                alert('❌ Could not connect to server');
+                console.error(err);
+            }
+        });
+
+        // Logout
+        document.getElementById('navLogout').addEventListener('click', async (e) => {
+            e.preventDefault();
+            try {
+                await fetch(`${API_URL}/auth/logout`, { method: 'POST', headers: getAuthHeaders() });
+            } catch (err) {}
+            localStorage.removeItem('paypoint_user');
+            localStorage.removeItem('paypoint_session');
+            window.location.replace('login.html');
+        });
+
+        // Init
+        if (checkAuth()) {
+            loadSettings();
+        }
+
+        console.log('⚙️ PayPoint Settings page loaded');
+    </script>
+
+</body>
+</html>
