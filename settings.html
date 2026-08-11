@@ -315,6 +315,21 @@
                 const result = await res.json();
                 if (result.success) {
                     showMessage('taxMessage', '✅ Tax rate updated to ' + taxRate + '%!', 'success');
+                    // Refresh settings from server and update local user copy so other pages show the change
+                    try {
+                        // Update local cached user metadata if present
+                        const stored = localStorage.getItem('paypoint_user');
+                        if (stored) {
+                            const user = JSON.parse(stored);
+                            user.user_metadata = user.user_metadata || {};
+                            user.user_metadata.tax_rate = (result.data && result.data.tax_rate) || taxRate;
+                            localStorage.setItem('paypoint_user', JSON.stringify(user));
+                        }
+                    } catch (e) {
+                        console.warn('Could not update local user metadata:', e);
+                    }
+                    // Reload settings input from backend to reflect the saved value
+                    loadSettings();
                 } else {
                     showMessage('taxMessage', '❌ ' + (result.error || 'Failed to update'), 'error');
                 }
@@ -323,14 +338,6 @@
             }
         });
         
-        // Save Tax Rate – after success
-if (result.success) {
-    showMessage('taxMessage', '✅ Tax rate updated to ' + taxRate + '%!', 'success');
-    // ✅ Reload settings to show updated value
-    loadSettings();
-} else {
-    showMessage('taxMessage', '❌ ' + (result.error || 'Failed to update'), 'error');
-}
 
         // Delete Account
         document.getElementById('deleteAccountBtn').addEventListener('click', async () => {
