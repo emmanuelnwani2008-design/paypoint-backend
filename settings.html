@@ -322,6 +322,15 @@
                 showMessage('taxMessage', '❌ Could not connect to server.', 'error');
             }
         });
+        
+        // Save Tax Rate – after success
+if (result.success) {
+    showMessage('taxMessage', '✅ Tax rate updated to ' + taxRate + '%!', 'success');
+    // ✅ Reload settings to show updated value
+    loadSettings();
+} else {
+    showMessage('taxMessage', '❌ ' + (result.error || 'Failed to update'), 'error');
+}
 
         // Delete Account
         document.getElementById('deleteAccountBtn').addEventListener('click', async () => {
