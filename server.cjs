@@ -262,56 +262,55 @@ app.get('/api/dashboard/stats', authenticate, async (req, res) => {
         const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
         const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
 
-        // Get all deals
+        // Get all deals and expenses
         const { data: deals } = await supabase
             .from('deals')
             .select('amount, currency, created_at')
             .eq('user_id', userId);
 
-        // Get all expenses
         const { data: expenses } = await supabase
             .from('expenses')
             .select('amount, currency, created_at')
             .eq('user_id', userId);
 
-        // Calculate revenue for current month
-        const currentRevenue = (deals || [])
-            .filter(d => new Date(d.created_at) >= currentMonth && new Date(d.created_at) < nextMonth)
-            .reduce((sum, d) => sum + Number(d.amount), 0);
+        // Calculate revenue/expenses for current/last month
+        // ... (same as before)
 
-        // Calculate revenue for last month
-        const lastRevenue = (deals || [])
-            .filter(d => new Date(d.created_at) >= lastMonth && new Date(d.created_at) < currentMonth)
-            .reduce((sum, d) => sum + Number(d.amount), 0);
-
-        // Calculate expenses for current month
-        const currentExpenses = (expenses || [])
-            .filter(e => new Date(e.created_at) >= currentMonth && new Date(e.created_at) < nextMonth)
-            .reduce((sum, e) => sum + Number(e.amount), 0);
-
-        // Calculate expenses for last month
-        const lastExpenses = (expenses || [])
-            .filter(e => new Date(e.created_at) >= lastMonth && new Date(e.created_at) < currentMonth)
-            .reduce((sum, e) => sum + Number(e.amount), 0);
-
-        // Calculate percentage changes
-        const revenueChange = lastRevenue > 0 ? ((currentRevenue - lastRevenue) / lastRevenue) * 100 : 0;
-        const expensesChange = lastExpenses > 0 ? ((currentExpenses - lastExpenses) / lastExpenses) * 100 : 0;
-
-        // Get user's tax rate from profile
-        const { data: profile } = await supabase
+        // ✅ FETCH TAX RATE FROM DATABASE USING supabaseAdmin (bypasses RLS)
+        const { data: profile, error: profileError } = await supabaseAdmin
             .from('profiles')
             .select('tax_rate')
             .eq('id', userId)
             .single();
 
-        const taxRate = profile?.tax_rate || 30; // default 30%
+        if (profileError) {
+            console.error('Error fetching tax rate:', profileError);
+        }
 
-        // Calculate total revenue (all time)
+        const taxRate = profile?.tax_rate || 30; // fallback to 30 if not set
+
+        // Total revenue and expenses (all time)
         const totalRevenue = (deals || []).reduce((sum, d) => sum + Number(d.amount), 0);
         const totalExpenses = (expenses || []).reduce((sum, e) => sum + Number(e.amount), 0);
         const taxes = totalRevenue * (taxRate / 100);
         const takeHome = totalRevenue - taxes - totalExpenses;
+
+        // Calculate percentage changes (same as before)
+        const currentRevenue = (deals || [])
+            .filter(d => new Date(d.created_at) >= currentMonth && new Date(d.created_at) < nextMonth)
+            .reduce((sum, d) => sum + Number(d.amount), 0);
+        const lastRevenue = (deals || [])
+            .filter(d => new Date(d.created_at) >= lastMonth && new Date(d.created_at) < currentMonth)
+            .reduce((sum, d) => sum + Number(d.amount), 0);
+        const revenueChange = lastRevenue > 0 ? ((currentRevenue - lastRevenue) / lastRevenue) * 100 : 0;
+
+        const currentExpenses = (expenses || [])
+            .filter(e => new Date(e.created_at) >= currentMonth && new Date(e.created_at) < nextMonth)
+            .reduce((sum, e) => sum + Number(e.amount), 0);
+        const lastExpenses = (expenses || [])
+            .filter(e => new Date(e.created_at) >= lastMonth && new Date(e.created_at) < currentMonth)
+            .reduce((sum, e) => sum + Number(e.amount), 0);
+        const expensesChange = lastExpenses > 0 ? ((currentExpenses - lastExpenses) / lastExpenses) * 100 : 0;
 
         res.json({
             success: true,
@@ -322,7 +321,7 @@ app.get('/api/dashboard/stats', authenticate, async (req, res) => {
                 takeHome,
                 revenueChange: Math.round(revenueChange),
                 expensesChange: Math.round(expensesChange),
-                taxRate
+                taxRate: taxRate  // ✅ always send the latest tax rate
             }
         });
     } catch (err) {
