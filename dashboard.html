@@ -588,29 +588,53 @@ async function loadDashboardStats() {
 
         const res = await fetch(`${API_URL}/dashboard/stats`, {
             headers: getAuthHeaders(),
-            cache: 'no-store'   // ✅ prevent caching
+            cache: 'no-store'
         });
         const result = await res.json();
 
         if (result.success) {
             const data = result.data;
 
-            // Display amounts
+            // Display totals
             document.getElementById('totalRevenue').textContent = currencySymbol + data.totalRevenue.toLocaleString();
             document.getElementById('totalExpenses').textContent = currencySymbol + data.totalExpenses.toLocaleString();
+            document.getElementById('totalTaxes').textContent = currencySymbol + data.taxes.toLocaleString();
+            document.getElementById('takeHome').textContent = currencySymbol + data.takeHome.toLocaleString();
 
-            // ✅ TAX RATE: use the value from the server (data.taxRate)
-            const taxRateDisplay = document.getElementById('taxRateDisplay');
-            taxRateDisplay.textContent = `${data.taxRate}% tax rate`;
+            // Tax rate display
+            document.getElementById('taxRateDisplay').textContent = `${data.taxRate}% tax rate`;
 
-            // Recalculate taxes and take-home using the server's tax rate
-            const taxes = data.totalRevenue * (data.taxRate / 100);
-            const takeHome = data.totalRevenue - taxes - data.totalExpenses;
-            document.getElementById('totalTaxes').textContent = currencySymbol + taxes.toLocaleString();
-            document.getElementById('takeHome').textContent = currencySymbol + takeHome.toLocaleString();
+            // ----- Revenue change -----
+            const revenueChangeEl = document.getElementById('revenueChange');
+            if (data.revenueChange === 'new') {
+                revenueChangeEl.textContent = '🆕 New this month';
+                revenueChangeEl.style.color = '#4F7CFF';
+            } else if (data.revenueChange > 0) {
+                revenueChangeEl.textContent = `↑ ${data.revenueChange}% this month`;
+                revenueChangeEl.style.color = '#34C759';
+            } else if (data.revenueChange < 0) {
+                revenueChangeEl.textContent = `↓ ${Math.abs(data.revenueChange)}% this month`;
+                revenueChangeEl.style.color = '#FF3B30';
+            } else {
+                revenueChangeEl.textContent = '↔ 0% this month';
+                revenueChangeEl.style.color = '#8A9AAB';
+            }
 
-            // Update percentage changes (same as before)
-            // ...
+            // ----- Expenses change -----
+            const expensesChangeEl = document.getElementById('expensesChange');
+            if (data.expensesChange === 'new') {
+                expensesChangeEl.textContent = '🆕 New from last month';
+                expensesChangeEl.style.color = '#4F7CFF';
+            } else if (data.expensesChange > 0) {
+                expensesChangeEl.textContent = `↑ ${data.expensesChange}% from last month`;
+                expensesChangeEl.style.color = '#FF3B30'; // increase in expenses is bad
+            } else if (data.expensesChange < 0) {
+                expensesChangeEl.textContent = `↓ ${Math.abs(data.expensesChange)}% from last month`;
+                expensesChangeEl.style.color = '#34C759'; // decrease in expenses is good
+            } else {
+                expensesChangeEl.textContent = '↔ 0% from last month';
+                expensesChangeEl.style.color = '#8A9AAB';
+            }
         }
     } catch (err) {
         console.error('Error loading dashboard stats:', err);

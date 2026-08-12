@@ -260,14 +260,14 @@ app.get('/api/dashboard/stats', authenticate, async (req, res) => {
         const fallbackUserId = req.reconciledUserId || null;
         const ids = [userId, fallbackUserId].filter(Boolean);
 
-        console.log('📊 Dashboard stats for user IDs:', ids); // DEBUG
+        console.log('📊 Dashboard stats for user IDs:', ids);
 
         const now = new Date();
         const currentMonth = new Date(now.getFullYear(), now.getMonth(), 1);
         const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
         const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
 
-        // ✅ USE supabaseAdmin FOR ALL QUERIES (bypasses RLS)
+        // Fetch deals and expenses using supabaseAdmin (bypass RLS)
         let allDeals = [];
         if (ids.length === 1) {
             const { data, error } = await supabaseAdmin
@@ -302,29 +302,40 @@ app.get('/api/dashboard/stats', authenticate, async (req, res) => {
             allExpenses = data || [];
         }
 
-        console.log(`📊 Found ${allDeals.length} deals and ${allExpenses.length} expenses`); // DEBUG
+        console.log(`📊 Found ${allDeals.length} deals and ${allExpenses.length} expenses`);
 
-        // Calculate revenue/expenses for current/last month
+        // Use ISO string for reliable date comparison
+        const currentMonthStart = currentMonth.toISOString();
+        const currentMonthEnd = nextMonth.toISOString();
+        const lastMonthStart = lastMonth.toISOString();
+        const lastMonthEnd = currentMonth.toISOString();
+
         const currentRevenue = allDeals
-            .filter(d => new Date(d.created_at) >= currentMonth && new Date(d.created_at) < nextMonth)
+            .filter(d => d.created_at >= currentMonthStart && d.created_at < currentMonthEnd)
             .reduce((sum, d) => sum + Number(d.amount), 0);
 
         const lastRevenue = allDeals
-            .filter(d => new Date(d.created_at) >= lastMonth && new Date(d.created_at) < currentMonth)
+            .filter(d => d.created_at >= lastMonthStart && d.created_at < lastMonthEnd)
             .reduce((sum, d) => sum + Number(d.amount), 0);
 
         const currentExpenses = allExpenses
-            .filter(e => new Date(e.created_at) >= currentMonth && new Date(e.created_at) < nextMonth)
+            .filter(e => e.created_at >= currentMonthStart && e.created_at < currentMonthEnd)
             .reduce((sum, e) => sum + Number(e.amount), 0);
 
         const lastExpenses = allExpenses
-            .filter(e => new Date(e.created_at) >= lastMonth && new Date(e.created_at) < currentMonth)
+            .filter(e => e.created_at >= lastMonthStart && e.created_at < lastMonthEnd)
             .reduce((sum, e) => sum + Number(e.amount), 0);
 
-        const revenueChange = lastRevenue > 0 ? ((currentRevenue - lastRevenue) / lastRevenue) * 100 : 0;
-        const expensesChange = lastExpenses > 0 ? ((currentExpenses - lastExpenses) / lastExpenses) * 100 : 0;
+        // Calculate percentage change, return 'new' if no previous month data
+        const revenueChange = lastRevenue > 0
+            ? Math.round(((currentRevenue - lastRevenue) / lastRevenue) * 100)
+            : (currentRevenue > 0 ? 'new' : 0);
 
-        // Get tax rate from profile using supabaseAdmin
+        const expensesChange = lastExpenses > 0
+            ? Math.round(((currentExpenses - lastExpenses) / lastExpenses) * 100)
+            : (currentExpenses > 0 ? 'new' : 0);
+
+        // Get tax rate from profile
         const { data: profile, error: profileError } = await supabaseAdmin
             .from('profiles')
             .select('tax_rate')
@@ -336,7 +347,6 @@ app.get('/api/dashboard/stats', authenticate, async (req, res) => {
         }
         const taxRate = profile?.tax_rate || 30;
 
-        // Totals
         const totalRevenue = allDeals.reduce((sum, d) => sum + Number(d.amount), 0);
         const totalExpenses = allExpenses.reduce((sum, e) => sum + Number(e.amount), 0);
         const taxes = totalRevenue * (taxRate / 100);
@@ -349,8 +359,8 @@ app.get('/api/dashboard/stats', authenticate, async (req, res) => {
                 totalExpenses,
                 taxes,
                 takeHome,
-                revenueChange: Math.round(revenueChange),
-                expensesChange: Math.round(expensesChange),
+                revenueChange,
+                expensesChange,
                 taxRate
             }
         });
