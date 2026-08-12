@@ -348,6 +348,34 @@
                         💳 Upgrade Now
                     </button>
                 </div>
+                <!-- ============================================ -->
+<!-- SUBSCRIPTION MANAGEMENT -->
+<!-- ============================================ -->
+<div class="profile-card" id="subscriptionSection">
+    <h3>💳 Subscription</h3>
+    <p style="color: #8A9AAB; font-size: 14px; margin-bottom: 16px;">
+        Manage your PayPoint Pro subscription.
+    </p>
+
+    <div id="subscriptionStatus" style="margin-bottom: 16px;">
+        <span id="planBadge" style="display: inline-block; padding: 4px 14px; border-radius: 40px; font-size: 13px; font-weight: 600; background: #E8EDF2; color: #5E6F82;">Free</span>
+        <span style="color: #8A9AAB; font-size: 14px; margin-left: 8px;">Current plan</span>
+    </div>
+
+    <div id="upgradeSection">
+        <button class="btn-primary" id="upgradeBtn">⬆️ Upgrade to Pro</button>
+        <p style="color: #8A9AAB; font-size: 12px; margin-top: 8px;">
+            ₦2,500/month – Unlimited deals, invoices, and advanced analytics.
+        </p>
+    </div>
+
+    <div id="cancelSection" style="display: none;">
+        <button class="btn-danger" id="cancelSubscriptionBtn">❌ Cancel Subscription</button>
+        <p style="color: #8A9AAB; font-size: 12px; margin-top: 8px;">
+            Your Pro features will remain active until the end of your billing period.
+        </p>
+    </div>
+</div>
 
                 <!-- Bank Account -->
                 <div class="profile-card">
@@ -788,6 +816,88 @@
                 console.error(err);
             }
         });
+        // ============================================
+// SUBSCRIPTION MANAGEMENT
+// ============================================
+
+// Check user's current plan
+async function checkSubscription() {
+    const user = JSON.parse(localStorage.getItem('paypoint_user'));
+    const plan = user?.user_metadata?.plan || 'free';
+
+    const badge = document.getElementById('planBadge');
+    const upgradeSection = document.getElementById('upgradeSection');
+    const cancelSection = document.getElementById('cancelSection');
+
+    if (plan === 'pro') {
+        badge.textContent = 'Pro';
+        badge.style.background = '#4F7CFF';
+        badge.style.color = '#FFFFFF';
+        upgradeSection.style.display = 'none';
+        cancelSection.style.display = 'block';
+    } else {
+        badge.textContent = 'Free';
+        badge.style.background = '#E8EDF2';
+        badge.style.color = '#5E6F82';
+        upgradeSection.style.display = 'block';
+        cancelSection.style.display = 'none';
+    }
+}
+
+// Upgrade to Pro
+document.getElementById('upgradeBtn').addEventListener('click', async () => {
+    try {
+        const res = await fetch(`${API_URL}/payments/create-subscription`, {
+            method: 'POST',
+            headers: getAuthHeaders(),
+        });
+
+        const result = await res.json();
+
+        if (result.authorization_url) {
+            window.open(result.authorization_url, '_blank');
+        } else {
+            alert('❌ Failed to start subscription: ' + (result.error || ''));
+        }
+    } catch (err) {
+        alert('❌ Could not connect to server');
+        console.error(err);
+    }
+});
+
+// Cancel Subscription
+document.getElementById('cancelSubscriptionBtn').addEventListener('click', async () => {
+    if (!confirm('Are you sure you want to cancel your Pro subscription? You will lose access to Pro features at the end of your billing period.')) {
+        return;
+    }
+
+    try {
+        const res = await fetch(`${API_URL}/payments/cancel-subscription`, {
+            method: 'POST',
+            headers: getAuthHeaders(),
+        });
+
+        const result = await res.json();
+
+        if (result.success) {
+            alert('✅ Subscription cancelled. You will remain on Pro until the end of your billing period.');
+            // Update user metadata to 'free'
+            const user = JSON.parse(localStorage.getItem('paypoint_user'));
+            user.user_metadata.plan = 'free';
+            localStorage.setItem('paypoint_user', JSON.stringify(user));
+            checkSubscription();
+        } else {
+            alert('❌ Failed to cancel subscription: ' + (result.error || ''));
+        }
+    } catch (err) {
+        alert('❌ Could not connect to server');
+        console.error(err);
+    }
+});
+
+// Check subscription status on page load
+checkSubscription();
+        
 
         // ============================================
         // DELETE ACCOUNT
@@ -817,6 +927,7 @@
                 console.error(err);
             }
         });
+        
 
         // ============================================
         // UPGRADE BUTTON

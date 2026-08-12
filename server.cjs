@@ -1739,6 +1739,104 @@ app.post('/api/subscribe', authenticate, async (req, res) => {
 });
 
 // ============================================
+// SUBSCRIPTION ROUTES
+// ============================================
+
+// 1. Create Subscription (Upgrade to Pro)
+app.post('/api/payments/create-subscription', authenticate, async (req, res) => {
+    try {
+        const userId = req.userId;
+        const userEmail = req.user.email;
+
+        // Check if user already has a subscription
+        const { data: existing } = await supabase
+            .from('deals')
+            .select('*')
+            .eq('user_id', userId)
+            .limit(1);
+
+        // Create Paystack subscription
+        const response = await fetch('https://api.paystack.co/subscription', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${PAYSTACK_SECRET_KEY}`
+            },
+            body: JSON.stringify({
+                email: userEmail,
+                plan: 'PLAN_pro_monthly', // Replace with your actual Paystack plan code
+                amount: 2500 * 100, // ₦2,500 in kobo
+                callback_url: 'https://paypoint-backend.vercel.app/dashboard.html'
+            })
+        });
+
+        const result = await response.json();
+
+        if (!result.status) {
+            console.error('Paystack subscription error:', result);
+            return res.status(400).json({ error: result.message || 'Failed to create subscription' });
+        }
+
+        res.json({
+            success: true,
+            authorization_url: result.data.authorization_url,
+            reference: result.data.reference
+        });
+
+    } catch (err) {
+        console.error('Subscription create error:', err);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// 2. Cancel Subscription
+app.post('/api/payments/cancel-subscription', authenticate, async (req, res) => {
+    try {
+        const userId = req.userId;
+
+        // Get the user's subscription code from metadata
+        const subscriptionCode = req.user?.user_metadata?.subscription_code;
+
+        if (!subscriptionCode) {
+            return res.status(400).json({ error: 'No active subscription found' });
+        }
+
+        const response = await fetch('https://api.paystack.co/subscription/disable', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${PAYSTACK_SECRET_KEY}`
+            },
+            body: JSON.stringify({
+                code: subscriptionCode,
+                token: 'cancel'
+            })
+        });
+
+        const result = await response.json();
+
+        if (!result.status) {
+            console.error('Paystack cancel error:', result);
+            return res.status(400).json({ error: result.message || 'Failed to cancel subscription' });
+        }
+
+        // Update user metadata to free
+        await supabase.auth.updateUser({
+            data: {
+                plan: 'free',
+                subscription_code: null
+            }
+        });
+
+        res.json({ success: true, message: 'Subscription cancelled' });
+
+    } catch (err) {
+        console.error('Subscription cancel error:', err);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// ============================================
 // WEBHOOKS
 // ============================================
 
