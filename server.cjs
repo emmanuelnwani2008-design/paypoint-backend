@@ -260,44 +260,51 @@ app.get('/api/dashboard/stats', authenticate, async (req, res) => {
         const fallbackUserId = req.reconciledUserId || null;
         const ids = [userId, fallbackUserId].filter(Boolean);
 
+        console.log('📊 Dashboard stats for user IDs:', ids); // DEBUG
+
         const now = new Date();
         const currentMonth = new Date(now.getFullYear(), now.getMonth(), 1);
         const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
         const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
 
-        // ✅ Query deals for both user IDs
+        // ✅ USE supabaseAdmin FOR ALL QUERIES (bypasses RLS)
         let allDeals = [];
         if (ids.length === 1) {
-            const { data } = await supabase
+            const { data, error } = await supabaseAdmin
                 .from('deals')
                 .select('amount, currency, created_at')
                 .eq('user_id', ids[0]);
+            if (error) console.error('Deals query error:', error);
             allDeals = data || [];
         } else {
-            const { data } = await supabase
+            const { data, error } = await supabaseAdmin
                 .from('deals')
                 .select('amount, currency, created_at')
                 .in('user_id', ids);
+            if (error) console.error('Deals query error:', error);
             allDeals = data || [];
         }
 
-        // ✅ Query expenses for both user IDs
         let allExpenses = [];
         if (ids.length === 1) {
-            const { data } = await supabase
+            const { data, error } = await supabaseAdmin
                 .from('expenses')
                 .select('amount, currency, created_at')
                 .eq('user_id', ids[0]);
+            if (error) console.error('Expenses query error:', error);
             allExpenses = data || [];
         } else {
-            const { data } = await supabase
+            const { data, error } = await supabaseAdmin
                 .from('expenses')
                 .select('amount, currency, created_at')
                 .in('user_id', ids);
+            if (error) console.error('Expenses query error:', error);
             allExpenses = data || [];
         }
 
-        // Calculate revenue/expenses for current and last month
+        console.log(`📊 Found ${allDeals.length} deals and ${allExpenses.length} expenses`); // DEBUG
+
+        // Calculate revenue/expenses for current/last month
         const currentRevenue = allDeals
             .filter(d => new Date(d.created_at) >= currentMonth && new Date(d.created_at) < nextMonth)
             .reduce((sum, d) => sum + Number(d.amount), 0);
@@ -317,7 +324,7 @@ app.get('/api/dashboard/stats', authenticate, async (req, res) => {
         const revenueChange = lastRevenue > 0 ? ((currentRevenue - lastRevenue) / lastRevenue) * 100 : 0;
         const expensesChange = lastExpenses > 0 ? ((currentExpenses - lastExpenses) / lastExpenses) * 100 : 0;
 
-        // ✅ Get tax rate from profile (for the primary user)
+        // Get tax rate from profile using supabaseAdmin
         const { data: profile, error: profileError } = await supabaseAdmin
             .from('profiles')
             .select('tax_rate')
@@ -325,11 +332,11 @@ app.get('/api/dashboard/stats', authenticate, async (req, res) => {
             .single();
 
         if (profileError) {
-            console.error('Error fetching tax rate for user', userId, profileError);
+            console.error('Error fetching tax rate:', profileError);
         }
         const taxRate = profile?.tax_rate || 30;
 
-        // Total revenue and expenses (all time)
+        // Totals
         const totalRevenue = allDeals.reduce((sum, d) => sum + Number(d.amount), 0);
         const totalExpenses = allExpenses.reduce((sum, e) => sum + Number(e.amount), 0);
         const taxes = totalRevenue * (taxRate / 100);
