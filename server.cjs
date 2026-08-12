@@ -257,26 +257,67 @@ cron.schedule('0 9 * * *', async () => {
 app.get('/api/dashboard/stats', authenticate, async (req, res) => {
     try {
         const userId = req.userId;
+        const fallbackUserId = req.reconciledUserId || null;
+        const ids = [userId, fallbackUserId].filter(Boolean);
+
         const now = new Date();
         const currentMonth = new Date(now.getFullYear(), now.getMonth(), 1);
         const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
         const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
 
-        // Get all deals and expenses
-        const { data: deals } = await supabase
-            .from('deals')
-            .select('amount, currency, created_at')
-            .eq('user_id', userId);
+        // ✅ Query deals for both user IDs
+        let allDeals = [];
+        if (ids.length === 1) {
+            const { data } = await supabase
+                .from('deals')
+                .select('amount, currency, created_at')
+                .eq('user_id', ids[0]);
+            allDeals = data || [];
+        } else {
+            const { data } = await supabase
+                .from('deals')
+                .select('amount, currency, created_at')
+                .in('user_id', ids);
+            allDeals = data || [];
+        }
 
-        const { data: expenses } = await supabase
-            .from('expenses')
-            .select('amount, currency, created_at')
-            .eq('user_id', userId);
+        // ✅ Query expenses for both user IDs
+        let allExpenses = [];
+        if (ids.length === 1) {
+            const { data } = await supabase
+                .from('expenses')
+                .select('amount, currency, created_at')
+                .eq('user_id', ids[0]);
+            allExpenses = data || [];
+        } else {
+            const { data } = await supabase
+                .from('expenses')
+                .select('amount, currency, created_at')
+                .in('user_id', ids);
+            allExpenses = data || [];
+        }
 
-        // Calculate revenue/expenses for current/last month
-        // ... (same as before)
+        // Calculate revenue/expenses for current and last month
+        const currentRevenue = allDeals
+            .filter(d => new Date(d.created_at) >= currentMonth && new Date(d.created_at) < nextMonth)
+            .reduce((sum, d) => sum + Number(d.amount), 0);
 
-        // ✅ FETCH TAX RATE FROM DATABASE USING supabaseAdmin (bypasses RLS)
+        const lastRevenue = allDeals
+            .filter(d => new Date(d.created_at) >= lastMonth && new Date(d.created_at) < currentMonth)
+            .reduce((sum, d) => sum + Number(d.amount), 0);
+
+        const currentExpenses = allExpenses
+            .filter(e => new Date(e.created_at) >= currentMonth && new Date(e.created_at) < nextMonth)
+            .reduce((sum, e) => sum + Number(e.amount), 0);
+
+        const lastExpenses = allExpenses
+            .filter(e => new Date(e.created_at) >= lastMonth && new Date(e.created_at) < currentMonth)
+            .reduce((sum, e) => sum + Number(e.amount), 0);
+
+        const revenueChange = lastRevenue > 0 ? ((currentRevenue - lastRevenue) / lastRevenue) * 100 : 0;
+        const expensesChange = lastExpenses > 0 ? ((currentExpenses - lastExpenses) / lastExpenses) * 100 : 0;
+
+        // ✅ Get tax rate from profile (for the primary user)
         const { data: profile, error: profileError } = await supabaseAdmin
             .from('profiles')
             .select('tax_rate')
@@ -284,33 +325,15 @@ app.get('/api/dashboard/stats', authenticate, async (req, res) => {
             .single();
 
         if (profileError) {
-            console.error('Error fetching tax rate:', profileError);
+            console.error('Error fetching tax rate for user', userId, profileError);
         }
-
-        const taxRate = profile?.tax_rate || 30; // fallback to 30 if not set
+        const taxRate = profile?.tax_rate || 30;
 
         // Total revenue and expenses (all time)
-        const totalRevenue = (deals || []).reduce((sum, d) => sum + Number(d.amount), 0);
-        const totalExpenses = (expenses || []).reduce((sum, e) => sum + Number(e.amount), 0);
+        const totalRevenue = allDeals.reduce((sum, d) => sum + Number(d.amount), 0);
+        const totalExpenses = allExpenses.reduce((sum, e) => sum + Number(e.amount), 0);
         const taxes = totalRevenue * (taxRate / 100);
         const takeHome = totalRevenue - taxes - totalExpenses;
-
-        // Calculate percentage changes (same as before)
-        const currentRevenue = (deals || [])
-            .filter(d => new Date(d.created_at) >= currentMonth && new Date(d.created_at) < nextMonth)
-            .reduce((sum, d) => sum + Number(d.amount), 0);
-        const lastRevenue = (deals || [])
-            .filter(d => new Date(d.created_at) >= lastMonth && new Date(d.created_at) < currentMonth)
-            .reduce((sum, d) => sum + Number(d.amount), 0);
-        const revenueChange = lastRevenue > 0 ? ((currentRevenue - lastRevenue) / lastRevenue) * 100 : 0;
-
-        const currentExpenses = (expenses || [])
-            .filter(e => new Date(e.created_at) >= currentMonth && new Date(e.created_at) < nextMonth)
-            .reduce((sum, e) => sum + Number(e.amount), 0);
-        const lastExpenses = (expenses || [])
-            .filter(e => new Date(e.created_at) >= lastMonth && new Date(e.created_at) < currentMonth)
-            .reduce((sum, e) => sum + Number(e.amount), 0);
-        const expensesChange = lastExpenses > 0 ? ((currentExpenses - lastExpenses) / lastExpenses) * 100 : 0;
 
         res.json({
             success: true,
@@ -321,7 +344,7 @@ app.get('/api/dashboard/stats', authenticate, async (req, res) => {
                 takeHome,
                 revenueChange: Math.round(revenueChange),
                 expensesChange: Math.round(expensesChange),
-                taxRate: taxRate  // ✅ always send the latest tax rate
+                taxRate
             }
         });
     } catch (err) {
