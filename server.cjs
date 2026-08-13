@@ -703,6 +703,46 @@ app.get('/api/auth/user', authenticate, async (req, res) => {
 });
 
 // ============================================
+// GOOGLE OAUTH – SET HTTPONLY COOKIE
+// ============================================
+
+app.post('/api/auth/oauth', async (req, res) => {
+    try {
+        const { access_token } = req.body;
+
+        if (!access_token) {
+            return res.status(400).json({ error: 'Access token required' });
+        }
+
+        // ✅ Verify the token with Supabase
+        const { data: userData, error } = await supabase.auth.getUser(access_token);
+
+        if (error || !userData?.user) {
+            console.error('OAuth token verification failed:', error);
+            return res.status(401).json({ error: 'Invalid or expired token' });
+        }
+
+        // ✅ Set the same HttpOnly cookie
+        res.cookie('paypoint_session', access_token, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'Strict',
+            maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+        });
+
+        // ✅ Return user data
+        res.json({
+            success: true,
+            user: userData.user
+        });
+
+    } catch (err) {
+        console.error('OAuth cookie error:', err);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+// ============================================
 // DELETE USER ACCOUNT
 // ============================================
 app.delete('/api/auth/delete', authenticate, async (req, res) => {

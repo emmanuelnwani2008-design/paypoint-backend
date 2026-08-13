@@ -379,15 +379,34 @@ const API_URL = '/api';
             const confirmEmail = document.getElementById('confirmEmail');
             const googleBtn = document.getElementById('googleSignIn');
 
-            // ---------- SAVE SESSION AND REDIRECT ----------
-            function saveSessionAndRedirect(session) {
-                if (!session) return;
-                localStorage.setItem('paypoint_user', JSON.stringify(session.user));
-localStorage.setItem('paypoint_user', JSON.stringify(session.user));
-                // Remove the hash before redirect to prevent loops
-                window.location.hash = '';
-                window.location.replace('/dashboard.html');
-            }
+            // ---------- SAVE SESSION AND REDIRECT (GOOGLE OAUTH) ----------
+async function saveSessionAndRedirect(session) {
+    if (!session) return;
+
+    try {
+        // ✅ Send the access token to the backend to set the HttpOnly cookie
+        const res = await fetch(`${API_URL}/auth/oauth`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ access_token: session.access_token })
+        });
+
+        const data = await res.json();
+
+        if (data.success && data.user) {
+            // ✅ Store user data (but NOT the token – it's in the cookie)
+            localStorage.setItem('paypoint_user', JSON.stringify(data.user));
+            window.location.hash = '';
+            window.location.replace('/dashboard.html');
+        } else {
+            console.error('OAuth cookie setup failed:', data.error);
+            alert('Authentication failed. Please try again.');
+        }
+    } catch (err) {
+        console.error('OAuth error:', err);
+        alert('Could not connect to server. Please try again.');
+    }
+}
 
             // ---------- HANDLE OAUTH REDIRECT ----------
             async function handleOAuthRedirect() {
