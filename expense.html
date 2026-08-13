@@ -723,7 +723,7 @@
         // AUTH HELPERS
         // ============================================
         function getAuthHeaders() {
-            const token = localStorage.getItem('paypoint_session');
+    return { 'Content-Type': 'application/json' };
             return {
                 'Content-Type': 'application/json',
                 ...(token ? { Authorization: `Bearer ${token}` } : {})
@@ -844,44 +844,75 @@
         }
 
         function renderExpenses(expenses) {
-            if (expenses.length === 0) {
-                tableBody.innerHTML = `
-                    <tr>
-                        <td colspan="6">
-                            <div class="empty-state">
-                                <div class="icon">🧾</div>
-                                <h3>No expenses found</h3>
-                                <p>Add your first expense to start tracking.</p>
-                            </div>
-                        </td>
-                    </tr>
-                `;
-                return;
-            }
+    if (expenses.length === 0) {
+        tableBody.innerHTML = `
+            <tr>
+                <td colspan="6">
+                    <div class="empty-state">
+                        <div class="icon">🧾</div>
+                        <h3>No expenses found</h3>
+                        <p>Add your first expense to start tracking.</p>
+                    </div>
+                </td>
+            </tr>
+        `;
+        return;
+    }
+    tableBody.innerHTML = '';
+    expenses.forEach(exp => {
+        const tr = document.createElement('tr');
 
-            tableBody.innerHTML = '';
-            expenses.forEach(exp => {
-                const tr = document.createElement('tr');
-                const date = exp.created_at ? new Date(exp.created_at).toLocaleDateString() : 'Not set';
-                const category = exp.category || 'other';
+        // Receipt (if any)
+        const receiptCell = document.createElement('td');
+        if (exp.receipt_url) {
+            const img = document.createElement('img');
+            img.src = exp.receipt_url;
+            img.className = 'receipt-thumb';
+            img.alt = 'Receipt';
+            receiptCell.appendChild(img);
+        } else {
+            receiptCell.textContent = '—';
+        }
+        tr.appendChild(receiptCell);
 
-                let receiptHtml = '—';
-                if (exp.receipt_url) {
-                    receiptHtml = `<img src="${exp.receipt_url}" class="receipt-thumb" alt="Receipt">`;
-                }
+        // Vendor (safe)
+        const vendorCell = document.createElement('td');
+        const vendorSpan = document.createElement('span');
+        vendorSpan.className = 'vendor-name';
+        vendorSpan.textContent = exp.vendor;
+        vendorCell.appendChild(vendorSpan);
+        tr.appendChild(vendorCell);
 
-                tr.innerHTML = `
-                    <td>${receiptHtml}</td>
-                    <td><span class="vendor-name">${exp.vendor}</span></td>
-                    <td>${formatCurrency(exp.amount, exp.currency)}</td>
-                    <td><span class="category-badge ${category}">${category}</span></td>
-                    <td>${date}</td>
-                    <td>
-                        <button class="action-btn delete" data-id="${exp.id}" title="Delete">🗑️</button>
-                    </td>
-                `;
-                tableBody.appendChild(tr);
-            });
+        // Amount (safe)
+        const amountCell = document.createElement('td');
+        amountCell.textContent = formatCurrency(exp.amount, exp.currency);
+        tr.appendChild(amountCell);
+
+        // Category (safe)
+        const categoryCell = document.createElement('td');
+        const catSpan = document.createElement('span');
+        catSpan.className = 'category-badge ' + (exp.category || 'other');
+        catSpan.textContent = exp.category || 'uncategorized';
+        categoryCell.appendChild(catSpan);
+        tr.appendChild(categoryCell);
+
+        // Date (safe)
+        const dateCell = document.createElement('td');
+        dateCell.textContent = exp.created_at ? new Date(exp.created_at).toLocaleDateString() : 'Not set';
+        tr.appendChild(dateCell);
+
+        // Delete button
+        const actionCell = document.createElement('td');
+        const deleteBtn = document.createElement('button');
+        deleteBtn.className = 'action-btn delete';
+        deleteBtn.dataset.id = exp.id;
+        deleteBtn.textContent = '🗑️';
+        deleteBtn.addEventListener('click', () => deleteExpense(exp.id));
+        actionCell.appendChild(deleteBtn);
+        tr.appendChild(actionCell);
+
+        tableBody.appendChild(tr);
+    });
 
             document.querySelectorAll('.action-btn.delete').forEach(btn => {
                 btn.addEventListener('click', () => deleteExpense(btn.dataset.id));
@@ -1013,6 +1044,12 @@
                 console.error(err);
             }
         });
+        function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
 
         async function deleteExpense(id) {
             if (!confirm('Are you sure you want to delete this expense?')) return;

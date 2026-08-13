@@ -282,7 +282,7 @@
         // AUTH HELPERS
         // ============================================
         function getAuthHeaders() {
-            const token = localStorage.getItem('paypoint_session');
+    return { 'Content-Type': 'application/json' };
             return {
                 'Content-Type': 'application/json',
                 ...(token ? { Authorization: `Bearer ${token}` } : {})
@@ -376,100 +376,50 @@
         // RENDER DEAL (Builds the HTML)
         // ============================================
         function renderDeal(deal) {
-            // 1. Status badge
-            const statusClass = deal.status || 'pending';
-            const statusLabel = (deal.status || 'pending').toUpperCase();
-
-            // 2. Profit color (green if positive, red if negative)
-            const profitColor = deal.profit >= 0 ? 'green' : 'red';
-
-            // 3. Build the expenses list HTML
-            let expensesHtml = '';
-            if (deal.expenses && deal.expenses.length > 0) {
-                deal.expenses.forEach(exp => {
-                    expensesHtml += `
-                        <div class="expense-item">
-                            <div>
-                                <span class="expense-vendor">${exp.vendor}</span>
-                                <span class="expense-category">${exp.category || 'uncategorized'}</span>
-                            </div>
-                            <span class="expense-amount">-${formatCurrency(exp.amount)}</span>
-                        </div>
-                    `;
-                });
-            } else {
-                expensesHtml = `
-                    <div style="color: #8A9AAB; font-size: 14px; padding: 12px 0;">
-                        No expenses linked to this deal yet. 
-                        <a href="expense.html" style="color: #4F7CFF;">Add one now</a>.
-                    </div>
-                `;
-            }
-
-            // 4. Notes HTML (if they exist)
-            const notesHtml = deal.notes ? `
-                <div class="notes-section">
-                    <h3>📝 Campaign Brief & Notes</h3>
-                    <p>${deal.notes}</p>
+    const html = `
+        <div class="deal-card">
+            <div class="deal-header">
+                <div class="deal-title">
+                    <h1>${escapeHtml(deal.brand_name)}</h1>
+                    <p style="color: #8A9AAB; font-size: 14px;">Deal ID: ${escapeHtml(deal.id)}</p>
                 </div>
-            ` : '';
-
-            // 5. Assemble the full page
-            const html = `
-                <div class="deal-card">
-                    <div class="deal-header">
-                        <div class="deal-title">
-                            <h1>${deal.brand_name}</h1>
-                            <p style="color: #8A9AAB; font-size: 14px;">Deal ID: ${deal.id}</p>
-                        </div>
-                        <span class="deal-status ${statusClass}">${statusLabel}</span>
+                <span class="deal-status ${deal.status || 'pending'}">${(deal.status || 'pending').toUpperCase()}</span>
+            </div>
+            ${deal.notes ? `<div class="notes-section"><h3>📝 Campaign Brief & Notes</h3><p>${escapeHtml(deal.notes)}</p></div>` : ''}
+            <div class="deal-meta">
+                <div class="meta-item"><div class="label">Amount</div><div class="value blue">${formatCurrency(deal.amount)}</div></div>
+                <div class="meta-item"><div class="label">Deliverable</div><div class="value">${escapeHtml(deal.deliverable || 'Not specified')}</div></div>
+                <div class="meta-item"><div class="label">Due Date</div><div class="value">${deal.due_date ? new Date(deal.due_date).toLocaleDateString() : 'Not set'}</div></div>
+                <div class="meta-item"><div class="label">Currency</div><div class="value">${escapeHtml(deal.currency || 'NGN')}</div></div>
+            </div>
+            <div class="profit-box">
+                <div class="label">💰 Profit</div>
+                <div class="value ${deal.profit >= 0 ? 'green' : 'red'}">${formatCurrency(deal.profit)}</div>
+                <div class="breakdown">${formatCurrency(deal.amount)} deal amount ${deal.total_expenses > 0 ? '− '+formatCurrency(deal.total_expenses)+' expenses' : ''} = ${formatCurrency(deal.profit)}</div>
+            </div>
+            <h3 style="font-size: 16px; font-weight: 600; margin: 20px 0 12px;">🧾 Linked Expenses</h3>
+            <div class="expenses-list">
+                ${deal.expenses && deal.expenses.length > 0 ? deal.expenses.map(exp => `
+                    <div class="expense-item">
+                        <div><span class="expense-vendor">${escapeHtml(exp.vendor)}</span> <span class="expense-category">${escapeHtml(exp.category || 'uncategorized')}</span></div>
+                        <span class="expense-amount">-${formatCurrency(exp.amount)}</span>
                     </div>
-
-                    ${notesHtml}
-
-                    <div class="deal-meta">
-                        <div class="meta-item">
-                            <div class="label">Amount</div>
-                            <div class="value blue">${formatCurrency(deal.amount)}</div>
-                        </div>
-                        <div class="meta-item">
-                            <div class="label">Deliverable</div>
-                            <div class="value">${deal.deliverable || 'Not specified'}</div>
-                        </div>
-                        <div class="meta-item">
-                            <div class="label">Due Date</div>
-                            <div class="value">${deal.due_date ? new Date(deal.due_date).toLocaleDateString() : 'Not set'}</div>
-                        </div>
-                        <div class="meta-item">
-                            <div class="label">Currency</div>
-                            <div class="value">${deal.currency || 'NGN'}</div>
-                        </div>
-                    </div>
-
-                    <div class="profit-box">
-                        <div class="label">💰 Profit</div>
-                        <div class="value ${profitColor}">${formatCurrency(deal.profit)}</div>
-                        <div class="breakdown">
-                            ${formatCurrency(deal.amount)} deal amount
-                            ${deal.total_expenses > 0 ? `− ${formatCurrency(deal.total_expenses)} expenses` : ''}
-                            = ${formatCurrency(deal.profit)}
-                        </div>
-                    </div>
-
-                    <h3 style="font-size: 16px; font-weight: 600; margin: 20px 0 12px;">🧾 Linked Expenses</h3>
-                    <div class="expenses-list">
-                        ${expensesHtml}
-                    </div>
-
-                    <div style="display: flex; gap: 12px; margin-top: 20px; flex-wrap: wrap;">
-                        <a href="expense.html" class="btn-secondary">➕ Add Expense</a>
-                        <a href="deals.html" class="btn-secondary">← Back to Deals</a>
-                    </div>
-                </div>
-            `;
-
-            document.getElementById('dealContent').innerHTML = html;
-        }
+                `).join('') : '<div style="color: #8A9AAB; font-size: 14px; padding: 12px 0;">No expenses linked to this deal yet. <a href="expense.html" style="color: #4F7CFF;">Add one now</a>.</div>'}
+            </div>
+            <div style="display: flex; gap: 12px; margin-top: 20px; flex-wrap: wrap;">
+                <a href="expense.html" class="btn-secondary">➕ Add Expense</a>
+                <a href="deals.html" class="btn-secondary">← Back to Deals</a>
+            </div>
+        </div>
+    `;
+    document.getElementById('dealContent').innerHTML = html;
+}
+        function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
 
         // ============================================
         // LOGOUT

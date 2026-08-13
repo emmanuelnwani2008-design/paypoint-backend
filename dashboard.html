@@ -488,10 +488,9 @@
         // ----- Helper Functions -----
         function getAuthHeaders() {
             const token = localStorage.getItem('paypoint_session');
-            return {
-                'Content-Type': 'application/json',
-                ...(token ? { Authorization: `Bearer ${token}` } : {})
-            };
+            const headers = { 'Content-Type': 'application/json' };
+            if (token) headers['Authorization'] = `Bearer ${token}`;
+            return headers;
         }
 
         function formatCurrency(amount, currency) {
@@ -641,24 +640,38 @@ async function loadDashboardStats() {
     }
 }
 
-        // ----- LOAD DEALS & EXPENSES -----
+        // ----- LOAD DEALS -----
         async function loadDeals() {
             try {
                 const res = await fetch(`${API_URL}/deals`, { headers: getAuthHeaders() });
                 const result = await res.json();
                 const list = document.getElementById('dealsList');
-                if (result.success && result.data.length > 0) {
+                if (result.success && result.data && result.data.length > 0) {
                     list.innerHTML = '';
                     result.data.slice(0, 5).forEach(deal => {
                         const div = document.createElement('div');
                         div.className = 'deal-item';
-                        let statusClass = 'pending';
-                        if (deal.status === 'overdue') statusClass = 'overdue';
-                        if (deal.status === 'paid') statusClass = 'paid';
-                        div.innerHTML = `
-                            <div><div class="deal-brand">${deal.brand_name}</div><div style="font-size:12px; color:#8A9AAB;">${deal.deliverable || 'No deliverable'}</div></div>
-                            <div style="text-align:right;"><div class="deal-amount">${formatCurrency(deal.amount, deal.currency)}</div><span class="deal-status ${statusClass}">${deal.status || 'pending'}</span></div>
-                        `;
+
+                        const leftDiv = document.createElement('div');
+                        const brandDiv = document.createElement('div');
+                        brandDiv.className = 'deal-brand';
+                        brandDiv.textContent = escapeHtml(deal.brand_name || deal.brand || 'Unknown');
+                        leftDiv.appendChild(brandDiv);
+
+                        const rightDiv = document.createElement('div');
+                        rightDiv.style.textAlign = 'right';
+                        const amountDiv = document.createElement('div');
+                        amountDiv.className = 'deal-amount';
+                        amountDiv.textContent = formatCurrency(deal.amount || 0, deal.currency || undefined);
+                        rightDiv.appendChild(amountDiv);
+
+                        const statusSpan = document.createElement('span');
+                        statusSpan.className = 'deal-status ' + (deal.status || 'pending');
+                        statusSpan.textContent = deal.status || 'pending';
+                        rightDiv.appendChild(statusSpan);
+
+                        div.appendChild(leftDiv);
+                        div.appendChild(rightDiv);
                         list.appendChild(div);
                     });
                 } else {
@@ -765,6 +778,12 @@ async function loadDashboardStats() {
             day: 'numeric',
             year: 'numeric'
         });
+        function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
 
         // ============================================
         // ⭐ INIT

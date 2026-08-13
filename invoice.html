@@ -412,7 +412,7 @@ function formatCurrency(amount, currency) {
         // ============================================
         async function loadDealsForInvoices() {
             try {
-                const res = await fetch(`${API_URL}/deals`, { headers: getAuthHeaders() });
+                const res = await fetch(`${API_URL}/deals`, { headers: getAuthHeaders(),credentials: 'include'});
                 const result = await res.json();
 
                 if (result.success) {
@@ -448,17 +448,17 @@ function formatCurrency(amount, currency) {
                 const status = statuses[Math.floor(Math.random() * statuses.length)];
 
                 card.innerHTML = `
-                    <div class="brand">${deal.brand_name}</div>
-                    <div class="amount">${formatCurrency(deal.amount, deal.currency)}</div>
-                    <div class="details">📅 Due: ${deal.due_date ? new Date(deal.due_date).toLocaleDateString() : 'Not set'}</div>
-                    <div class="details">📋 ${deal.deliverable || 'No deliverable'}</div>
-                    <span class="status ${status}">${status.toUpperCase()}</span>
-                    <div class="invoice-actions">
-                        <button class="btn-invoice gold" onclick="previewInvoice('${deal.id}')">👁️ Preview</button>
-                        <button class="btn-invoice blue" onclick="downloadInvoice('${deal.id}')">⬇️ Download</button>
-                        <button class="btn-invoice green" onclick="sendInvoice('${deal.id}')">💰 Pay Now</button>
-                    </div>
-                `;
+    <div class="brand">${escapeHtml(deal.brand_name)}</div>
+    <div class="amount">${formatCurrency(deal.amount, deal.currency)}</div>
+    <div class="details">📅 Due: ${deal.due_date ? new Date(deal.due_date).toLocaleDateString() : 'Not set'}</div>
+    <div class="details">📋 ${escapeHtml(deal.deliverable || 'No deliverable')}</div>
+    <span class="status ${status}">${status.toUpperCase()}</span>
+    <div class="invoice-actions">
+        <button class="btn-invoice gold" onclick="previewInvoice('${deal.id}')">👁️ Preview</button>
+        <button class="btn-invoice blue" onclick="downloadInvoice('${deal.id}')">⬇️ Download</button>
+        <button class="btn-invoice green" onclick="sendInvoice('${deal.id}')">💰 Pay Now</button>
+    </div>
+`;
                 invoiceGrid.appendChild(card);
             });
         }
@@ -665,6 +665,13 @@ function formatCurrency(amount, currency) {
             localStorage.removeItem('paypoint_session');
             window.location.replace('login.html');
         });
+
+        function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
 
         // ============================================
         // INIT

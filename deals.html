@@ -850,7 +850,7 @@ Example: 'Brand wants 3 TikTok videos. Must use #GalaxyAI. Sarah is the contact.
         // ============================================
         async function loadDeals() {
             try {
-                const res = await fetch(`${API_URL}/deals`, { headers: getAuthHeaders() });
+                const res = await fetch(`${API_URL}/deals`, { headers: getAuthHeaders(),credentials: 'include'});
                 const result = await res.json();
 
                 if (result.success) {
@@ -880,45 +880,74 @@ Example: 'Brand wants 3 TikTok videos. Must use #GalaxyAI. Sarah is the contact.
         // RENDER DEALS
         // ============================================
         function renderDeals(deals) {
-            if (deals.length === 0) {
-                tableBody.innerHTML = `
-                    <tr>
-                        <td colspan="6">
-                            <div class="empty-state">
-                                <div class="icon">📋</div>
-                                <h3>No deals found</h3>
-                                <p>Add your first brand deal to start tracking.</p>
-                            </div>
-                        </td>
-                    </tr>
-                `;
-                return;
-            }
+    if (deals.length === 0) {
+        tableBody.innerHTML = `
+            <tr>
+                <td colspan="6">
+                    <div class="empty-state">
+                        <div class="icon">📋</div>
+                        <h3>No deals found</h3>
+                        <p>Add your first brand deal to start tracking.</p>
+                    </div>
+                </td>
+            </tr>
+        `;
+        return;
+    }
+    tableBody.innerHTML = '';
+    deals.forEach(deal => {
+        const tr = document.createElement('tr');
 
-            tableBody.innerHTML = '';
-            deals.forEach(deal => {
-                const tr = document.createElement('tr');
-                const dueDate = deal.due_date ? new Date(deal.due_date).toLocaleDateString() : 'Not set';
+        // Brand (safe)
+        const brandCell = document.createElement('td');
+        const link = document.createElement('a');
+        link.href = `deal-detail.html?id=${deal.id}`;
+        link.textContent = deal.brand_name;   // ✅ safe
+        brandCell.appendChild(link);
+        tr.appendChild(brandCell);
 
-                let statusClass = 'pending';
-                if (deal.status === 'paid') statusClass = 'paid';
-                if (deal.status === 'overdue') statusClass = 'overdue';
+        // Amount (safe)
+        const amountCell = document.createElement('td');
+        amountCell.textContent = formatCurrency(deal.amount, deal.currency);
+        tr.appendChild(amountCell);
 
-                tr.innerHTML = `
-                    <td><a href="deal-detail.html?id=${deal.id}" style="color: #4F7CFF; text-decoration: none; font-weight: 600;">${deal.brand_name}</a></td>
-                    <td>${formatCurrency(deal.amount, deal.currency)}</td>
-                    <td>${deal.deliverable || '—'}</td>
-                    <td>${dueDate}</td>
-                    <td><span class="status-badge ${statusClass}">${deal.status || 'pending'}</span></td>
-                    <td>
-                        <div class="action-buttons">
-                            <button class="action-btn edit" data-id="${deal.id}" title="Edit">✏️</button>
-                            <button class="action-btn delete" data-id="${deal.id}" title="Delete">🗑️</button>
-                        </div>
-                    </td>
-                `;
-                tableBody.appendChild(tr);
-            });
+        // Deliverable (safe)
+        const deliverableCell = document.createElement('td');
+        deliverableCell.textContent = deal.deliverable || '—';
+        tr.appendChild(deliverableCell);
+
+        // Due date (safe)
+        const dueDateCell = document.createElement('td');
+        dueDateCell.textContent = deal.due_date ? new Date(deal.due_date).toLocaleDateString() : 'Not set';
+        tr.appendChild(dueDateCell);
+
+        // Status (safe)
+        const statusCell = document.createElement('td');
+        const statusSpan = document.createElement('span');
+        statusSpan.className = 'status-badge ' + (deal.status || 'pending');
+        statusSpan.textContent = deal.status || 'pending';
+        statusCell.appendChild(statusSpan);
+        tr.appendChild(statusCell);
+
+        // Actions (safe)
+        const actionsCell = document.createElement('td');
+        const editBtn = document.createElement('button');
+        editBtn.className = 'action-btn edit';
+        editBtn.dataset.id = deal.id;
+        editBtn.textContent = '✏️';
+        editBtn.addEventListener('click', () => openEditModal(deal.id));
+        const deleteBtn = document.createElement('button');
+        deleteBtn.className = 'action-btn delete';
+        deleteBtn.dataset.id = deal.id;
+        deleteBtn.textContent = '🗑️';
+        deleteBtn.addEventListener('click', () => deleteDeal(deal.id));
+        actionsCell.appendChild(editBtn);
+        actionsCell.appendChild(deleteBtn);
+        tr.appendChild(actionsCell);
+
+        tableBody.appendChild(tr);
+    });
+}
 
             document.querySelectorAll('.action-btn.edit').forEach(btn => {
                 btn.addEventListener('click', () => openEditModal(btn.dataset.id));
@@ -927,8 +956,7 @@ Example: 'Brand wants 3 TikTok videos. Must use #GalaxyAI. Sarah is the contact.
             document.querySelectorAll('.action-btn.delete').forEach(btn => {
                 btn.addEventListener('click', () => deleteDeal(btn.dataset.id));
             });
-        }
-
+    
         // ============================================
         // UPDATE STATS
         // ============================================
@@ -1092,6 +1120,13 @@ Example: 'Brand wants 3 TikTok videos. Must use #GalaxyAI. Sarah is the contact.
                 console.error(err);
             }
         });
+
+        function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
 
         // ============================================
         // DELETE DEAL

@@ -382,8 +382,8 @@ const API_URL = '/api';
             // ---------- SAVE SESSION AND REDIRECT ----------
             function saveSessionAndRedirect(session) {
                 if (!session) return;
-                localStorage.setItem('paypoint_session', session.access_token);
                 localStorage.setItem('paypoint_user', JSON.stringify(session.user));
+localStorage.setItem('paypoint_user', JSON.stringify(session.user));
                 // Remove the hash before redirect to prevent loops
                 window.location.hash = '';
                 window.location.replace('/dashboard.html');
@@ -598,6 +598,12 @@ const API_URL = '/api';
                     console.error('Login error:', err);
                 }
             });
+            function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
 
             // ---------- DEMO LOGIN ----------
             async function demoLoginHandler() {
