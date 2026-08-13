@@ -302,24 +302,37 @@
         // ============================================
         // CHECK AUTH
         // ============================================
-        function checkAuth() {
-            const user = localStorage.getItem('paypoint_user');
-            if (!user) {
-                window.location.replace('login.html');
-                return false;
-            }
-            try {
-                const userData = JSON.parse(user);
-                const name = userData?.user_metadata?.name || userData?.name || 'Creator';
-                document.getElementById('userBadge').textContent = `👤 ${name}`;
-                return true;
-            } catch (e) {
-                localStorage.removeItem('paypoint_user');
-                localStorage.removeItem('paypoint_session');
-                window.location.replace('login.html');
-                return false;
-            }
+        async function checkAuth() {
+    try {
+        const res = await fetch(`${API_URL}/auth/user`, {
+            credentials: 'include'   // ✅ sends the cookie automatically
+        });
+
+        if (res.status === 401) {
+            console.log('🔐 Not authenticated, redirecting to login');
+            localStorage.removeItem('paypoint_user');
+            window.location.replace('login.html');
+            return false;
         }
+
+        const data = await res.json();
+        if (data.success && data.user) {
+            // Update localStorage with fresh user data (no token)
+            localStorage.setItem('paypoint_user', JSON.stringify(data.user));
+            if (typeof updateUI === 'function') updateUI(data.user);
+            return true;
+        } else {
+            console.log('⚠️ No user data, redirecting');
+            localStorage.removeItem('paypoint_user');
+            window.location.replace('login.html');
+            return false;
+        }
+    } catch (err) {
+        console.error('❌ Error checking auth:', err);
+        window.location.replace('login.html');
+        return false;
+    }
+}
 
         // ============================================
         // FETCH DEAL DETAILS

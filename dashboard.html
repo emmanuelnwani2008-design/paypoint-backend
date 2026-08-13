@@ -515,41 +515,32 @@
             else sidebarAvatarImg.src = 'user.png';
         }
 
-        // ----- ⭐ THE FIXED CHECK AUTH ⭐ -----
+        // ----- ⭐ CHECK AUTH (robust) ⭐ -----
         async function checkAuth() {
             const token = localStorage.getItem('paypoint_session');
-            const user = localStorage.getItem('paypoint_user');
+            const cachedUser = localStorage.getItem('paypoint_user');
 
-            if (!token) {
-                console.log('🔐 No token, redirecting to login');
-                localStorage.removeItem('paypoint_user');
-                localStorage.removeItem('paypoint_session');
-                window.location.replace('login.html');
-                return false;
-            }
-
-            if (user) {
+            // If we already have a token and user cached, use it immediately
+            if (token && cachedUser) {
                 try {
-                    const userData = JSON.parse(user);
-                    const userId = userData.id || userData.user_metadata?.id || userData.sub;
-                    if (userId) {
-                        console.log('✅ User found in localStorage with ID:', userId);
-                        updateSidebarUI(userData);
-                        return true;
-                    }
+                    const userData = JSON.parse(cachedUser);
+                    updateSidebarUI(userData);
+                    return true;
                 } catch (e) {
-                    console.warn('⚠️ Invalid user in localStorage, re-fetching...');
+                    // fallthrough to re-fetch
+                    console.warn('⚠️ Invalid cached user, will re-fetch');
                 }
             }
 
-            console.log('⏳ Fetching user from backend...');
+            // Otherwise, try to fetch the user from the backend.
             try {
+                const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
                 const res = await fetch(`${API_URL}/auth/user`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
+                    headers,
+                    credentials: token ? 'same-origin' : 'include'
                 });
 
                 if (res.status === 401) {
-                    console.warn('🔐 Token invalid, redirecting to login');
                     localStorage.removeItem('paypoint_user');
                     localStorage.removeItem('paypoint_session');
                     window.location.replace('login.html');
@@ -557,21 +548,19 @@
                 }
 
                 const data = await res.json();
-                if (data.success && data.user) {
-                    console.log('✅ User fetched from backend:', data.user.email);
+                if (data && data.success && data.user) {
                     localStorage.setItem('paypoint_user', JSON.stringify(data.user));
                     updateSidebarUI(data.user);
                     return true;
-                } else {
-                    console.warn('⚠️ No user found in backend, redirecting');
-                    localStorage.removeItem('paypoint_user');
-                    localStorage.removeItem('paypoint_session');
-                    window.location.replace('login.html');
-                    return false;
                 }
+
+                localStorage.removeItem('paypoint_user');
+                localStorage.removeItem('paypoint_session');
+                window.location.replace('login.html');
+                return false;
             } catch (err) {
-                console.error('❌ Error fetching user:', err);
-                return true;
+                console.error('❌ Error checking auth:', err);
+                return false;
             }
         }
 

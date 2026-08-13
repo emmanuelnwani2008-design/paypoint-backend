@@ -585,7 +585,6 @@ localStorage.setItem('paypoint_user', JSON.stringify(session.user));
                     if (data.success && data.user) {
                         localStorage.setItem('paypoint_user', JSON.stringify(data.user));
                         if (data.session?.access_token) {
-                            localStorage.setItem('paypoint_session', data.session.access_token);
                         }
                         window.location.replace('dashboard.html');
                     } else {
@@ -637,7 +636,6 @@ localStorage.setItem('paypoint_user', JSON.stringify(session.user));
                     if (data.success && data.user) {
                         localStorage.setItem('paypoint_user', JSON.stringify(data.user));
                         if (data.session?.access_token) {
-                            localStorage.setItem('paypoint_session', data.session.access_token);
                         }
                         window.location.replace('dashboard.html');
                     } else {

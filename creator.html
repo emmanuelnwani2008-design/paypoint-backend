@@ -533,37 +533,36 @@
         // CHECK AUTH (UPDATED)
         // ============================================
         async function checkAuth() {
-            const token = localStorage.getItem('paypoint_session');
-            const user = localStorage.getItem('paypoint_user');
+    try {
+        const res = await fetch(`${API_URL}/auth/user`, {
+            credentials: 'include'   // ✅ sends the cookie automatically
+        });
 
-            if (!token || !user) {
-                localStorage.removeItem('paypoint_user');
-                localStorage.removeItem('paypoint_session');
-                window.location.replace('login.html');
-                return false;
-            }
-
-            try {
-                // Fetch fresh user data instead of relying on cached localStorage
-                const freshUser = await fetchFreshUserData();
-                if (!freshUser) {
-                    localStorage.removeItem('paypoint_user');
-                    localStorage.removeItem('paypoint_session');
-                    window.location.replace('login.html');
-                    return false;
-                }
-
-                // Update UI with fresh data
-                updateUI(freshUser);
-                return true;
-            } catch (e) {
-                console.error('checkAuth error:', e);
-                localStorage.removeItem('paypoint_user');
-                localStorage.removeItem('paypoint_session');
-                window.location.replace('login.html');
-                return false;
-            }
+        if (res.status === 401) {
+            console.log('🔐 Not authenticated, redirecting to login');
+            localStorage.removeItem('paypoint_user');
+            window.location.replace('login.html');
+            return false;
         }
+
+        const data = await res.json();
+        if (data.success && data.user) {
+            // Update localStorage with fresh user data (no token)
+            localStorage.setItem('paypoint_user', JSON.stringify(data.user));
+            if (typeof updateUI === 'function') updateUI(data.user);
+            return true;
+        } else {
+            console.log('⚠️ No user data, redirecting');
+            localStorage.removeItem('paypoint_user');
+            window.location.replace('login.html');
+            return false;
+        }
+    } catch (err) {
+        console.error('❌ Error checking auth:', err);
+        window.location.replace('login.html');
+        return false;
+    }
+}
 
         // ============================================
         // UPDATE UI WITH USER DATA
