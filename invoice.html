@@ -356,11 +356,9 @@
         let allDeals = [];
 
         function getAuthHeaders() {
-    const token = localStorage.getItem('paypoint_session');
-    console.log('🔑 Token in getAuthHeaders:', token ? 'Present (starts with ' + token.substring(0, 15) + '...)' : 'MISSING');
     return {
         'Content-Type': 'application/json',
-        ...(token ? { Authorization: `Bearer ${token}` } : {})
+        // No Authorization header needed – the cookie is sent automatically
     };
 }
 function formatCurrency(amount, currency) {
@@ -402,12 +400,10 @@ function formatCurrency(amount, currency) {
 
         const data = await res.json();
         if (data.success && data.user) {
-            // Update localStorage with fresh user data (no token)
             localStorage.setItem('paypoint_user', JSON.stringify(data.user));
             if (typeof updateUI === 'function') updateUI(data.user);
             return true;
         } else {
-            console.log('⚠️ No user data, redirecting');
             localStorage.removeItem('paypoint_user');
             window.location.replace('login.html');
             return false;
