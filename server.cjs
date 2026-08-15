@@ -286,19 +286,23 @@ function isValidAmount(amount) {
 // ============================================
 async function authenticate(req, res, next) {
     try {
-        const token = req.cookies.paypoint_session;
-        // DEBUG: log whether cookie is present (masked) and raw Cookie header
-        try {
-            const masked = token ? (String(token).slice(0, 8) + '...') : 'none';
-            console.log(`🔐 COOKIE DEBUG - paypoint_session present: ${!!token}, masked: ${masked}`);
-            console.log('🔐 COOKIE DEBUG - request Cookie header:', req.headers.cookie || '(none)');
-        } catch (e) {
-            console.log('🔐 COOKIE DEBUG - logging error', e);
+        // 🔸 Hybrid: try cookie first, then fallback to Authorization header
+        let token = req.cookies?.paypoint_session;
+        if (!token) {
+            const authHeader = req.headers.authorization;
+            if (authHeader && authHeader.startsWith('Bearer ')) {
+                token = authHeader.split(' ')[1];
+            }
         }
-        if (!token) return res.status(401).json({ error: 'Authentication required' });
+
+        if (!token) {
+            return res.status(401).json({ error: 'Authentication required' });
+        }
+
         if (!/^[a-zA-Z0-9\-_]+\.[a-zA-Z0-9\-_]+\.[a-zA-Z0-9\-_]+$/.test(token)) {
             return res.status(401).json({ error: 'Invalid token format' });
         }
+
         const { data: userData, error } = await supabase.auth.getUser(token);
         if (error || !userData?.user) {
             return res.status(401).json({ error: 'Invalid or expired token' });
@@ -307,6 +311,7 @@ async function authenticate(req, res, next) {
         req.user = userData.user;
         req.userId = userData.user.id;
 
+        // Account reconciliation (keep if you use it)
         const email = userData.user?.email;
         if (email) {
             const { data: userMatches, error: listError } = await supabaseAdmin.auth.admin.listUsers();
@@ -651,21 +656,19 @@ app.post('/api/auth/login', authLimiter, async (req, res) => {
         const { email, password } = req.body || {};
         if (!email || !password) return res.status(400).json({ error: 'Email and password required' });
         if (!isValidEmail(email)) return res.status(400).json({ error: 'Invalid email format' });
+
         const { data, error } = await supabase.auth.signInWithPassword({
             email: email.toLowerCase().trim(),
             password
         });
+
         if (error) {
             console.error('Login error:', error);
             return res.status(401).json({ error: 'Invalid credentials' });
         }
-        res.cookie('paypoint_session', data.session.access_token, {
-            httpOnly: true,
-            secure: IS_PROD,
-            sameSite: COOKIE_SAME_SITE,
-            maxAge: 7 * 24 * 60 * 60 * 1000
-        });
-        res.json({ success: true, user: data.user });
+
+        // ✅ Return both user and session (token) – this is what the frontend expects
+        res.json({ success: true, user: data.user, session: data.session });
     } catch (err) {
         console.error('Login server error:', err);
         res.status(500).json({ error: 'Internal server error' });
@@ -673,11 +676,14 @@ app.post('/api/auth/login', authLimiter, async (req, res) => {
 });
 
 app.post('/api/auth/logout', authenticate, async (req, res) => {
-    // Clear cookie using same options so browser will remove it
-    res.clearCookie('paypoint_session', { httpOnly: true, secure: IS_PROD, sameSite: COOKIE_SAME_SITE });
     try {
+        // Clear the cookie if present
+        res.clearCookie('paypoint_session');
+        
+        // Sign out from Supabase
         const { error } = await supabase.auth.signOut();
         if (error) return res.status(400).json({ error: error.message });
+        
         res.json({ success: true, message: 'Logged out successfully' });
     } catch (err) {
         console.error('Logout error:', err);
@@ -725,7 +731,6 @@ app.post('/api/auth/oauth', async (req, res) => {
             return res.status(400).json({ error: 'Access token required' });
         }
 
-        // ✅ Verify the token with Supabase
         const { data: userData, error } = await supabase.auth.getUser(access_token);
 
         if (error || !userData?.user) {
@@ -733,20 +738,12 @@ app.post('/api/auth/oauth', async (req, res) => {
             return res.status(401).json({ error: 'Invalid or expired token' });
         }
 
-        // ✅ Set the same HttpOnly cookie
-        res.cookie('paypoint_session', access_token, {
-    httpOnly: true,
-    secure: true,                     // ✅ must be true (HTTPS)
-    sameSite: 'Lax',                  // ✅ works across domains on navigation
-    maxAge: 7 * 24 * 60 * 60 * 1000
-});
-
-        // ✅ Return user data
+        // ✅ Return user data and session (token)
         res.json({
             success: true,
-            user: userData.user
+            user: userData.user,
+            session: { access_token: access_token }  // this matches the frontend's expectation
         });
-
     } catch (err) {
         console.error('OAuth cookie error:', err);
         res.status(500).json({ error: 'Server error' });
