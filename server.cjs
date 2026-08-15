@@ -287,6 +287,14 @@ function isValidAmount(amount) {
 async function authenticate(req, res, next) {
     try {
         const token = req.cookies.paypoint_session;
+        // DEBUG: log whether cookie is present (masked) and raw Cookie header
+        try {
+            const masked = token ? (String(token).slice(0, 8) + '...') : 'none';
+            console.log(`🔐 COOKIE DEBUG - paypoint_session present: ${!!token}, masked: ${masked}`);
+            console.log('🔐 COOKIE DEBUG - request Cookie header:', req.headers.cookie || '(none)');
+        } catch (e) {
+            console.log('🔐 COOKIE DEBUG - logging error', e);
+        }
         if (!token) return res.status(401).json({ error: 'Authentication required' });
         if (!/^[a-zA-Z0-9\-_]+\.[a-zA-Z0-9\-_]+\.[a-zA-Z0-9\-_]+$/.test(token)) {
             return res.status(401).json({ error: 'Invalid token format' });
