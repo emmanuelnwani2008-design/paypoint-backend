@@ -1597,23 +1597,35 @@ app.post('/api/invoices/generate', authenticate, async (req, res) => {
         const { dealId } = req.body;
         const userId = req.userId;
 
-        if (!dealId) {
-            return res.status(400).json({ error: 'dealId required' });
-        }
-
-        const fallbackUserId = req.reconciledUserId || null;
-        const ids = [userId, fallbackUserId].filter(Boolean);
-        const { data: deal, error } = await supabaseAdmin
+        // 1. Get deal details
+        const { data: deal, error: dealError } = await supabaseAdmin
             .from('deals')
             .select('*')
             .eq('id', dealId)
-            .in('user_id', ids)
+            .eq('user_id', userId)
             .single();
 
-        if (error || !deal) {
+        if (dealError || !deal) {
             return res.status(404).json({ error: 'Deal not found' });
         }
 
+        // 2. Get creator's bank details from profile
+        const { data: profile, error: profileError } = await supabaseAdmin
+            .from('profiles')
+            .select('bank_account_name, bank_name, bank_account_number')
+            .eq('id', userId)
+            .single();
+
+        if (profileError) {
+            console.error('Profile fetch error:', profileError);
+            // Continue without bank details – just don't show them.
+        }
+
+        const bankName = profile?.bank_name || 'Not provided';
+        const accountName = profile?.bank_account_name || 'Not provided';
+        const accountNumber = profile?.bank_account_number || 'Not provided';
+
+        // 3. Generate PDF
         const invoiceNumber = `INV-${Date.now().toString().slice(-8)}`;
         const date = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
         const dueDate = deal.due_date ? new Date(deal.due_date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : 'Not set';
@@ -1627,8 +1639,69 @@ app.post('/api/invoices/generate', authenticate, async (req, res) => {
 
         doc.pipe(res);
 
-        // ... (keep existing PDF generation code) ...
+        // ----- Header -----
+        doc.fontSize(24).font('Helvetica-Bold').text('PayPoint', { align: 'center' });
+        doc.fontSize(12).font('Helvetica').text('Finance OS for Creators', { align: 'center' });
+        doc.moveDown(0.5);
+        doc.moveTo(50, doc.y).lineTo(550, doc.y).stroke('#CCCCCC');
+        doc.moveDown(1);
 
+        // ----- Invoice Title -----
+        doc.fontSize(20).font('Helvetica-Bold').text('INVOICE', { align: 'center' });
+        doc.moveDown(0.5);
+
+        // ----- Invoice Info -----
+        doc.fontSize(10).font('Helvetica');
+        doc.text(`Invoice #: ${invoiceNumber}`, 50, doc.y);
+        doc.text(`Date: ${date}`, 400, doc.y - 12);
+        doc.text(`Status: ${(deal.status || 'pending').toUpperCase()}`, 50, doc.y + 12);
+        doc.moveDown(2);
+
+        // ----- Brand Details -----
+        doc.fontSize(14).font('Helvetica-Bold').text('Brand Details', { underline: true });
+        doc.moveDown(0.3);
+        doc.fontSize(12).font('Helvetica');
+        doc.text(`Brand Name: ${deal.brand_name}`);
+        doc.text(`Email: ${req.user.email || 'Not provided'}`);
+        doc.moveDown(1);
+
+        // ----- Deal Details -----
+        doc.fontSize(14).font('Helvetica-Bold').text('Deal Details', { underline: true });
+        doc.moveDown(0.3);
+        doc.fontSize(12).font('Helvetica');
+        doc.text(`Deliverable: ${deal.deliverable || 'Not specified'}`);
+        doc.text(`Due Date: ${dueDate}`);
+        doc.moveDown(1);
+
+        // ----- Payment Instructions -----
+        doc.fontSize(14).font('Helvetica-Bold').text('Payment Instructions', { underline: true });
+        doc.moveDown(0.3);
+        doc.fontSize(12).font('Helvetica');
+        doc.text(`Account Name: ${accountName}`);
+        doc.text(`Bank: ${bankName}`);
+        doc.text(`Account Number: ${accountNumber}`);
+        doc.text(`Please use the invoice number (${invoiceNumber}) as your payment reference.`);
+        doc.moveDown(1);
+
+        // ----- Total Amount -----
+        doc.moveTo(50, doc.y).lineTo(550, doc.y).stroke('#CCCCCC');
+        doc.moveDown(0.5);
+        doc.fontSize(16).font('Helvetica-Bold');
+        const currencySymbol = deal.currency === 'USD' ? '$' : '₦';
+        doc.text(`Total Amount: ${currencySymbol}${Number(deal.amount).toLocaleString()}`, { align: 'right' });
+        doc.moveDown(2);
+
+        // ----- Footer -----
+        doc.fontSize(10).font('Helvetica');
+        doc.text('Thank you for your business!', { align: 'center' });
+        doc.text('Payment is due within 30 days of invoice date.', { align: 'center' });
+        doc.text('For questions, contact: support@paypoint.com', { align: 'center' });
+        doc.moveDown(1);
+        doc.moveTo(50, doc.y).lineTo(550, doc.y).stroke('#EEEEEE');
+        doc.moveDown(0.3);
+        doc.fontSize(8).text('PayPoint · Finance OS for Creators · www.paypoint.com', { align: 'center' });
+
+        // ✅ CRITICAL: End the document
         doc.end();
 
     } catch (err) {
