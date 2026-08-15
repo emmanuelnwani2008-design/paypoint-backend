@@ -395,9 +395,12 @@ async function saveSessionAndRedirect(session) {
 
         if (data.success && data.user) {
             // ✅ Store user data (but NOT the token – it's in the cookie)
-            localStorage.setItem('paypoint_user', JSON.stringify(data.user));
-            window.location.hash = '';
-            window.location.replace('/dashboard.html');
+            // After successful login
+sessionStorage.setItem('paypoint_user', JSON.stringify(data.user));
+if (data.session?.access_token) {
+    sessionStorage.setItem('paypoint_session', data.session.access_token);
+}
+window.location.replace('dashboard.html');
         } else {
             console.error('OAuth cookie setup failed:', data.error);
             alert('Authentication failed. Please try again.');
@@ -602,10 +605,12 @@ async function saveSessionAndRedirect(session) {
                     });
                     const data = await res.json();
                     if (data.success && data.user) {
-                        localStorage.setItem('paypoint_user', JSON.stringify(data.user));
-                        if (data.session?.access_token) {
-                        }
-                        window.location.replace('dashboard.html');
+                        // After successful login
+sessionStorage.setItem('paypoint_user', JSON.stringify(data.user));
+if (data.session?.access_token) {
+    sessionStorage.setItem('paypoint_session', data.session.access_token);
+}
+window.location.replace('dashboard.html');
                     } else {
                         loginError.textContent = data.error || 'Invalid credentials';
                         loginError.style.display = 'block';
@@ -653,10 +658,12 @@ async function saveSessionAndRedirect(session) {
                         data = await res.json();
                     }
                     if (data.success && data.user) {
-                        localStorage.setItem('paypoint_user', JSON.stringify(data.user));
-                        if (data.session?.access_token) {
-                        }
-                        window.location.replace('dashboard.html');
+                        // After successful login
+sessionStorage.setItem('paypoint_user', JSON.stringify(data.user));
+if (data.session?.access_token) {
+    sessionStorage.setItem('paypoint_session', data.session.access_token);
+}
+window.location.replace('dashboard.html');
                     } else {
                         alert('Demo login failed. Please try again.');
                     }

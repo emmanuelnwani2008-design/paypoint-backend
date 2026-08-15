@@ -369,12 +369,12 @@
         // AUTH HELPERS (Authorization header – for this page only)
         // ============================================
         function getAuthHeaders() {
-            const token = localStorage.getItem('paypoint_session');
-            return {
-                'Content-Type': 'application/json',
-                ...(token ? { Authorization: `Bearer ${token}` } : {})
-            };
-        }
+    const token = sessionStorage.getItem('paypoint_session');  // ✅ sessionStorage
+    return {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {})
+    };
+}
 
         // ============================================
         // FORMAT CURRENCY
@@ -402,29 +402,27 @@
         // CHECK AUTHENTICATION (localStorage – for this page only)
         // ============================================
         function checkAuth() {
-            const token = localStorage.getItem('paypoint_session');
-            const user = localStorage.getItem('paypoint_user');
-
-            if (!token || !user) {
-                console.log('🔐 Not authenticated, redirecting to login');
-                localStorage.removeItem('paypoint_user');
-                localStorage.removeItem('paypoint_session');
-                window.location.replace('login.html');
-                return false;
-            }
-
-            try {
-                const userData = JSON.parse(user);
-                const name = userData?.user_metadata?.name || userData?.name || 'Creator';
-                document.getElementById('userBadge').textContent = `👤 ${name}`;
-                return true;
-            } catch (e) {
-                localStorage.removeItem('paypoint_user');
-                localStorage.removeItem('paypoint_session');
-                window.location.replace('login.html');
-                return false;
-            }
-        }
+    const token = sessionStorage.getItem('paypoint_session');
+    const user = sessionStorage.getItem('paypoint_user');
+    if (!token || !user) {
+        console.log('🔐 Not authenticated, redirecting to login');
+        sessionStorage.removeItem('paypoint_user');
+        sessionStorage.removeItem('paypoint_session');
+        window.location.replace('login.html');
+        return false;
+    }
+    try {
+        const userData = JSON.parse(user);
+        const name = userData?.user_metadata?.name || userData?.name || 'Creator';
+        document.getElementById('userBadge').textContent = `👤 ${name}`;
+        return true;
+    } catch (e) {
+        sessionStorage.removeItem('paypoint_user');
+        sessionStorage.removeItem('paypoint_session');
+        window.location.replace('login.html');
+        return false;
+    }
+}
 
         // ============================================
         // DOM REFERENCES
@@ -684,17 +682,17 @@
         // LOGOUT – clears localStorage
         // ============================================
         document.getElementById('navLogout')?.addEventListener('click', async (e) => {
-            e.preventDefault();
-            try {
-                await fetch(`${API_URL}/auth/logout`, {
-                    method: 'POST',
-                    headers: getAuthHeaders()
-                });
-            } catch (err) {}
-            localStorage.removeItem('paypoint_user');
-            localStorage.removeItem('paypoint_session');
-            window.location.replace('login.html');
+    e.preventDefault();
+    try {
+        await fetch(`${API_URL}/auth/logout`, {
+            method: 'POST',
+            headers: getAuthHeaders()
         });
+    } catch (err) {}
+    sessionStorage.removeItem('paypoint_user');
+    sessionStorage.removeItem('paypoint_session');
+    window.location.replace('login.html');
+});
 
         // ============================================
         // AUTO-CHASING TOGGLE
