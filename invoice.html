@@ -500,6 +500,7 @@ function formatCurrency(amount, currency) {
         const res = await fetch(`${API_URL}/invoices/generate`, {
             method: 'POST',
             headers: getAuthHeaders(),
+            credentials: 'include',
             body: JSON.stringify({ dealId: id })
         });
 
@@ -528,6 +529,7 @@ function formatCurrency(amount, currency) {
         const res = await fetch(`${API_URL}/invoices/generate`, {
             method: 'POST',
             headers: getAuthHeaders(),
+            credentials: 'include',
             body: JSON.stringify({ dealId: id })
         });
 
@@ -567,6 +569,7 @@ function formatCurrency(amount, currency) {
         const payRes = await fetch(`${API_URL}/payments/initialize`, {
             method: 'POST',
             headers: getAuthHeaders(),
+            credentials: 'include',
             body: JSON.stringify({ dealId: id, email: brandEmail })
         });
 
@@ -622,15 +625,16 @@ function formatCurrency(amount, currency) {
             }
 
             try {
-                const res = await fetch(`${API_URL}/invoices/create`, {
-                    method: 'POST',
-                    headers: getAuthHeaders(),
-                    body: JSON.stringify({
-                        dealId,
-                        invoiceNumber: invoiceNumber || `INV-${Date.now()}`,
-                        brandEmail
-                    })
-                });
+                    const res = await fetch(`${API_URL}/invoices/create`, {
+                        method: 'POST',
+                        headers: getAuthHeaders(),
+                        credentials: 'include',
+                        body: JSON.stringify({
+                            dealId,
+                            invoiceNumber: invoiceNumber || `INV-${Date.now()}`,
+                            brandEmail
+                        })
+                    });
 
                 const result = await res.json();
 
@@ -667,7 +671,7 @@ function formatCurrency(amount, currency) {
         document.getElementById('navLogout')?.addEventListener('click', async (e) => {
             e.preventDefault();
             try {
-                await fetch(`${API_URL}/auth/logout`, { method: 'POST', headers: getAuthHeaders() });
+                await fetch(`${API_URL}/auth/logout`, { method: 'POST', headers: getAuthHeaders(), credentials: 'include' });
             } catch (err) {}
             localStorage.removeItem('paypoint_user');
             localStorage.removeItem('paypoint_session');
@@ -684,9 +688,12 @@ function formatCurrency(amount, currency) {
         // ============================================
         // INIT
         // ============================================
-        if (checkAuth()) {
-            loadDealsForInvoices();
-        }
+        (async function init() {
+            const authed = await checkAuth();
+            if (authed) {
+                await loadDealsForInvoices();
+            }
+        })();
 // ============================================
 // Auto-Chasing Toggle (Pro feature)
 // ============================================
