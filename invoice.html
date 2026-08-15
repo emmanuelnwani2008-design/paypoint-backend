@@ -6,16 +6,16 @@
     <title>PayPoint · Invoices</title>
     <link rel="stylesheet" href="mobile.css">
     <link rel="icon" type="image/png" href="logo.png">
-    <!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-HFJ9JM358E"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-  gtag('config', 'G-HFJ9JM358E');
-</script>
+    <!-- Google tag -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-HFJ9JM358E"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-HFJ9JM358E');
+    </script>
     <style>
-        /* Same white/blue theme as expense.html */
+        /* ====== Existing styles – unchanged ====== */
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -183,7 +183,14 @@
         }
         .modal h2 { font-size: 22px; font-weight: 700; color: #000000; margin-bottom: 4px; }
         .modal p { color: #8A9AAB; font-size: 14px; margin-bottom: 20px; }
-        .modal label { display: block; font-size: 13px; font-weight: 500; color: #5E6F82; margin-bottom: 4px; }
+        /* ✅ Accessibility: labels have for attributes */
+        .modal label {
+            display: block;
+            font-size: 13px;
+            font-weight: 500;
+            color: #5E6F82;
+            margin-bottom: 4px;
+        }
         .modal select, .modal input {
             width: 100%;
             padding: 12px 16px;
@@ -243,35 +250,35 @@
 </head>
 <body>
     <!-- Pro Feature: Auto-Chasing Toggle -->
-<div id="autoChaseContainer" style="margin-bottom: 20px;">
-    <div style="background: #FFFFFF; border: 1px solid #E8EDF2; border-radius: 12px; padding: 20px;">
-        <h3 style="font-size: 16px; font-weight: 600; margin-bottom: 8px;">🚀 Automated Invoice Chasing</h3>
-        <p style="color: #8A9AAB; font-size: 14px;">Automatically send reminder emails to brands when invoices are overdue.</p>
-        <div style="margin-top: 12px;">
-            <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
-                <input type="checkbox" id="autoChaseToggle" style="width: 20px; height: 20px; accent-color: #4F7CFF;">
-                <span id="autoChaseLabel" style="font-weight: 500;">Enable Auto-Chasing</span>
-            </label>
-            <span id="autoChaseStatus" style="font-size: 12px; color: #8A9AAB; margin-left: 30px;"></span>
+    <div id="autoChaseContainer" style="margin-bottom: 20px;">
+        <div style="background: #FFFFFF; border: 1px solid #E8EDF2; border-radius: 12px; padding: 20px;">
+            <h3 style="font-size: 16px; font-weight: 600; margin-bottom: 8px;">🚀 Automated Invoice Chasing</h3>
+            <p style="color: #8A9AAB; font-size: 14px;">Automatically send reminder emails to brands when invoices are overdue.</p>
+            <div style="margin-top: 12px;">
+                <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                    <input type="checkbox" id="autoChaseToggle" style="width: 20px; height: 20px; accent-color: #4F7CFF;">
+                    <span id="autoChaseLabel" style="font-weight: 500;">Enable Auto-Chasing</span>
+                </label>
+                <span id="autoChaseStatus" style="font-size: 12px; color: #8A9AAB; margin-left: 30px;"></span>
+            </div>
         </div>
     </div>
-</div>
 
     <div class="app-container">
         <nav class="navbar">
             <a href="dashboard.html" class="logo">
-    <img src="logo.png" alt="PayPoint" onerror="this.style.display='none'">
-    PayPoint <span>· Invoices</span>
-</a>
-<div class="nav-links">
-    <a href="dashboard.html">Dashboard</a>
-    <a href="deals.html">Deals</a>
-    <a href="expense.html">Expenses</a>
-    <a href="invoice.html" class="active">Invoices</a>
-    <a href="creator.html">Creator</a>
-    <span class="user-badge" id="userBadge">👤 Creator</span>
-    <a href="#" class="logout" id="navLogout">Logout</a>
-</div>
+                <img src="logo.png" alt="PayPoint" onerror="this.style.display='none'">
+                PayPoint <span>· Invoices</span>
+            </a>
+            <div class="nav-links">
+                <a href="dashboard.html">Dashboard</a>
+                <a href="deals.html">Deals</a>
+                <a href="expense.html">Expenses</a>
+                <a href="invoice.html" class="active">Invoices</a>
+                <a href="creator.html">Creator</a>
+                <span class="user-badge" id="userBadge">👤 Creator</span>
+                <a href="#" class="logout" id="navLogout">Logout</a>
+            </div>
         </nav>
 
         <div class="page-header">
@@ -288,61 +295,66 @@
         </div>
     </div>
 
+    <!-- Modal -->
     <div class="modal-overlay" id="invoiceModal">
         <div class="modal">
             <h2>📄 Create Invoice</h2>
             <p>Select a deal to convert into a professional invoice.</p>
+            <!-- ✅ Labels with for attributes -->
             <label for="modalDeal">Select Deal</label>
             <select id="modalDeal"><option value="">Loading deals...</option></select>
+
             <label for="modalInvoiceNumber">Invoice Number (Optional)</label>
             <input type="text" id="modalInvoiceNumber" placeholder="e.g. INV-001">
+
             <label for="modalBrandEmail">Brand Email</label>
             <input type="email" id="modalBrandEmail" placeholder="finance@brand.com">
+
             <div class="modal-actions">
                 <button class="btn-cancel" id="closeModalBtn">Cancel</button>
                 <button class="btn-save" id="createInvoiceBtn">Create & Send</button>
             </div>
         </div>
     </div>
+
     <!-- Mobile Bottom Navigation -->
-<nav class="bottom-nav">
-    <a href="dashboard.html" class="active">   <!-- change per page -->
-        <span class="icon">
-            <img src="chart-pie.png" alt="Dashboard" onerror="this.style.display='none'; this.parentElement.querySelector('.fallback').style.display='inline';">
-            <span class="fallback" style="display:none;">📊</span>
-        </span>
-        <span>Home</span>
-    </a>
-    <a href="deals.html">
-        <span class="icon">
-            <img src="handshake.png" alt="Deals" onerror="this.style.display='none'; this.parentElement.querySelector('.fallback').style.display='inline';">
-            <span class="fallback" style="display:none;">🤝</span>
-        </span>
-        <span>Deals</span>
-    </a>
-    <a href="expense.html">
-        <span class="icon">
-            <img src="credit-card.png" alt="Expenses" onerror="this.style.display='none'; this.parentElement.querySelector('.fallback').style.display='inline';">
-            <span class="fallback" style="display:none;">💳</span>
-        </span>
-        <span>Expenses</span>
-    </a>
-    <a href="invoice.html">
-        <span class="icon">
-            <img src="file-invoice.png" alt="Invoices" onerror="this.style.display='none'; this.parentElement.querySelector('.fallback').style.display='inline';">
-            <span class="fallback" style="display:none;">📄</span>
-        </span>
-        <span>Invoices</span>
-    </a>
-    <a href="creator.html">
-        <span class="icon">
-            <img src="user.png" alt="Profile" onerror="this.style.display='none'; this.parentElement.querySelector('.fallback').style.display='inline';">
-            <span class="fallback" style="display:none;">👤</span>
-        </span>
-        <span>Profile</span>
-    </a>
-</nav>
-</nav>
+    <nav class="bottom-nav">
+        <a href="dashboard.html" class="active">
+            <span class="icon">
+                <img src="chart-pie.png" alt="Dashboard" onerror="this.style.display='none'; this.parentElement.querySelector('.fallback').style.display='inline';">
+                <span class="fallback" style="display:none;">📊</span>
+            </span>
+            <span>Home</span>
+        </a>
+        <a href="deals.html">
+            <span class="icon">
+                <img src="handshake.png" alt="Deals" onerror="this.style.display='none'; this.parentElement.querySelector('.fallback').style.display='inline';">
+                <span class="fallback" style="display:none;">🤝</span>
+            </span>
+            <span>Deals</span>
+        </a>
+        <a href="expense.html">
+            <span class="icon">
+                <img src="credit-card.png" alt="Expenses" onerror="this.style.display='none'; this.parentElement.querySelector('.fallback').style.display='inline';">
+                <span class="fallback" style="display:none;">💳</span>
+            </span>
+            <span>Expenses</span>
+        </a>
+        <a href="invoice.html">
+            <span class="icon">
+                <img src="file-invoice.png" alt="Invoices" onerror="this.style.display='none'; this.parentElement.querySelector('.fallback').style.display='inline';">
+                <span class="fallback" style="display:none;">📄</span>
+            </span>
+            <span>Invoices</span>
+        </a>
+        <a href="creator.html">
+            <span class="icon">
+                <img src="user.png" alt="Profile" onerror="this.style.display='none'; this.parentElement.querySelector('.fallback').style.display='inline';">
+                <span class="fallback" style="display:none;">👤</span>
+            </span>
+            <span>Profile</span>
+        </a>
+    </nav>
 
     <script>
         // ============================================
@@ -355,21 +367,71 @@
         );
         let allDeals = [];
 
+        // ============================================
+        // AUTH HELPERS (Cookie-based – no token in localStorage)
+        // ============================================
         function getAuthHeaders() {
-    return {
-        'Content-Type': 'application/json',
-        // No Authorization header needed – the cookie is sent automatically
-    };
-}
-function formatCurrency(amount, currency) {
-    if (!amount) return '₦0';
-    // Get user's currency from localStorage
-    const userData = JSON.parse(localStorage.getItem('paypoint_user') || '{}');
-    const userCurrency = userData?.user_metadata?.default_currency || 'NGN';
-    const symbols = { USD: '$', NGN: '₦' };
-    const symbol = symbols[currency] || symbols[userCurrency] || '₦';
-    return symbol + Number(amount).toLocaleString();
-}
+            return { 'Content-Type': 'application/json' };
+        }
+
+        // ============================================
+        // FORMAT CURRENCY
+        // ============================================
+        function formatCurrency(amount, currency) {
+            if (!amount) return '₦0';
+            const userData = JSON.parse(localStorage.getItem('paypoint_user') || '{}');
+            const userCurrency = userData?.user_metadata?.default_currency || 'NGN';
+            const symbols = { USD: '$', NGN: '₦' };
+            const symbol = symbols[currency] || symbols[userCurrency] || '₦';
+            return symbol + Number(amount).toLocaleString();
+        }
+
+        // ============================================
+        // XSS PROTECTION
+        // ============================================
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // ============================================
+        // CHECK AUTHENTICATION (No redirect loop)
+        // ============================================
+        async function checkAuth() {
+            try {
+                const res = await fetch(`${API_URL}/auth/user`, {
+                    credentials: 'include'   // ✅ sends the cookie
+                });
+
+                if (res.status === 401) {
+                    console.log('🔐 Not authenticated, redirecting to login');
+                    localStorage.removeItem('paypoint_user');
+                    localStorage.removeItem('user_subscription_tier');
+                    window.location.replace('login.html');
+                    return false;
+                }
+
+                const data = await res.json();
+                if (data.success && data.user) {
+                    // Store only user info, never the token
+                    localStorage.setItem('paypoint_user', JSON.stringify(data.user));
+                    const name = data.user?.user_metadata?.name || data.user?.name || 'Creator';
+                    document.getElementById('userBadge').textContent = `👤 ${name}`;
+                    return true;
+                } else {
+                    localStorage.removeItem('paypoint_user');
+                    window.location.replace('login.html');
+                    return false;
+                }
+            } catch (err) {
+                console.error('❌ Error checking auth:', err);
+                window.location.replace('login.html');
+                return false;
+            }
+        }
+
         // ============================================
         // DOM REFERENCES
         // ============================================
@@ -383,44 +445,14 @@ function formatCurrency(amount, currency) {
         const modalBrandEmail = document.getElementById('modalBrandEmail');
 
         // ============================================
-        // CHECK AUTHENTICATION - SINGLE FUNCTION (FIXED)
-        // ============================================
-        async function checkAuth() {
-    try {
-        const res = await fetch(`${API_URL}/auth/user`, {
-            credentials: 'include'   // ✅ sends the cookie automatically
-        });
-
-        if (res.status === 401) {
-            console.log('🔐 Not authenticated, redirecting to login');
-            localStorage.removeItem('paypoint_user');
-            window.location.replace('login.html');
-            return false;
-        }
-
-        const data = await res.json();
-        if (data.success && data.user) {
-            localStorage.setItem('paypoint_user', JSON.stringify(data.user));
-            if (typeof updateUI === 'function') updateUI(data.user);
-            return true;
-        } else {
-            localStorage.removeItem('paypoint_user');
-            window.location.replace('login.html');
-            return false;
-        }
-    } catch (err) {
-        console.error('❌ Error checking auth:', err);
-        window.location.replace('login.html');
-        return false;
-    }
-}
-
-        // ============================================
         // LOAD DEALS
         // ============================================
         async function loadDealsForInvoices() {
             try {
-                const res = await fetch(`${API_URL}/deals`, { headers: getAuthHeaders(),credentials: 'include'});
+                const res = await fetch(`${API_URL}/deals`, {
+                    headers: getAuthHeaders(),
+                    credentials: 'include'
+                });
                 const result = await res.json();
 
                 if (result.success) {
@@ -434,7 +466,7 @@ function formatCurrency(amount, currency) {
         }
 
         // ============================================
-        // RENDER INVOICES
+        // RENDER INVOICES (with XSS protection)
         // ============================================
         function renderInvoices(deals) {
             if (deals.length === 0) {
@@ -455,18 +487,19 @@ function formatCurrency(amount, currency) {
                 const statuses = ['draft', 'sent', 'paid'];
                 const status = statuses[Math.floor(Math.random() * statuses.length)];
 
+                // ✅ Escape all user-supplied data
                 card.innerHTML = `
-    <div class="brand">${escapeHtml(deal.brand_name)}</div>
-    <div class="amount">${formatCurrency(deal.amount, deal.currency)}</div>
-    <div class="details">📅 Due: ${deal.due_date ? new Date(deal.due_date).toLocaleDateString() : 'Not set'}</div>
-    <div class="details">📋 ${escapeHtml(deal.deliverable || 'No deliverable')}</div>
-    <span class="status ${status}">${status.toUpperCase()}</span>
-    <div class="invoice-actions">
-        <button class="btn-invoice gold" onclick="previewInvoice('${deal.id}')">👁️ Preview</button>
-        <button class="btn-invoice blue" onclick="downloadInvoice('${deal.id}')">⬇️ Download</button>
-        <button class="btn-invoice green" onclick="sendInvoice('${deal.id}')">💰 Pay Now</button>
-    </div>
-`;
+                    <div class="brand">${escapeHtml(deal.brand_name)}</div>
+                    <div class="amount">${formatCurrency(deal.amount, deal.currency)}</div>
+                    <div class="details">📅 Due: ${deal.due_date ? new Date(deal.due_date).toLocaleDateString() : 'Not set'}</div>
+                    <div class="details">📋 ${escapeHtml(deal.deliverable || 'No deliverable')}</div>
+                    <span class="status ${status}">${status.toUpperCase()}</span>
+                    <div class="invoice-actions">
+                        <button class="btn-invoice gold" onclick="previewInvoice('${deal.id}')">👁️ Preview</button>
+                        <button class="btn-invoice blue" onclick="downloadInvoice('${deal.id}')">⬇️ Download</button>
+                        <button class="btn-invoice green" onclick="sendInvoice('${deal.id}')">💰 Pay Now</button>
+                    </div>
+                `;
                 invoiceGrid.appendChild(card);
             });
         }
@@ -493,99 +526,99 @@ function formatCurrency(amount, currency) {
         // PREVIEW INVOICE
         // ============================================
         async function previewInvoice(id) {
-    const deal = allDeals.find(d => String(d.id) === String(id)); // <-- type coercion
-    if (!deal) return;
+            const deal = allDeals.find(d => String(d.id) === String(id));
+            if (!deal) return;
 
-    try {
-        const res = await fetch(`${API_URL}/invoices/generate`, {
-            method: 'POST',
-            headers: getAuthHeaders(),
-            credentials: 'include',
-            body: JSON.stringify({ dealId: id })
-        });
+            try {
+                const res = await fetch(`${API_URL}/invoices/generate`, {
+                    method: 'POST',
+                    headers: getAuthHeaders(),
+                    credentials: 'include',
+                    body: JSON.stringify({ dealId: id })
+                });
 
-        if (res.ok) {
-            const blob = await res.blob();
-            const url = URL.createObjectURL(blob);
-            window.open(url, '_blank');
-            setTimeout(() => URL.revokeObjectURL(url), 10000);
-        } else {
-            const err = await res.json();
-            alert('❌ Preview failed: ' + (err.error || 'Unknown error'));
+                if (res.ok) {
+                    const blob = await res.blob();
+                    const url = URL.createObjectURL(blob);
+                    window.open(url, '_blank');
+                    setTimeout(() => URL.revokeObjectURL(url), 10000);
+                } else {
+                    const err = await res.json();
+                    alert('❌ Preview failed: ' + (err.error || 'Unknown error'));
+                }
+            } catch (err) {
+                alert('❌ Could not connect to server');
+            }
         }
-    } catch (err) {
-        alert('❌ Could not connect to server');
-    }
-}
 
         // ============================================
         // DOWNLOAD INVOICE
         // ============================================
         async function downloadInvoice(id) {
-    const deal = allDeals.find(d => String(d.id) === String(id)); // <-- type coercion
-    if (!deal) return;
+            const deal = allDeals.find(d => String(d.id) === String(id));
+            if (!deal) return;
 
-    try {
-        const res = await fetch(`${API_URL}/invoices/generate`, {
-            method: 'POST',
-            headers: getAuthHeaders(),
-            credentials: 'include',
-            body: JSON.stringify({ dealId: id })
-        });
+            try {
+                const res = await fetch(`${API_URL}/invoices/generate`, {
+                    method: 'POST',
+                    headers: getAuthHeaders(),
+                    credentials: 'include',
+                    body: JSON.stringify({ dealId: id })
+                });
 
-        if (res.ok) {
-            const blob = await res.blob();
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `invoice-${deal.brand_name}-${Date.now()}.pdf`;
-            document.body.appendChild(a);
-            a.click();
-            a.remove();
-            URL.revokeObjectURL(url);
-        } else {
-            const err = await res.json();
-            alert('❌ Download failed: ' + (err.error || 'Unknown error'));
+                if (res.ok) {
+                    const blob = await res.blob();
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `invoice-${deal.brand_name}-${Date.now()}.pdf`;
+                    document.body.appendChild(a);
+                    a.click();
+                    a.remove();
+                    URL.revokeObjectURL(url);
+                } else {
+                    const err = await res.json();
+                    alert('❌ Download failed: ' + (err.error || 'Unknown error'));
+                }
+            } catch (err) {
+                alert('❌ Could not connect to server');
+            }
         }
-    } catch (err) {
-        alert('❌ Could not connect to server');
-    }
-}
 
         // ============================================
-        // SEND INVOICE
+        // SEND INVOICE (Payment)
         // ============================================
         async function sendInvoice(id) {
-    const deal = allDeals.find(d => String(d.id) === String(id));
-    if (!deal) return;
+            const deal = allDeals.find(d => String(d.id) === String(id));
+            if (!deal) return;
 
-    const brandEmail = prompt(`📧 Enter email to send invoice to ${deal.brand_name}:`, 'finance@brand.com');
-    if (!brandEmail || !brandEmail.includes('@')) {
-        alert('❌ A valid email is required to send the invoice.');
-        return;
-    }
+            const brandEmail = prompt(`📧 Enter email to send invoice to ${deal.brand_name}:`, 'finance@brand.com');
+            if (!brandEmail || !brandEmail.includes('@')) {
+                alert('❌ A valid email is required to send the invoice.');
+                return;
+            }
 
-    try {
-        const payRes = await fetch(`${API_URL}/payments/initialize`, {
-            method: 'POST',
-            headers: getAuthHeaders(),
-            credentials: 'include',
-            body: JSON.stringify({ dealId: id, email: brandEmail })
-        });
+            try {
+                const payRes = await fetch(`${API_URL}/payments/initialize`, {
+                    method: 'POST',
+                    headers: getAuthHeaders(),
+                    credentials: 'include',
+                    body: JSON.stringify({ dealId: id, email: brandEmail })
+                });
 
-        const payResult = await payRes.json();
+                const payResult = await payRes.json();
 
-        if (payResult && payResult.authorization_url) {
-            window.open(payResult.authorization_url, '_blank');
-            alert(`✅ Payment link opened for ${brandEmail}!`);
-        } else {
-            alert('❌ Payment initialization failed: ' + (payResult.error || ''));
+                if (payResult && payResult.authorization_url) {
+                    window.open(payResult.authorization_url, '_blank');
+                    alert(`✅ Payment link opened for ${brandEmail}!`);
+                } else {
+                    alert('❌ Payment initialization failed: ' + (payResult.error || ''));
+                }
+            } catch (err) {
+                alert('❌ Could not initialize payment');
+                console.error(err);
+            }
         }
-    } catch (err) {
-        alert('❌ Could not initialize payment');
-        console.error(err);
-    }
-}
 
         // ============================================
         // MODAL CONTROLS
@@ -625,38 +658,32 @@ function formatCurrency(amount, currency) {
             }
 
             try {
-                    const res = await fetch(`${API_URL}/invoices/create`, {
-                        method: 'POST',
-                        headers: getAuthHeaders(),
-                        credentials: 'include',
-                        body: JSON.stringify({
-                            dealId,
-                            invoiceNumber: invoiceNumber || `INV-${Date.now()}`,
-                            brandEmail
-                        })
-                    });
+                const res = await fetch(`${API_URL}/invoices/create`, {
+                    method: 'POST',
+                    headers: getAuthHeaders(),
+                    credentials: 'include',
+                    body: JSON.stringify({
+                        dealId,
+                        invoiceNumber: invoiceNumber || `INV-${Date.now()}`,
+                        brandEmail
+                    })
+                });
 
                 const result = await res.json();
 
                 if (result.success) {
-    // The backend sends the full link as "portal_link"
-    const paymentLink = result.portal_link || 'No link generated (backend missing portal_link)';
-    
-    // Log it to the console for debugging
-    console.log('🔗 Payment Link:', paymentLink);
-    
-    // Show the prompt so the user can copy it
-    prompt(
-        '✅ Invoice created!\n\n' +
-        '📋 COPY THIS LINK AND SEND IT TO THE BRAND:\n' +
-        '(Select the link below, press Ctrl+C to copy, then close this box.)\n\n' +
-        '💡 We are still setting up automatic email delivery. For now, manually send this link to the brand via WhatsApp, Slack, or email.',
-        paymentLink
-    );
-    
-    closeModal();
-    loadDealsForInvoices();
-}else {
+                    const paymentLink = result.portal_link || 'No link generated';
+                    console.log('🔗 Payment Link:', paymentLink);
+                    prompt(
+                        '✅ Invoice created!\n\n' +
+                        '📋 COPY THIS LINK AND SEND IT TO THE BRAND:\n' +
+                        '(Select the link below, press Ctrl+C to copy, then close this box.)\n\n' +
+                        '💡 We are still setting up automatic email delivery. For now, manually send this link to the brand via WhatsApp, Slack, or email.',
+                        paymentLink
+                    );
+                    closeModal();
+                    loadDealsForInvoices();
+                } else {
                     alert('❌ Error: ' + (result.error || 'Failed to create invoice'));
                 }
             } catch (err) {
@@ -666,24 +693,49 @@ function formatCurrency(amount, currency) {
         });
 
         // ============================================
-        // LOGOUT - FIXED
+        // LOGOUT – clears cookie and localStorage
         // ============================================
         document.getElementById('navLogout')?.addEventListener('click', async (e) => {
             e.preventDefault();
             try {
-                await fetch(`${API_URL}/auth/logout`, { method: 'POST', headers: getAuthHeaders(), credentials: 'include' });
+                await fetch(`${API_URL}/auth/logout`, {
+                    method: 'POST',
+                    headers: getAuthHeaders(),
+                    credentials: 'include'
+                });
             } catch (err) {}
             localStorage.removeItem('paypoint_user');
-            localStorage.removeItem('paypoint_session');
+            localStorage.removeItem('user_subscription_tier');
+            // The cookie will be cleared by the backend
             window.location.replace('login.html');
         });
 
-        function escapeHtml(text) {
-    if (!text) return '';
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
-}
+        // ============================================
+        // AUTO-CHASING TOGGLE
+        // ============================================
+        const tier = localStorage.getItem('user_subscription_tier') || 'free';
+        const autoChaseToggle = document.getElementById('autoChaseToggle');
+        const autoChaseLabel = document.getElementById('autoChaseLabel');
+        const autoChaseStatus = document.getElementById('autoChaseStatus');
+
+        if (tier === 'pro') {
+            autoChaseToggle.disabled = false;
+            autoChaseLabel.textContent = 'Enable Auto-Chasing';
+            autoChaseStatus.textContent = '✅ Pro feature – active';
+            autoChaseStatus.style.color = '#34C759';
+
+            const enabled = localStorage.getItem('auto_chase_enabled') === 'true';
+            autoChaseToggle.checked = enabled;
+
+            autoChaseToggle.addEventListener('change', function() {
+                localStorage.setItem('auto_chase_enabled', this.checked);
+                autoChaseStatus.textContent = this.checked ? '✅ Auto-chasing enabled' : '⏸️ Auto-chasing paused';
+            });
+        } else {
+            autoChaseToggle.disabled = true;
+            autoChaseLabel.textContent = '🔒 Pro Feature – Upgrade to Enable';
+            autoChaseStatus.innerHTML = '<span style="color: #FF9500;">⚠️ Upgrade to Pro to unlock auto-chasing</span>';
+        }
 
         // ============================================
         // INIT
@@ -692,38 +744,10 @@ function formatCurrency(amount, currency) {
             const authed = await checkAuth();
             if (authed) {
                 await loadDealsForInvoices();
+                console.log('📄 PayPoint Invoices Page loaded');
+                console.log('📡 Connected to:', API_URL);
             }
         })();
-// ============================================
-// Auto-Chasing Toggle (Pro feature)
-// ============================================
-const tier = localStorage.getItem('user_subscription_tier') || 'free';
-const autoChaseToggle = document.getElementById('autoChaseToggle');
-const autoChaseLabel = document.getElementById('autoChaseLabel');
-const autoChaseStatus = document.getElementById('autoChaseStatus');
-
-if (tier === 'pro') {
-    autoChaseToggle.disabled = false;
-    autoChaseLabel.textContent = 'Enable Auto-Chasing';
-    autoChaseStatus.textContent = '✅ Pro feature – active';
-    autoChaseStatus.style.color = '#34C759';
-
-    const enabled = localStorage.getItem('auto_chase_enabled') === 'true';
-    autoChaseToggle.checked = enabled;
-
-    autoChaseToggle.addEventListener('change', function() {
-        localStorage.setItem('auto_chase_enabled', this.checked);
-        autoChaseStatus.textContent = this.checked ? '✅ Auto-chasing enabled' : '⏸️ Auto-chasing paused';
-    });
-} else {
-    autoChaseToggle.disabled = true;
-    autoChaseLabel.textContent = '🔒 Pro Feature – Upgrade to Enable';
-    autoChaseStatus.innerHTML = '<span style="color: #FF9500;">⚠️ Upgrade to Pro to unlock auto-chasing</span>';
-}
-
-        console.log('📄 PayPoint Invoices Page loaded');
-        console.log('📡 Connected to:', API_URL);
     </script>
-
 </body>
 </html>
