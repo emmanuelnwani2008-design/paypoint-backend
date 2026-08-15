@@ -114,6 +114,24 @@
         }
     }
 
+    // Fetch creator's bank details
+const bankRes = await fetch(`${API_URL}/profile/bank-details`, {
+    credentials: 'include'
+});
+const bankData = await bankRes.json();
+
+if (bankData.success && bankData.data && bankData.data.account_name) {
+    invoiceInfo.innerHTML += `
+        <div style="margin-top: 20px; padding: 16px; background: #F8FAFC; border-radius: 8px; border: 1px solid #E8EDF2; text-align: left;">
+            <h4 style="margin-bottom: 8px;">💳 Payment Instructions</h4>
+            <p><strong>Account Name:</strong> ${bankData.data.account_name}</p>
+            <p><strong>Bank:</strong> ${bankData.data.bank_name}</p>
+            <p><strong>Account Number:</strong> ${bankData.data.account_number}</p>
+            <p style="font-size: 12px; color: #8A9AAB; margin-top: 8px;">Please use the invoice number as your payment reference.</p>
+        </div>
+    `;
+}
+
     loadInvoice();
 
     // Payment button handler (unchanged)

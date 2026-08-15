@@ -927,6 +927,69 @@ app.put('/api/auth/update', authenticate, async (req, res) => {
 });
 
 // ============================================
+// PROFILE – BANK DETAILS (for invoices)
+// ============================================
+
+app.put('/api/profile/bank-details', authenticate, async (req, res) => {
+    try {
+        const userId = req.userId;
+        const { accountName, bankName, accountNumber } = req.body;
+
+        if (!accountName || !bankName || !accountNumber) {
+            return res.status(400).json({ error: 'All fields are required' });
+        }
+
+        const { error } = await supabaseAdmin
+            .from('profiles')
+            .update({
+                bank_account_name: accountName,
+                bank_name: bankName,
+                bank_account_number: accountNumber
+            })
+            .eq('id', userId);
+
+        if (error) {
+            console.error('Error saving bank details:', error);
+            return res.status(500).json({ error: 'Failed to save bank details' });
+        }
+
+        res.json({ success: true, message: 'Bank details saved successfully' });
+    } catch (err) {
+        console.error('Bank details save error:', err);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+app.get('/api/profile/bank-details', authenticate, async (req, res) => {
+    try {
+        const userId = req.userId;
+
+        const { data: profile, error } = await supabaseAdmin
+            .from('profiles')
+            .select('bank_account_name, bank_name, bank_account_number')
+            .eq('id', userId)
+            .single();
+
+        if (error) {
+            console.error('Error fetching bank details:', error);
+            return res.status(500).json({ error: 'Failed to fetch bank details' });
+        }
+
+        res.json({
+            success: true,
+            data: {
+                account_name: profile?.bank_account_name || '',
+                bank_name: profile?.bank_name || '',
+                account_number: profile?.bank_account_number || ''
+            }
+        });
+    } catch (err) {
+        console.error('Bank details fetch error:', err);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+// ============================================
 // DEALS ROUTES
 // ============================================
 app.get('/api/deals', authenticate, async (req, res) => {
