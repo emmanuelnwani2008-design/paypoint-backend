@@ -725,8 +725,8 @@ app.post('/api/auth/oauth', async (req, res) => {
         // ✅ Set the same HttpOnly cookie
         res.cookie('paypoint_session', access_token, {
             httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'Strict',
+            secure: true,
+            sameSite: 'none',
             maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
         });
 
