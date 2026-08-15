@@ -20,6 +20,8 @@ app.set('trust proxy', 1);
 const port = process.env.PORT || 3000;
 const FRONTEND_URL = process.env.FRONTEND_URL || 'https://paypoint-backend.vercel.app';
 console.log(`🌐 Frontend URL: ${FRONTEND_URL}`);
+const IS_PROD = process.env.NODE_ENV === 'production';
+const COOKIE_SAME_SITE = IS_PROD ? 'none' : 'lax';
 
 // ============================================
 // SECURITY MIDDLEWARE
@@ -651,8 +653,8 @@ app.post('/api/auth/login', authLimiter, async (req, res) => {
         }
         res.cookie('paypoint_session', data.session.access_token, {
             httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'Strict',
+            secure: IS_PROD,
+            sameSite: COOKIE_SAME_SITE,
             maxAge: 7 * 24 * 60 * 60 * 1000
         });
         res.json({ success: true, user: data.user });
@@ -663,7 +665,8 @@ app.post('/api/auth/login', authLimiter, async (req, res) => {
 });
 
 app.post('/api/auth/logout', authenticate, async (req, res) => {
-    res.clearCookie('paypoint_session');
+    // Clear cookie using same options so browser will remove it
+    res.clearCookie('paypoint_session', { httpOnly: true, secure: IS_PROD, sameSite: COOKIE_SAME_SITE });
     try {
         const { error } = await supabase.auth.signOut();
         if (error) return res.status(400).json({ error: error.message });
@@ -725,8 +728,8 @@ app.post('/api/auth/oauth', async (req, res) => {
         // ✅ Set the same HttpOnly cookie
         res.cookie('paypoint_session', access_token, {
             httpOnly: true,
-            secure: true,
-            sameSite: 'none',
+            secure: IS_PROD,
+            sameSite: COOKIE_SAME_SITE,
             maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
         });
 
