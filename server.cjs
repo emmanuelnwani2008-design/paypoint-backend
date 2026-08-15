@@ -667,7 +667,15 @@ app.post('/api/auth/login', authLimiter, async (req, res) => {
             return res.status(401).json({ error: 'Invalid credentials' });
         }
 
-        // ✅ Return both user and session (token) – this is what the frontend expects
+        // ✅ Set the cookie (for all pages that use cookies)
+        res.cookie('paypoint_session', data.session.access_token, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'Lax',
+            maxAge: 7 * 24 * 60 * 60 * 1000
+        });
+
+        // ✅ Also return the session (so invoice page can store token in localStorage)
         res.json({ success: true, user: data.user, session: data.session });
     } catch (err) {
         console.error('Login server error:', err);
@@ -726,26 +734,32 @@ app.get('/api/auth/user', authenticate, async (req, res) => {
 app.post('/api/auth/oauth', async (req, res) => {
     try {
         const { access_token } = req.body;
-
         if (!access_token) {
             return res.status(400).json({ error: 'Access token required' });
         }
 
         const { data: userData, error } = await supabase.auth.getUser(access_token);
-
         if (error || !userData?.user) {
             console.error('OAuth token verification failed:', error);
             return res.status(401).json({ error: 'Invalid or expired token' });
         }
 
-        // ✅ Return user data and session (token)
+        // ✅ Set cookie
+        res.cookie('paypoint_session', access_token, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'Lax',
+            maxAge: 7 * 24 * 60 * 60 * 1000
+        });
+
+        // ✅ Return session
         res.json({
             success: true,
             user: userData.user,
-            session: { access_token: access_token }  // this matches the frontend's expectation
+            session: { access_token: access_token }
         });
     } catch (err) {
-        console.error('OAuth cookie error:', err);
+        console.error('OAuth error:', err);
         res.status(500).json({ error: 'Server error' });
     }
 });
