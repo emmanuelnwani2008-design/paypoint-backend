@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pricing · PayPoint</title>
+    <link rel="stylesheet" href="mobile.css">
+    <link rel="icon" type="image/png" href="logo.png">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: #FFFFFF;
+            color: #000000;
+            padding: 24px;
+            min-height: 100vh;
+        }
+        .container { max-width: 1200px; margin: 0 auto; }
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0 28px 0;
+            border-bottom: 1px solid #E8EDF2;
+            margin-bottom: 32px;
+        }
+        .logo {
+            font-size: 24px;
+            font-weight: 700;
+            color: #000000;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .logo img { height: 32px; width: auto; }
+        .logo span { font-weight: 400; color: #8A9AAB; font-size: 14px; }
+        .back-link { color: #4F7CFF; text-decoration: none; font-size: 14px; }
+        .back-link:hover { text-decoration: underline; }
+        .pricing-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px;
+            margin-top: 32px;
+        }
+        .pricing-card {
+            background: #FFFFFF;
+            border: 1px solid #E8EDF2;
+            border-radius: 16px;
+            padding: 32px 28px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+        .pricing-card:hover { transform: translateY(-4px); box-shadow: 0 8px 32px rgba(0,0,0,0.08); }
+        .pricing-card.pro { border-color: #4F7CFF; background: #F8FAFF; }
+        .pricing-card .badge {
+            display: inline-block;
+            background: #4F7CFF;
+            color: #FFFFFF;
+            padding: 4px 16px;
+            border-radius: 40px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .pricing-card .plan-name { font-size: 20px; font-weight: 700; margin-bottom: 8px; }
+        .pricing-card .price {
+            font-size: 40px;
+            font-weight: 800;
+            color: #4F7CFF;
+            margin: 16px 0 4px;
+        }
+        .pricing-card .price span { font-size: 16px; font-weight: 400; color: #8A9AAB; }
+        .pricing-card .ngn-equivalent {
+            font-size: 14px;
+            color: #8A9AAB;
+            margin-bottom: 12px;
+            font-weight: 500;
+        }
+        .pricing-card .ngn-equivalent .rate { color: #4F7CFF; font-weight: 600; }
+        .pricing-card .description { color: #8A9AAB; font-size: 14px; margin-bottom: 20px; }
+        .pricing-card .features { list-style: none; text-align: left; margin: 20px 0; padding: 0; }
+        .pricing-card .features li {
+            padding: 8px 0;
+            font-size: 14px;
+            color: #000000;
+            border-bottom: 1px solid #F0F2F5;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .pricing-card .features li:last-child { border-bottom: none; }
+        .pricing-card .features li .check { color: #34C759; font-weight: 700; }
+        .btn-primary {
+            width: 100%;
+            background: #4F7CFF;
+            border: none;
+            padding: 14px;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 16px;
+            color: #FFFFFF;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-family: 'Inter', sans-serif;
+            box-shadow: 0 2px 8px rgba(79, 124, 255, 0.25);
+        }
+        .btn-primary:hover { background: #3A5FD9; transform: translateY(-1px); }
+        .btn-primary.outline { background: transparent; color: #4F7CFF; border: 2px solid #4F7CFF; box-shadow: none; }
+        .btn-primary.outline:hover { background: #F8FAFF; }
+        .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+        .savings-tag {
+            display: inline-block;
+            background: #E8F9EF;
+            color: #34C759;
+            font-size: 12px;
+            font-weight: 600;
+            padding: 2px 12px;
+            border-radius: 40px;
+            margin-top: 4px;
+        }
+        .exchange-note {
+            text-align: center;
+            color: #8A9AAB;
+            font-size: 13px;
+            margin-top: 24px;
+            padding: 16px;
+            background: #F8FAFC;
+            border-radius: 10px;
+            border: 1px solid #E8EDF2;
+        }
+        .exchange-note strong { color: #4F7CFF; }
+        @media (max-width: 768px) {
+            .pricing-grid { grid-template-columns: 1fr; max-width: 400px; margin: 0 auto; }
+            .navbar { flex-direction: column; gap: 12px; align-items: flex-start; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <nav class="navbar">
+            <a href="dashboard.html" class="logo">
+                <img src="logo.png" alt="PayPoint">
+                PayPoint <span>· Pricing</span>
+            </a>
+            <a href="dashboard.html" class="back-link">← Back to Dashboard</a>
+        </nav>
+
+        <div class="pricing-grid">
+            <!-- Free -->
+            <div class="pricing-card">
+                <div class="plan-name">Free</div>
+                <div class="price">$0 <span>/ month</span></div>
+                <div class="description">Perfect for getting started</div>
+                <ul class="features">
+                    <li><span class="check">✅</span> 5 Deals</li>
+                    <li><span class="check">✅</span> 5 Invoices</li>
+                    <li><span class="check">✅</span> 10 Expenses</li>
+                    <li><span class="check">✅</span> Full Dashboard</li>
+                    <li><span class="check">✅</span> Profile &amp; Bank Details</li>
+                </ul>
+                <button class="btn-primary outline" id="currentPlanBtn" disabled>Current Plan</button>
+            </div>
+
+            <!-- Pro Monthly -->
+            <div class="pricing-card pro" id="monthlyCard">
+                <div class="badge">POPULAR</div>
+                <div class="plan-name">Pro</div>
+                <div class="price">$15 <span>/ month</span></div>
+                <div class="ngn-equivalent">≈ <span class="rate" id="monthlyNgn">₦0</span> <span id="monthlyRateNote">(at current exchange rate)</span></div>
+                <div class="description">Unlock unlimited everything</div>
+                <ul class="features">
+                    <li><span class="check">✅</span> Unlimited Deals</li>
+                    <li><span class="check">✅</span> Unlimited Invoices</li>
+                    <li><span class="check">✅</span> Unlimited Expenses</li>
+                    <li><span class="check">✅</span> Advanced Analytics</li>
+                    <li><span class="check">✅</span> Export Data</li>
+                    <li><span class="check">✅</span> Priority Support</li>
+                </ul>
+                <button class="btn-primary" id="proMonthlyBtn">Upgrade Now</button>
+            </div>
+
+            <!-- Pro Annual -->
+            <div class="pricing-card pro" id="annualCard">
+                <div class="badge">BEST VALUE</div>
+                <div class="plan-name">Pro Annual</div>
+                <div class="price">$150 <span>/ year</span></div>
+                <div class="ngn-equivalent">≈ <span class="rate" id="annualNgn">₦0</span> <span id="annualRateNote">(at current exchange rate)</span></div>
+                <div class="savings-tag">💡 Save $30 (2 months free)</div>
+                <div class="description" style="margin-top: 8px;">Best value for creators</div>
+                <ul class="features">
+                    <li><span class="check">✅</span> All Pro features</li>
+                    <li><span class="check">✅</span> 2 months FREE</li>
+                    <li><span class="check">✅</span> Priority support</li>
+                </ul>
+                <button class="btn-primary" id="proAnnualBtn">Upgrade Now</button>
+            </div>
+        </div>
+
+        <div class="exchange-note">
+            💱 <strong>USD prices shown.</strong> You will be charged in <strong>NGN</strong> at the current exchange rate.<br>
+            <span id="liveRateDisplay">Loading exchange rate...</span>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = window.__API_URL__ || (
+            window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+                ? '/api'
+                : 'https://paypoint-7dmc.onrender.com/api'
+        );
+
+        function getAuthHeaders() {
+            const token = sessionStorage.getItem('paypoint_session');
+            return {
+                'Content-Type': 'application/json',
+                ...(token ? { Authorization: `Bearer ${token}` } : {})
+            };
+        }
+
+        // ============================================
+        // FETCH LIVE EXCHANGE RATE (uses same API as backend)
+        // ============================================
+        async function fetchExchangeRate() {
+            try {
+                // Use the public endpoint (no key needed for frontend)
+                const res = await fetch('https://api.exchangerate-api.com/v4/latest/USD');
+                const data = await res.json();
+                const rate = data.rates.NGN;
+
+                if (rate) {
+                    const monthlyNgn = Math.round(15 * rate);
+                    const annualNgn = Math.round(150 * rate);
+
+                    document.getElementById('monthlyNgn').textContent = `₦${monthlyNgn.toLocaleString()}`;
+                    document.getElementById('annualNgn').textContent = `₦${annualNgn.toLocaleString()}`;
+                    document.getElementById('liveRateDisplay').textContent =
+                        `💰 1 USD = ₦${rate.toFixed(2)} (as of ${new Date().toLocaleDateString()})`;
+
+                    window.currentExchangeRate = rate;
+                } else {
+                    throw new Error('Rate not found');
+                }
+            } catch (err) {
+                console.error('Failed to fetch exchange rate:', err);
+                document.getElementById('liveRateDisplay').textContent =
+                    '⚠️ Could not load exchange rate. Please refresh or try again.';
+                // Fallback
+                window.currentExchangeRate = 1500;
+            }
+        }
+
+        // ============================================
+        // SUBSCRIBE FUNCTION
+        // ============================================
+        async function subscribe(plan, interval) {
+            try {
+                const res = await fetch(`${API_URL}/subscribe`, {
+                    method: 'POST',
+                    headers: getAuthHeaders(),
+                    body: JSON.stringify({ plan, interval })
+                });
+                const data = await res.json();
+
+                if (data.success && data.authorization_url) {
+                    // Show user the conversion breakdown
+                    const confirmMsg =
+                        `💳 Upgrade to Pro (${plan.toUpperCase()})\n\n` +
+                        `Price: $${data.amount_usd}\n` +
+                        `NGN Equivalent: ₦${data.amount_ngn.toLocaleString()}\n` +
+                        `Exchange Rate: 1 USD = ₦${data.exchange_rate.toFixed(2)}\n\n` +
+                        `You will be redirected to Paystack to complete payment.`;
+
+                    if (confirm(confirmMsg)) {
+                        window.location.href = data.authorization_url;
+                    }
+                } else {
+                    alert('Error: ' + (data.error || 'Something went wrong'));
+                }
+            } catch (err) {
+                alert('Could not connect to server.');
+                console.error(err);
+            }
+        }
+
+        // ============================================
+        // CHECK USER TIER
+        // ============================================
+        async function checkCurrentTier() {
+            try {
+                const res = await fetch(`${API_URL}/auth/user`, {
+                    headers: getAuthHeaders()
+                });
+                const data = await res.json();
+                if (data.success && data.user) {
+                    const tier = data.user?.user_metadata?.subscription_tier || 'free';
+                    if (tier === 'pro') {
+                        document.getElementById('proMonthlyBtn').textContent = '✅ Current Plan';
+                        document.getElementById('proMonthlyBtn').disabled = true;
+                        document.getElementById('proAnnualBtn').textContent = '✅ Current Plan';
+                        document.getElementById('proAnnualBtn').disabled = true;
+                    }
+                }
+            } catch (err) {
+                console.error('Error checking tier:', err);
+            }
+        }
+
+        // ============================================
+        // INIT
+        // ============================================
+        document.getElementById('proMonthlyBtn').addEventListener('click', () => subscribe('pro', 'monthly'));
+        document.getElementById('proAnnualBtn').addEventListener('click', () => subscribe('pro', 'annual'));
+
+        fetchExchangeRate();
+        checkCurrentTier();
+
+        console.log('💳 PayPoint Pricing Page loaded (USD → NGN conversion)');
+    </script>
+</body>
+</html>

@@ -1726,27 +1726,125 @@ app.post('/api/payments/create-subaccount', authenticate, async (req, res) => {
 // SUBSCRIPTION SYSTEM (Pro/Free)
 // ============================================
 app.post('/api/subscribe', authenticate, async (req, res) => {
-    // ... keep existing ...
-});
+    try {
+        const userId = req.userId;
+        const userEmail = req.user?.email;
+        const { plan, interval } = req.body;
 
-app.post('/api/payments/create-subscription', authenticate, async (req, res) => {
-    // ... keep existing ...
-});
+        if (!userEmail) {
+            return res.status(400).json({ error: 'User email required' });
+        }
 
-app.post('/api/payments/cancel-subscription', authenticate, async (req, res) => {
-    // ... keep existing ...
+        if (plan !== 'pro') {
+            return res.status(400).json({ error: 'Invalid plan' });
+        }
+
+        // PRICING IN USD
+        let usdAmount;
+        if (interval === 'monthly') {
+            usdAmount = 15;
+        } else if (interval === 'annual') {
+            usdAmount = 150;
+        } else {
+            return res.status(400).json({ error: 'Invalid interval' });
+        }
+
+        // ✅ Fetch live exchange rate using the API key
+        const apiKey = process.env.EXCHANGE_RATE_API_KEY;
+        if (!apiKey) {
+            console.error('EXCHANGE_RATE_API_KEY is not set');
+            return res.status(500).json({ error: 'Currency conversion not configured' });
+        }
+
+        let ngnRate;
+        try {
+            const exchangeRes = await fetch(
+                `https://api.exchangerate-api.com/v4/latest/USD?api_key=${apiKey}`
+            );
+            const exchangeData = await exchangeRes.json();
+
+            if (exchangeData.rates && exchangeData.rates.NGN) {
+                ngnRate = exchangeData.rates.NGN;
+            } else {
+                throw new Error('NGN rate not found in response');
+            }
+        } catch (err) {
+            console.error('Exchange rate API error:', err);
+
+            // ✅ Fallback to public endpoint
+            const fallbackRes = await fetch('https://api.exchangerate-api.com/v4/latest/USD');
+            const fallbackData = await fallbackRes.json();
+            ngnRate = fallbackData.rates.NGN;
+
+            if (!ngnRate) {
+                return res.status(500).json({ error: 'Currency conversion temporarily unavailable' });
+            }
+        }
+
+        const ngnAmount = Math.round(usdAmount * ngnRate * 100); // kobo
+        const displayNgn = Math.round(usdAmount * ngnRate);
+
+        console.log(`💰 USD $${usdAmount} → ₦${displayNgn} at rate ${ngnRate}`);
+
+        // ✅ Initialize Paystack transaction
+        const response = await fetch('https://api.paystack.co/transaction/initialize', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${PAYSTACK_SECRET_KEY}`
+            },
+            body: JSON.stringify({
+                email: userEmail,
+                amount: ngnAmount,
+                currency: 'NGN',
+                metadata: {
+                    user_id: userId,
+                    plan: plan,
+                    interval: interval,
+                    usd_amount: usdAmount,
+                    ngn_amount: displayNgn,
+                    exchange_rate: ngnRate
+                },
+                callback_url: `${FRONTEND_URL}/dashboard.html?subscription=success`
+            })
+        });
+
+        const result = await response.json();
+
+        if (!result.status) {
+            console.error('Paystack error:', result);
+            return res.status(502).json({ error: result.message || 'Payment provider error' });
+        }
+
+        res.json({
+            success: true,
+            authorization_url: result.data.authorization_url,
+            reference: result.data.reference,
+            amount_usd: usdAmount,
+            amount_ngn: displayNgn,
+            exchange_rate: ngnRate
+        });
+
+    } catch (err) {
+        console.error('Subscription error:', err);
+        res.status(500).json({ error: 'Internal server error' });
+    }
 });
 
 // ============================================
 // WEBHOOKS
 // ============================================
-app.post('/api/webhooks/paystack', express.raw({ type: 'application/json' }), async (req, res) => {
-    // ... keep existing ...
-});
+if (event.event === 'charge.success' || event.event === 'subscription.create') {
+    const userId = event.data.metadata?.user_id;
+    const usdAmount = event.data.metadata?.usd_amount;
+    const ngnAmount = event.data.metadata?.ngn_amount;
+    const exchangeRate = event.data.metadata?.exchange_rate;
 
-app.post('/api/webhooks/paystack-deal', express.raw({ type: 'application/json' }), async (req, res) => {
-    // ... keep existing ...
-});
+    if (userId) {
+        // ... upgrade profile
+        // optionally store payment metadata in a separate field
+    }
+}
 
 // ============================================
 // PUBLIC PORTAL - View Invoice
