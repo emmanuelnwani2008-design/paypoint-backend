@@ -1834,17 +1834,66 @@ app.post('/api/subscribe', authenticate, async (req, res) => {
 // ============================================
 // WEBHOOKS
 // ============================================
-if (event.event === 'charge.success' || event.event === 'subscription.create') {
-    const userId = event.data.metadata?.user_id;
-    const usdAmount = event.data.metadata?.usd_amount;
-    const ngnAmount = event.data.metadata?.ngn_amount;
-    const exchangeRate = event.data.metadata?.exchange_rate;
+app.post('/api/webhooks/paystack',
+    express.raw({ type: 'application/json' }),
+    async (req, res) => {
+        try {
+            const signature = req.headers['x-paystack-signature'];
+            if (!signature) {
+                return res.status(401).send('Missing signature');
+            }
 
-    if (userId) {
-        // ... upgrade profile
-        // optionally store payment metadata in a separate field
+            const hash = crypto
+                .createHmac('sha512', PAYSTACK_SECRET_KEY)
+                .update(req.body)
+                .digest('hex');
+
+            if (hash !== signature) {
+                return res.status(401).send('Invalid signature');
+            }
+
+            // ✅ event is defined HERE, inside the try block
+            const event = JSON.parse(req.body.toString());
+            console.log('📨 Webhook received:', event.event);
+
+            if (event.event === 'charge.success' || event.event === 'subscription.create') {
+                const userId = event.data.metadata?.user_id;
+                if (!userId) {
+                    console.error('❌ No user_id in webhook');
+                    return res.status(400).send('Missing user_id');
+                }
+
+                const expiresAt = new Date();
+                expiresAt.setDate(expiresAt.getDate() + 30);
+
+                const { error: upsertError } = await supabaseAdmin
+                    .from('profiles')
+                    .upsert({
+                        id: userId,
+                        subscription_tier: 'pro',
+                        subscription_status: 'active',
+                        subscription_expires_at: expiresAt.toISOString(),
+                        paystack_subscription_code: event.data.subscription?.subscription_code || null,
+                        paystack_customer_code: event.data.customer?.customer_code || null,
+                        updated_at: new Date().toISOString()
+                    }, { onConflict: 'id' });
+
+                if (upsertError) {
+                    console.error('❌ Error updating profile:', upsertError);
+                    return res.status(500).send('Database update failed');
+                }
+
+                console.log(`✅ User ${userId} upgraded to Pro (expires: ${expiresAt.toISOString()})`);
+            }
+
+            res.sendStatus(200);
+
+        } catch (err) {
+            console.error('Webhook error:', err);
+            res.sendStatus(500);
+        }
     }
-}
+);
 
 // ============================================
 // PUBLIC PORTAL - View Invoice
