@@ -388,6 +388,9 @@ app.get('/api/dashboard/stats', authenticate, async (req, res) => {
         const ids = [userId, fallbackUserId].filter(Boolean);
 
         console.log('📊 Dashboard stats for user IDs:', ids);
+console.log(`📊 Found ${allDeals.length} deals and ${allExpenses.length} expenses`);
+console.log(`📊 Current revenue: ${currentRevenue}, Last revenue: ${lastRevenue}`);
+console.log(`📊 Revenue change: ${revenueChange}`);
 
         const now = new Date();
         const currentMonth = new Date(now.getFullYear(), now.getMonth(), 1);
