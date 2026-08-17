@@ -228,6 +228,19 @@
     <script>
         const API_URL = '/api';
 
+        async function refreshUserData() {
+    try {
+        const res = await fetch(`${API_URL}/auth/user`, {
+            headers: getAuthHeaders()
+        });
+        const data = await res.json();
+        if (data.success && data.user) {
+            localStorage.setItem('paypoint_user', JSON.stringify(data.user));
+        }
+    } catch (err) {
+        console.error('Failed to refresh user data:', err);
+    }
+}
         function getAuthHeaders() {
     return { 'Content-Type': 'application/json' };
             return {

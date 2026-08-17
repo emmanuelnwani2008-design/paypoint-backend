@@ -494,14 +494,14 @@
         }
 
         function formatCurrency(amount, currency) {
-            if (!amount) return '₦0';
-            // Get user's currency from localStorage
-            const userData = JSON.parse(localStorage.getItem('paypoint_user') || '{}');
-            const userCurrency = userData?.user_metadata?.default_currency || 'NGN';
-            const symbols = { USD: '$', NGN: '₦' };
-            const symbol = symbols[currency] || symbols[userCurrency] || '₦';
-            return symbol + Number(amount).toLocaleString();
-        }
+    if (!amount) return '₦0';
+    const userData = JSON.parse(localStorage.getItem('paypoint_user') || '{}');
+    const userCurrency = userData?.user_metadata?.default_currency || 'USD';
+    const symbols = { USD: '$', NGN: '₦' };
+    // If the deal has its own currency, use that; otherwise fallback to user currency
+    const symbol = symbols[currency] || symbols[userCurrency] || '₦';
+    return symbol + Number(amount).toLocaleString();
+}
 
         function updateSidebarUI(userData) {
             if (!userData) return;
@@ -571,8 +571,8 @@
 async function loadDashboardStats() {
     try {
         const userData = JSON.parse(localStorage.getItem('paypoint_user') || '{}');
-        const currency = userData?.user_metadata?.default_currency || 'NGN';
-        const currencySymbol = currency === 'USD' ? '$' : '₦';
+const currency = userData?.user_metadata?.default_currency || 'USD';
+const currencySymbol = currency === 'USD' ? '$' : '₦';
 
         const res = await fetch(`${API_URL}/dashboard/stats`, {
             headers: getAuthHeaders(),
@@ -585,9 +585,9 @@ async function loadDashboardStats() {
 
             // Display totals
             document.getElementById('totalRevenue').textContent = currencySymbol + data.totalRevenue.toLocaleString();
-            document.getElementById('totalExpenses').textContent = currencySymbol + data.totalExpenses.toLocaleString();
-            document.getElementById('totalTaxes').textContent = currencySymbol + data.taxes.toLocaleString();
-            document.getElementById('takeHome').textContent = currencySymbol + data.takeHome.toLocaleString();
+document.getElementById('totalExpenses').textContent = currencySymbol + data.totalExpenses.toLocaleString();
+document.getElementById('totalTaxes').textContent = currencySymbol + data.taxes.toLocaleString();
+document.getElementById('takeHome').textContent = currencySymbol + data.takeHome.toLocaleString();
 
             // Tax rate display
             document.getElementById('taxRateDisplay').textContent = `${data.taxRate}% tax rate`;
