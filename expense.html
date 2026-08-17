@@ -733,13 +733,12 @@
         // ============================================
         // CURRENCY HELPER
         // ============================================
-        function formatCurrency(amount, currency) {
+        function formatCurrency(amount) {
     if (!amount) return '₦0';
-    // Get user's currency from localStorage
     const userData = JSON.parse(localStorage.getItem('paypoint_user') || '{}');
     const userCurrency = userData?.user_metadata?.default_currency || 'USD';
     const symbols = { USD: '$', NGN: '₦' };
-    const symbol = symbols[currency] || symbols[userCurrency] || '₦';
+    const symbol = symbols[userCurrency] || '₦';
     return symbol + Number(amount).toLocaleString();
 }
 
