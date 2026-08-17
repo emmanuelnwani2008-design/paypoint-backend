@@ -286,7 +286,11 @@ function isValidAmount(amount) {
 // ============================================
 async function authenticate(req, res, next) {
     try {
-        // 🔸 Hybrid: try cookie first, then fallback to Authorization header
+        // --------------------------------------------
+        // 1. TOKEN RETRIEVAL (Hybrid)
+        //    - Try HttpOnly cookie first (more secure)
+        //    - Fallback to Authorization header (for invoice page)
+        // --------------------------------------------
         let token = req.cookies?.paypoint_session;
         if (!token) {
             const authHeader = req.headers.authorization;
@@ -299,19 +303,55 @@ async function authenticate(req, res, next) {
             return res.status(401).json({ error: 'Authentication required' });
         }
 
+        // --------------------------------------------
+        // 2. TOKEN FORMAT VALIDATION (JWT format)
+        // --------------------------------------------
         if (!/^[a-zA-Z0-9\-_]+\.[a-zA-Z0-9\-_]+\.[a-zA-Z0-9\-_]+$/.test(token)) {
             return res.status(401).json({ error: 'Invalid token format' });
         }
 
+        // --------------------------------------------
+        // 3. VERIFY TOKEN WITH SUPABASE
+        // --------------------------------------------
         const { data: userData, error } = await supabase.auth.getUser(token);
         if (error || !userData?.user) {
             return res.status(401).json({ error: 'Invalid or expired token' });
         }
 
+        // --------------------------------------------
+        // 4. SET USER DATA ON REQUEST OBJECT
+        // --------------------------------------------
         req.user = userData.user;
         req.userId = userData.user.id;
 
-        // Account reconciliation (keep if you use it)
+        // --------------------------------------------
+        // 5. ENSURE USER HAS A PROFILE WITH DEFAULT CURRENCY
+        //    - This is critical for Google sign‑in users who may not have a profile yet.
+        //    - Default set to 'USD' per your preference.
+        // --------------------------------------------
+        const { data: profile, error: profileError } = await supabaseAdmin
+            .from('profiles')
+            .select('default_currency')
+            .eq('id', req.userId)
+            .single();
+
+        if (profileError && profileError.code === 'PGRST116') {
+            // 🔹 Profile doesn't exist – create it
+            await supabaseAdmin.from('profiles').insert({
+                id: req.userId,
+                default_currency: 'USD'
+            });
+        } else if (profile && !profile.default_currency) {
+            // 🔹 Profile exists but default_currency is null – set it
+            await supabaseAdmin.from('profiles')
+                .update({ default_currency: 'USD' })
+                .eq('id', req.userId);
+        }
+
+        // --------------------------------------------
+        // 6. ACCOUNT RECONCILIATION (Keep your existing logic)
+        //    - Merges accounts with the same email (if you use it).
+        // --------------------------------------------
         const email = userData.user?.email;
         if (email) {
             const { data: userMatches, error: listError } = await supabaseAdmin.auth.admin.listUsers();
@@ -324,27 +364,13 @@ async function authenticate(req, res, next) {
             }
         }
 
-        const { data: profile, error: profileError } = await supabaseAdmin
-            .from('profiles')
-            .select('default_currency')
-            .eq('id', req.userId)
-            .single();
-
-        if (profileError && profileError.code === 'PGRST116') {
-            // Profile doesn't exist – create it
-            await supabaseAdmin.from('profiles').insert({
-                id: req.userId,
-                default_currency: 'NGN' 
-            });
-        } else if (profile && !profile.default_currency) {
-            // Profile exists but default_currency is null – update it
-            await supabaseAdmin.from('profiles')
-                .update({ default_currency: 'NGN' })
-                .eq('id', req.userId);
-        }
+        // --------------------------------------------
+        // 7. PROCEED TO NEXT MIDDLEWARE / ROUTE
+        // --------------------------------------------
         next();
+
     } catch (err) {
-        console.error('Auth error:', err);
+        console.error('Authentication error:', err);
         res.status(500).json({ error: 'Authentication failed' });
     }
 }
