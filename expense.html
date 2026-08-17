@@ -932,14 +932,46 @@
         }
 
         function updateStats(expenses) {
-            const total = expenses.length;
-            const spent = expenses.reduce((sum, e) => sum + Number(e.amount), 0);
-            const avg = total > 0 ? spent / total : 0;
+    const total = expenses.length;
+    document.getElementById('totalExpenses').textContent = total;
 
-            totalExpensesEl.textContent = total;
-            totalSpentEl.textContent = formatCurrency(spent, 'NGN');
-            averageExpenseEl.textContent = formatCurrency(avg, 'NGN');
-        }
+    // ✅ Group amounts by currency
+    const totals = {};
+    expenses.forEach(exp => {
+        const currency = exp.currency || 'NGN';
+        const amount = Number(exp.amount);
+        if (!totals[currency]) totals[currency] = 0;
+        totals[currency] += amount;
+    });
+
+    // ✅ Display totals per currency
+    const currencySymbols = { USD: '$', NGN: '₦' };
+    let totalText = '';
+    let avgText = '';
+    const currencyKeys = Object.keys(totals);
+
+    if (currencyKeys.length === 0) {
+        totalText = '₦0';
+        avgText = '₦0';
+    } else if (currencyKeys.length === 1) {
+        const cur = currencyKeys[0];
+        const symbol = currencySymbols[cur] || '₦';
+        const totalAmount = totals[cur];
+        totalText = symbol + totalAmount.toLocaleString();
+        const avg = total > 0 ? totalAmount / total : 0;
+        avgText = symbol + avg.toLocaleString();
+    } else {
+        // Multiple currencies → show breakdown
+        totalText = currencyKeys.map(cur =>
+            (currencySymbols[cur] || '₦') + totals[cur].toLocaleString()
+        ).join(' | ');
+        // Average isn't meaningful across currencies – show combined or remove
+        avgText = 'Mixed currencies';
+    }
+
+    document.getElementById('totalSpent').textContent = totalText;
+    document.getElementById('averageExpense').textContent = avgText;
+}
 
         function filterExpenses() {
             const search = searchInput.value.toLowerCase();
