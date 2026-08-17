@@ -375,27 +375,7 @@ async function authenticate(req, res, next) {
     }
 }
 
-// ============================================
-// ENSURE USER HAS DEFAULT CURRENCY
-// ============================================
-const { data: profile, error: profileError } = await supabaseAdmin
-    .from('profiles')
-    .select('default_currency')
-    .eq('id', req.userId)
-    .single();
-
-if (profileError && profileError.code === 'PGRST116') {
-    // Profile doesn't exist – create it
-    await supabaseAdmin.from('profiles').insert({
-        id: req.userId,
-        default_currency: 'NGN'
-    });
-} else if (profile && !profile.default_currency) {
-    // Profile exists but default_currency is null – update it
-    await supabaseAdmin.from('profiles')
-        .update({ default_currency: 'NGN' })
-        .eq('id', req.userId);
-}
+// (Removed stray top-level await block that caused startup errors.)
 
 // ============================================
 // DASHBOARD STATS WITH REAL PERCENTAGES
