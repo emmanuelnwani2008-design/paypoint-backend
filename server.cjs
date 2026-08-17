@@ -334,12 +334,12 @@ async function authenticate(req, res, next) {
             // Profile doesn't exist – create it
             await supabaseAdmin.from('profiles').insert({
                 id: req.userId,
-                default_currency: 'USD' 
+                default_currency: 'NGN' 
             });
         } else if (profile && !profile.default_currency) {
             // Profile exists but default_currency is null – update it
             await supabaseAdmin.from('profiles')
-                .update({ default_currency: 'USD' })
+                .update({ default_currency: 'NGN' })
                 .eq('id', req.userId);
         }
         next();
