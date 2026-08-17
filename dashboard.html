@@ -496,7 +496,7 @@
         function formatCurrency(amount, currency) {
     if (!amount) return '₦0';
     const userData = JSON.parse(localStorage.getItem('paypoint_user') || '{}');
-    const userCurrency = userData?.user_metadata?.default_currency || 'USD';
+    const userCurrency = userData?.user_metadata?.default_currency || 'NGN';
     const symbols = { USD: '$', NGN: '₦' };
     // If the deal has its own currency, use that; otherwise fallback to user currency
     const symbol = symbols[currency] || symbols[userCurrency] || '₦';
@@ -571,7 +571,7 @@
 async function loadDashboardStats() {
     try {
         const userData = JSON.parse(localStorage.getItem('paypoint_user') || '{}');
-const currency = userData?.user_metadata?.default_currency || 'USD';
+const currency = userData?.user_metadata?.default_currency || 'NGN';
 const currencySymbol = currency === 'USD' ? '$' : '₦';
 
         const res = await fetch(`${API_URL}/dashboard/stats`, {
