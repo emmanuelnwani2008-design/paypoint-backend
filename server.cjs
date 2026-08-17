@@ -324,6 +324,24 @@ async function authenticate(req, res, next) {
             }
         }
 
+        const { data: profile, error: profileError } = await supabaseAdmin
+            .from('profiles')
+            .select('default_currency')
+            .eq('id', req.userId)
+            .single();
+
+        if (profileError && profileError.code === 'PGRST116') {
+            // Profile doesn't exist – create it
+            await supabaseAdmin.from('profiles').insert({
+                id: req.userId,
+                default_currency: 'USD' 
+            });
+        } else if (profile && !profile.default_currency) {
+            // Profile exists but default_currency is null – update it
+            await supabaseAdmin.from('profiles')
+                .update({ default_currency: 'USD' })
+                .eq('id', req.userId);
+        }
         next();
     } catch (err) {
         console.error('Auth error:', err);
