@@ -397,17 +397,23 @@ async function authenticate(req, res, next) {
             .single();
 
         if (profileError && profileError.code === 'PGRST116') {
-            // 🔹 Profile doesn't exist – create it
-            await supabaseAdmin.from('profiles').insert({
-                id: req.userId,
-                default_currency: 'USD'
-            });
-        } else if (profile && !profile.default_currency) {
-            // 🔹 Profile exists but default_currency is null – set it
-            await supabaseAdmin.from('profiles')
-                .update({ default_currency: 'USD' })
-                .eq('id', req.userId);
-        }
+    // Profile doesn't exist – create it
+    await supabaseAdmin.from('profiles').insert({
+        id: req.userId,
+        default_currency: 'USD',
+        subscription_tier: 'free',
+        subscription_status: 'active'
+    });
+} else if (profile && !profile.default_currency) {
+    // Profile exists but default_currency is null – update it
+    await supabaseAdmin.from('profiles')
+        .update({
+            default_currency: 'USD',
+            subscription_tier: 'free',
+            subscription_status: 'active'
+        })
+        .eq('id', req.userId);
+}
 
         // --------------------------------------------
         // 6. ACCOUNT RECONCILIATION (Keep your existing logic)
@@ -1203,6 +1209,16 @@ app.post('/api/deals', authenticate, async (req, res) => {
             }])
             .select();
 
+            // ✅ Check usage limit for deals
+        const usage = await checkUsageLimit(userId, 'deal');
+        if (!usage.allowed) {
+            return res.status(403).json({
+                error: `Deal limit reached (${usage.max}). Upgrade to Pro for unlimited deals.`,
+                limit_reached: true,
+                current: usage.current,
+                max: usage.max
+            });
+        }
         if (error) {
             console.error('Supabase error:', error);
             return res.status(500).json({ error: error.message });
@@ -1381,6 +1397,16 @@ app.post('/api/expenses', authenticate, async (req, res) => {
                 deal_id: req.body.deal_id || null 
             }])
             .select();
+            // ✅ Check usage limit for expenses
+        const usage = await checkUsageLimit(userId, 'expense');
+        if (!usage.allowed) {
+            return res.status(403).json({
+                error: `Expense limit reached (${usage.max}). Upgrade to Pro for unlimited expenses.`,
+                limit_reached: true,
+                current: usage.current,
+                max: usage.max
+            });
+        }
         if (error) {
             console.error('Supabase error:', error);
             return res.status(500).json({ error: error.message });
@@ -1657,6 +1683,16 @@ async function handleInvoiceCreate(req, res) {
                 status: 'sent'
             }])
             .select();
+             // ✅ Check usage limit for invoices
+        const usage = await checkUsageLimit(userId, 'invoice');
+        if (!usage.allowed) {
+            return res.status(403).json({
+                error: `Invoice limit reached (${usage.max}). Upgrade to Pro for unlimited invoices.`,
+                limit_reached: true,
+                current: usage.current,
+                max: usage.max
+            });
+        }
 
         if (error) {
             console.error('Invoice create error:', error);
