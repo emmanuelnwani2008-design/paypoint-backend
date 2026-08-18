@@ -372,15 +372,13 @@
         /* ===== USAGE RINGS ===== */
 .usage-rings-container {
     display: flex;
-    justify-content: space-around;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 20px 30px;
-    margin-top: 28px;
+    justify-content: center;
+    gap: 30px;
+    margin-top: 20px;
     background: #FFFFFF;
     border: 1px solid #E8EDF2;
     border-radius: 14px;
-    padding: 28px 20px;
+    padding: 16px 20px;
     box-shadow: 0 1px 3px rgba(0,0,0,0.04);
 }
 
@@ -388,14 +386,12 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    flex: 0 1 auto;
-    min-width: 100px;
 }
 
 .ring-wrapper {
     position: relative;
-    width: 140px;
-    height: 140px;
+    width: 80px;
+    height: 80px;
 }
 
 .ring-wrapper svg {
@@ -407,103 +403,42 @@
 .ring-wrapper .track {
     fill: none;
     stroke: #E8EDF2;
-    stroke-width: 10;
+    stroke-width: 8;
 }
 
 .ring-wrapper .progress-fill {
     fill: none;
-    stroke-width: 10;
+    stroke-width: 8;
     stroke-linecap: round;
-    transition: stroke-dashoffset 0.8s ease, stroke 0.5s ease;
-    filter: drop-shadow(0 2px 8px rgba(79, 124, 255, 0.15));
+    transition: stroke-dashoffset 0.8s ease;
 }
 
 .ring-wrapper .deals-ring   { stroke: #4F7CFF; }
 .ring-wrapper .invoices-ring { stroke: #34C759; }
 .ring-wrapper .expenses-ring { stroke: #FF9500; }
 
-.ring-label {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    text-align: center;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    line-height: 1.2;
-}
-
-.ring-label .ring-count {
-    font-size: 26px;
-    font-weight: 700;
-    color: #000000;
-}
-
-.ring-label .ring-name {
-    font-size: 12px;
-    font-weight: 500;
-    color: #8A9AAB;
-    margin-top: 2px;
-}
-
-.ring-limit {
-    font-size: 12px;
-    color: #8A9AAB;
-    margin-top: 6px;
-    font-weight: 500;
-}
-
-/* ===== RESPONSIVE ===== */
+/* Mobile responsive */
 @media (max-width: 768px) {
     .usage-rings-container {
-        gap: 12px;
-        padding: 16px 12px;
+        gap: 16px;
+        padding: 12px 16px;
+        flex-wrap: wrap;
         justify-content: center;
     }
-
-    .ring-item {
-        min-width: 80px;
-        flex: 0 1 90px;
-    }
-
     .ring-wrapper {
-        width: 100px;
-        height: 100px;
+        width: 65px;
+        height: 65px;
     }
-
     .ring-wrapper .track,
     .ring-wrapper .progress-fill {
-        stroke-width: 8;
+        stroke-width: 6;
     }
-
-    .ring-label .ring-count {
-        font-size: 20px;
+    .ring-item div:first-child div:first-child {
+        font-size: 14px !important;
     }
-
-    .ring-label .ring-name {
-        font-size: 10px;
+    .ring-item div:first-child div:last-child {
+        font-size: 8px !important;
     }
-
-    .ring-limit {
-        font-size: 10px;
-    }
-}
-
-@media (max-width: 480px) {
-    .ring-wrapper {
-        width: 85px;
-        height: 85px;
-    }
-
-    .ring-label .ring-count {
-        font-size: 16px;
-    }
-
-    .ring-label .ring-name {
-        font-size: 9px;
-    }
-
     .ring-limit {
         font-size: 9px;
     }
@@ -617,51 +552,51 @@
             <span>Profile</span>
         </a>
     </nav>
-<!-- Usage Rings Section -->
-<div class="usage-rings-container">
-    <div class="ring-item">
-        <div class="ring-wrapper">
-            <svg viewBox="0 0 100 100">
-                <circle class="track" cx="50" cy="50" r="40" />
-                <circle class="progress-fill deals-ring" cx="50" cy="50" r="40" 
+    <!-- Usage Rings Section (small, horizontal) -->
+<div class="usage-rings-container" style="display: flex; justify-content: center; gap: 30px; margin-top: 20px; background: #FFFFFF; border: 1px solid #E8EDF2; border-radius: 14px; padding: 16px 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
+    <div class="ring-item" style="display: flex; flex-direction: column; align-items: center;">
+        <div class="ring-wrapper" style="position: relative; width: 80px; height: 80px;">
+            <svg viewBox="0 0 100 100" style="transform: rotate(-90deg); width: 100%; height: 100%;">
+                <circle class="track" cx="50" cy="50" r="40" fill="none" stroke="#E8EDF2" stroke-width="8" />
+                <circle class="progress-fill deals-ring" cx="50" cy="50" r="40" fill="none" stroke="#4F7CFF" stroke-width="8" 
                         stroke-dasharray="251.2" stroke-dashoffset="251.2" />
             </svg>
-            <div class="ring-label">
-                <span class="ring-count" id="dealsCount">0</span>
-                <span class="ring-name">Deals</span>
+            <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; line-height: 1.2;">
+                <div style="font-size: 18px; font-weight: 700; color: #000000;" id="dealsCount">0</div>
+                <div style="font-size: 9px; color: #8A9AAB;">Deals</div>
             </div>
         </div>
-        <div class="ring-limit">Limit: <span id="dealsMax">5</span></div>
+        <div style="font-size: 10px; color: #8A9AAB; margin-top: 4px;">Limit: <span id="dealsMax">5</span></div>
     </div>
 
-    <div class="ring-item">
-        <div class="ring-wrapper">
-            <svg viewBox="0 0 100 100">
-                <circle class="track" cx="50" cy="50" r="40" />
-                <circle class="progress-fill invoices-ring" cx="50" cy="50" r="40" 
+    <div class="ring-item" style="display: flex; flex-direction: column; align-items: center;">
+        <div class="ring-wrapper" style="position: relative; width: 80px; height: 80px;">
+            <svg viewBox="0 0 100 100" style="transform: rotate(-90deg); width: 100%; height: 100%;">
+                <circle class="track" cx="50" cy="50" r="40" fill="none" stroke="#E8EDF2" stroke-width="8" />
+                <circle class="progress-fill invoices-ring" cx="50" cy="50" r="40" fill="none" stroke="#34C759" stroke-width="8" 
                         stroke-dasharray="251.2" stroke-dashoffset="251.2" />
             </svg>
-            <div class="ring-label">
-                <span class="ring-count" id="invoicesCount">0</span>
-                <span class="ring-name">Invoices</span>
+            <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; line-height: 1.2;">
+                <div style="font-size: 18px; font-weight: 700; color: #000000;" id="invoicesCount">0</div>
+                <div style="font-size: 9px; color: #8A9AAB;">Invoices</div>
             </div>
         </div>
-        <div class="ring-limit">Limit: <span id="invoicesMax">5</span></div>
+        <div style="font-size: 10px; color: #8A9AAB; margin-top: 4px;">Limit: <span id="invoicesMax">5</span></div>
     </div>
 
-    <div class="ring-item">
-        <div class="ring-wrapper">
-            <svg viewBox="0 0 100 100">
-                <circle class="track" cx="50" cy="50" r="40" />
-                <circle class="progress-fill expenses-ring" cx="50" cy="50" r="40" 
+    <div class="ring-item" style="display: flex; flex-direction: column; align-items: center;">
+        <div class="ring-wrapper" style="position: relative; width: 80px; height: 80px;">
+            <svg viewBox="0 0 100 100" style="transform: rotate(-90deg); width: 100%; height: 100%;">
+                <circle class="track" cx="50" cy="50" r="40" fill="none" stroke="#E8EDF2" stroke-width="8" />
+                <circle class="progress-fill expenses-ring" cx="50" cy="50" r="40" fill="none" stroke="#FF9500" stroke-width="8" 
                         stroke-dasharray="251.2" stroke-dashoffset="251.2" />
             </svg>
-            <div class="ring-label">
-                <span class="ring-count" id="expensesCount">0</span>
-                <span class="ring-name">Expenses</span>
+            <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; line-height: 1.2;">
+                <div style="font-size: 18px; font-weight: 700; color: #000000;" id="expensesCount">0</div>
+                <div style="font-size: 9px; color: #8A9AAB;">Expenses</div>
             </div>
         </div>
-        <div class="ring-limit">Limit: <span id="expensesMax">10</span></div>
+        <div style="font-size: 10px; color: #8A9AAB; margin-top: 4px;">Limit: <span id="expensesMax">10</span></div>
     </div>
 </div>
     <script>

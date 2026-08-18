@@ -280,6 +280,67 @@ function isValidAmount(amount) {
     const num = parseFloat(amount);
     return !isNaN(num) && num > 0 && num < 1e9;
 }
+// ============================================
+// SUBSCRIPTION & USAGE HELPERS
+// ============================================
+
+const PLAN_LIMITS = {
+    free: {
+        max_deals: 5,
+        max_invoices: 5,
+        max_expenses: 10,
+    },
+    pro: {
+        max_deals: 999999,
+        max_invoices: 999999,
+        max_expenses: 999999,
+    }
+};
+
+async function getUserPlan(userId) {
+    const { data: profile, error } = await supabase
+        .from('profiles')
+        .select('subscription_tier, subscription_status, subscription_expires_at')
+        .eq('id', userId)
+        .single();
+    if (error || !profile) return { tier: 'free', status: 'active' };
+    if (profile.subscription_tier === 'pro' &&
+        profile.subscription_status === 'active' &&
+        profile.subscription_expires_at &&
+        new Date(profile.subscription_expires_at) < new Date()) {
+        return { tier: 'free', status: 'expired' };
+    }
+    return {
+        tier: profile.subscription_tier || 'free',
+        status: profile.subscription_status || 'active'
+    };
+}
+
+async function checkUsageLimit(userId, resourceType) {
+    const plan = await getUserPlan(userId);
+    const limits = PLAN_LIMITS[plan.tier];
+    const max = limits[`max_${resourceType}s`] || 999999;
+    const now = new Date();
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    const table = resourceType === 'deal' ? 'deals' :
+                  resourceType === 'invoice' ? 'invoices' : 'expenses';
+    const { count, error } = await supabase
+        .from(table)
+        .select('id', { count: 'exact', head: true })
+        .eq('user_id', userId)
+        .gte('created_at', monthStart.toISOString());
+    if (error) {
+        console.error('Usage check error:', error);
+        return { allowed: true, current: 0, max: 999999 };
+    }
+    const current = count || 0;
+    return {
+        allowed: current < max,
+        current: current,
+        max: max,
+        tier: plan.tier
+    };
+}
 
 // ============================================
 // AUTHENTICATION
@@ -388,15 +449,13 @@ app.get('/api/dashboard/stats', authenticate, async (req, res) => {
         const ids = [userId, fallbackUserId].filter(Boolean);
 
         console.log('📊 Dashboard stats for user IDs:', ids);
-console.log(`📊 Found ${allDeals.length} deals and ${allExpenses.length} expenses`);
-console.log(`📊 Current revenue: ${currentRevenue}, Last revenue: ${lastRevenue}`);
-console.log(`📊 Revenue change: ${revenueChange}`);
 
         const now = new Date();
         const currentMonth = new Date(now.getFullYear(), now.getMonth(), 1);
         const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
         const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
 
+        // Fetch deals and expenses using supabaseAdmin
         let allDeals = [];
         if (ids.length === 1) {
             const { data, error } = await supabaseAdmin
@@ -433,6 +492,7 @@ console.log(`📊 Revenue change: ${revenueChange}`);
 
         console.log(`📊 Found ${allDeals.length} deals and ${allExpenses.length} expenses`);
 
+        // Convert dates to ISO for reliable comparison
         const currentMonthStart = currentMonth.toISOString();
         const currentMonthEnd = nextMonth.toISOString();
         const lastMonthStart = lastMonth.toISOString();
@@ -454,6 +514,7 @@ console.log(`📊 Revenue change: ${revenueChange}`);
             .filter(e => e.created_at >= lastMonthStart && e.created_at < lastMonthEnd)
             .reduce((sum, e) => sum + Number(e.amount), 0);
 
+        // Determine change: 'new' if no previous data, otherwise percentage
         const revenueChange = lastRevenue > 0
             ? Math.round(((currentRevenue - lastRevenue) / lastRevenue) * 100)
             : (currentRevenue > 0 ? 'new' : 0);
@@ -462,6 +523,7 @@ console.log(`📊 Revenue change: ${revenueChange}`);
             ? Math.round(((currentExpenses - lastExpenses) / lastExpenses) * 100)
             : (currentExpenses > 0 ? 'new' : 0);
 
+        // Get user's tax rate from profile
         const { data: profile, error: profileError } = await supabaseAdmin
             .from('profiles')
             .select('tax_rate')
@@ -473,6 +535,7 @@ console.log(`📊 Revenue change: ${revenueChange}`);
         }
         const taxRate = profile?.tax_rate || 30;
 
+        // Total revenue (all time)
         const totalRevenue = allDeals.reduce((sum, d) => sum + Number(d.amount), 0);
         const totalExpenses = allExpenses.reduce((sum, e) => sum + Number(e.amount), 0);
         const taxes = totalRevenue * (taxRate / 100);
@@ -490,6 +553,7 @@ console.log(`📊 Revenue change: ${revenueChange}`);
                 taxRate
             }
         });
+
     } catch (err) {
         console.error('Dashboard stats error:', err);
         res.status(500).json({ error: 'Server error' });
