@@ -1120,13 +1120,22 @@ Example: 'Brand wants 3 TikTok videos. Must use #GalaxyAI. Sarah is the contact.
                 });
 
                 const result = await res.json();
-                if (result.success) {
-                    alert(isEdit ? '✅ Deal updated successfully!' : '✅ Deal added successfully!');
-                    closeModal();
-                    loadDeals();
-                } else {
-                    alert('❌ Error: ' + (result.error || 'Unknown error'));
-                }
+
+if (result.success) {
+    alert(isEdit ? '✅ Deal updated successfully!' : '✅ Deal added successfully!');
+    closeModal();
+    loadDeals();
+} else if (result.limit_reached) {
+    // ⚠️ FREE LIMIT REACHED – show upgrade prompt
+    const confirmUpgrade = confirm(
+        `${result.error}\n\nYou've used ${result.current} out of ${result.max} free deals.\nUpgrade to Pro for unlimited deals!`
+    );
+    if (confirmUpgrade) {
+        window.location.href = 'pricing.html';
+    }
+} else {
+    alert('❌ Error: ' + (result.error || 'Unknown error'));
+}
             } catch (err) {
                 alert('❌ Could not connect to backend.');
                 console.error(err);

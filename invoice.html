@@ -658,20 +658,28 @@
                 const result = await res.json();
 
                 if (result.success) {
-                    const paymentLink = result.portal_link || 'No link generated';
-                    console.log('🔗 Payment Link:', paymentLink);
-                    prompt(
-                        '✅ Invoice created!\n\n' +
-                        '📋 COPY THIS LINK AND SEND IT TO THE BRAND:\n' +
-                        '(Select the link below, press Ctrl+C to copy, then close this box.)\n\n' +
-                        '💡 We are still setting up automatic email delivery. For now, manually send this link to the brand via WhatsApp, Slack, or email.',
-                        paymentLink
-                    );
-                    closeModal();
-                    loadDealsForInvoices();
-                } else {
-                    alert('❌ Error: ' + (result.error || 'Failed to create invoice'));
-                }
+    const paymentLink = result.portal_link || 'No link generated';
+    console.log('🔗 Payment Link:', paymentLink);
+    prompt(
+        '✅ Invoice created!\n\n' +
+        '📋 COPY THIS LINK AND SEND IT TO THE BRAND:\n' +
+        '(Select the link below, press Ctrl+C to copy, then close this box.)\n\n' +
+        '💡 We are still setting up automatic email delivery. For now, manually send this link to the brand via WhatsApp, Slack, or email.',
+        paymentLink
+    );
+    closeModal();
+    loadDealsForInvoices();
+} else if (result.limit_reached) {
+    // ⚠️ FREE LIMIT REACHED – show upgrade prompt
+    const confirmUpgrade = confirm(
+        `${result.error}\n\nYou've used ${result.current} out of ${result.max} free invoices.\nUpgrade to Pro for unlimited invoices!`
+    );
+    if (confirmUpgrade) {
+        window.location.href = 'pricing.html';
+    }
+} else {
+    alert('❌ Error: ' + (result.error || 'Failed to create invoice'));
+}
             } catch (err) {
                 alert('❌ Could not connect to server');
                 console.error(err);

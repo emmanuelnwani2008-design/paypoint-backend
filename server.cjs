@@ -497,6 +497,27 @@ console.log(`📊 Revenue change: ${revenueChange}`);
 });
 
 // ============================================
+// GET USAGE DATA (for dashboard rings)
+// ============================================
+app.get('/api/usage', authenticate, async (req, res) => {
+    try {
+        const userId = req.userId;
+        const dealUsage = await checkUsageLimit(userId, 'deal');
+        const invoiceUsage = await checkUsageLimit(userId, 'invoice');
+        const expenseUsage = await checkUsageLimit(userId, 'expense');
+        res.json({
+            success: true,
+            deals: { current: dealUsage.current, max: dealUsage.max },
+            invoices: { current: invoiceUsage.current, max: invoiceUsage.max },
+            expenses: { current: expenseUsage.current, max: expenseUsage.max }
+        });
+    } catch (err) {
+        console.error('Usage API error:', err);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+// ============================================
 // UPDATE TAX RATE
 // ============================================
 

@@ -369,6 +369,145 @@
             .metrics-grid { grid-template-columns: 1fr; }
             .top-bar h1 { font-size: 18px; }
         }
+        /* ===== USAGE RINGS ===== */
+.usage-rings-container {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 20px 30px;
+    margin-top: 28px;
+    background: #FFFFFF;
+    border: 1px solid #E8EDF2;
+    border-radius: 14px;
+    padding: 28px 20px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+}
+
+.ring-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex: 0 1 auto;
+    min-width: 100px;
+}
+
+.ring-wrapper {
+    position: relative;
+    width: 140px;
+    height: 140px;
+}
+
+.ring-wrapper svg {
+    transform: rotate(-90deg);
+    width: 100%;
+    height: 100%;
+}
+
+.ring-wrapper .track {
+    fill: none;
+    stroke: #E8EDF2;
+    stroke-width: 10;
+}
+
+.ring-wrapper .progress-fill {
+    fill: none;
+    stroke-width: 10;
+    stroke-linecap: round;
+    transition: stroke-dashoffset 0.8s ease, stroke 0.5s ease;
+    filter: drop-shadow(0 2px 8px rgba(79, 124, 255, 0.15));
+}
+
+.ring-wrapper .deals-ring   { stroke: #4F7CFF; }
+.ring-wrapper .invoices-ring { stroke: #34C759; }
+.ring-wrapper .expenses-ring { stroke: #FF9500; }
+
+.ring-label {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    line-height: 1.2;
+}
+
+.ring-label .ring-count {
+    font-size: 26px;
+    font-weight: 700;
+    color: #000000;
+}
+
+.ring-label .ring-name {
+    font-size: 12px;
+    font-weight: 500;
+    color: #8A9AAB;
+    margin-top: 2px;
+}
+
+.ring-limit {
+    font-size: 12px;
+    color: #8A9AAB;
+    margin-top: 6px;
+    font-weight: 500;
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 768px) {
+    .usage-rings-container {
+        gap: 12px;
+        padding: 16px 12px;
+        justify-content: center;
+    }
+
+    .ring-item {
+        min-width: 80px;
+        flex: 0 1 90px;
+    }
+
+    .ring-wrapper {
+        width: 100px;
+        height: 100px;
+    }
+
+    .ring-wrapper .track,
+    .ring-wrapper .progress-fill {
+        stroke-width: 8;
+    }
+
+    .ring-label .ring-count {
+        font-size: 20px;
+    }
+
+    .ring-label .ring-name {
+        font-size: 10px;
+    }
+
+    .ring-limit {
+        font-size: 10px;
+    }
+}
+
+@media (max-width: 480px) {
+    .ring-wrapper {
+        width: 85px;
+        height: 85px;
+    }
+
+    .ring-label .ring-count {
+        font-size: 16px;
+    }
+
+    .ring-label .ring-name {
+        font-size: 9px;
+    }
+
+    .ring-limit {
+        font-size: 9px;
+    }
+}
     </style>
 </head>
 <body>
@@ -478,7 +617,53 @@
             <span>Profile</span>
         </a>
     </nav>
+<!-- Usage Rings Section -->
+<div class="usage-rings-container">
+    <div class="ring-item">
+        <div class="ring-wrapper">
+            <svg viewBox="0 0 100 100">
+                <circle class="track" cx="50" cy="50" r="40" />
+                <circle class="progress-fill deals-ring" cx="50" cy="50" r="40" 
+                        stroke-dasharray="251.2" stroke-dashoffset="251.2" />
+            </svg>
+            <div class="ring-label">
+                <span class="ring-count" id="dealsCount">0</span>
+                <span class="ring-name">Deals</span>
+            </div>
+        </div>
+        <div class="ring-limit">Limit: <span id="dealsMax">5</span></div>
+    </div>
 
+    <div class="ring-item">
+        <div class="ring-wrapper">
+            <svg viewBox="0 0 100 100">
+                <circle class="track" cx="50" cy="50" r="40" />
+                <circle class="progress-fill invoices-ring" cx="50" cy="50" r="40" 
+                        stroke-dasharray="251.2" stroke-dashoffset="251.2" />
+            </svg>
+            <div class="ring-label">
+                <span class="ring-count" id="invoicesCount">0</span>
+                <span class="ring-name">Invoices</span>
+            </div>
+        </div>
+        <div class="ring-limit">Limit: <span id="invoicesMax">5</span></div>
+    </div>
+
+    <div class="ring-item">
+        <div class="ring-wrapper">
+            <svg viewBox="0 0 100 100">
+                <circle class="track" cx="50" cy="50" r="40" />
+                <circle class="progress-fill expenses-ring" cx="50" cy="50" r="40" 
+                        stroke-dasharray="251.2" stroke-dashoffset="251.2" />
+            </svg>
+            <div class="ring-label">
+                <span class="ring-count" id="expensesCount">0</span>
+                <span class="ring-name">Expenses</span>
+            </div>
+        </div>
+        <div class="ring-limit">Limit: <span id="expensesMax">10</span></div>
+    </div>
+</div>
     <script>
         // ============================================
         // 🚀 BULLETPROOF AUTH (FIXED)
@@ -563,6 +748,60 @@
                 return false;
             }
         }
+
+        // ============================================
+// FETCH USAGE DATA AND UPDATE RINGS
+// ============================================
+async function loadUsageRings() {
+    try {
+        const res = await fetch(`${API_URL}/usage`, {
+            headers: getAuthHeaders(),
+            credentials: 'include'
+        });
+        const data = await res.json();
+
+        if (data.success) {
+            // Deals ring
+            const dealProgress = data.deals.current / data.deals.max;
+            updateRing('deals-ring', dealProgress);
+            document.getElementById('dealsCount').textContent = data.deals.current;
+            document.getElementById('dealsMax').textContent = data.deals.max;
+
+            // Invoices ring
+            const invoiceProgress = data.invoices.current / data.invoices.max;
+            updateRing('invoices-ring', invoiceProgress);
+            document.getElementById('invoicesCount').textContent = data.invoices.current;
+            document.getElementById('invoicesMax').textContent = data.invoices.max;
+
+            // Expenses ring
+            const expenseProgress = data.expenses.current / data.expenses.max;
+            updateRing('expenses-ring', expenseProgress);
+            document.getElementById('expensesCount').textContent = data.expenses.current;
+            document.getElementById('expensesMax').textContent = data.expenses.max;
+        }
+    } catch (err) {
+        console.error('Error loading usage rings:', err);
+    }
+}
+
+function updateRing(className, progress) {
+    const circumference = 251.2; // 2 * PI * 40
+    const ring = document.querySelector(`.${className}`);
+    if (ring) {
+        const clamped = Math.min(1, Math.max(0, progress));
+        const offset = circumference - (clamped * circumference);
+        ring.style.strokeDashoffset = offset;
+
+        // Color changes when near limit
+        const color = ring.classList.contains('deals-ring') ? '#4F7CFF' :
+                     ring.classList.contains('invoices-ring') ? '#34C759' :
+                     '#FF9500';
+        const warningColor = ring.classList.contains('deals-ring') ? '#FF3B30' :
+                            ring.classList.contains('invoices-ring') ? '#FF3B30' :
+                            '#FF3B30';
+        ring.style.stroke = clamped >= 0.8 ? warningColor : color;
+    }
+}
 
         // ============================================
         // LOAD DASHBOARD STATS (with real percentages)
@@ -783,6 +1022,7 @@ document.getElementById('takeHome').textContent = currencySymbol + data.takeHome
                 loadDashboardStats();   // ✅ now called
                 loadDeals();
                 loadExpenses();
+                loadUsageRings();
                 console.log('🚀 PayPoint Dashboard loaded successfully');
                 console.log('📡 Connected to:', API_URL);
             } else {

@@ -1076,13 +1076,21 @@
                 });
 
                 const result = await res.json();
-                if (result.success) {
-                    alert('✅ Expense added successfully!');
-                    closeModal();
-                    loadExpenses();
-                } else {
-                    alert('❌ Error: ' + (result.error || 'Unknown error'));
-                }
+
+if (result.success) {
+    alert('✅ Expense added successfully!');
+    closeModal();
+    loadExpenses();
+} else if (result.limit_reached) {
+    const confirmUpgrade = confirm(
+        `${result.error}\n\nYou've used ${result.current} out of ${result.max} free expenses.\nUpgrade to Pro for unlimited expenses!`
+    );
+    if (confirmUpgrade) {
+        window.location.href = 'pricing.html';
+    }
+} else {
+    alert('❌ Error: ' + (result.error || 'Unknown error'));
+}
             } catch (err) {
                 alert('❌ Could not connect to backend.');
                 console.error(err);
