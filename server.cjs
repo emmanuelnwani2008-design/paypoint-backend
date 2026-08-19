@@ -1932,9 +1932,9 @@ app.post('/api/subscribe', authenticate, async (req, res) => {
         // PRICING IN USD
         let usdAmount;
         if (interval === 'monthly') {
-            usdAmount = 15;
+            usdAmount = 9;
         } else if (interval === 'annual') {
-            usdAmount = 150;
+            usdAmount = 90;
         } else {
             return res.status(400).json({ error: 'Invalid interval' });
         }
