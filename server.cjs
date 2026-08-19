@@ -1694,16 +1694,6 @@ async function handleInvoiceCreate(req, res) {
                 status: 'sent'
             }])
             .select();
-             // ✅ Check usage limit for invoices
-        const usage = await checkUsageLimit(userId, 'invoice');
-        if (!usage.allowed) {
-            return res.status(403).json({
-                error: `Invoice limit reached (${usage.max}). Upgrade to Pro for unlimited invoices.`,
-                limit_reached: true,
-                current: usage.current,
-                max: usage.max
-            });
-        }
 
         if (error) {
             console.error('Invoice create error:', error);
