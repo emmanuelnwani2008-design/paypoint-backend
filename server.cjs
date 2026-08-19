@@ -1341,8 +1341,6 @@ app.get('/api/deals/:id', authenticate, async (req, res) => {
         const dealId = req.params.id;
         const userId = req.userId;
 
-        const fallbackUserId = req.reconciledUserId || null;
-        const ids = [userId, fallbackUserId].filter(Boolean);
         const { data: deal, error: dealError } = await supabaseAdmin
             .from('deals')
             .select('*')
@@ -1519,8 +1517,6 @@ app.post('/api/payments/initialize', authenticate, async (req, res) => {
             return res.status(400).json({ error: 'dealId required' });
         }
 
-        const fallbackUserId = req.reconciledUserId || null;
-        const ids = [userId, fallbackUserId].filter(Boolean);
         const { data: deal, error: dealError } = await supabaseAdmin
             .from('deals')
             .select('*')
@@ -1695,8 +1691,6 @@ async function handleInvoiceCreate(req, res) {
             return res.status(400).json({ error: 'Invalid brand email format' });
         }
 
-        const fallbackUserId = req.reconciledUserId || null;
-        const ids = [userId, fallbackUserId].filter(Boolean);
         const { data: deal, error: dealError } = await supabaseAdmin
             .from('deals')
             .select('*')
