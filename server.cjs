@@ -324,7 +324,7 @@ async function checkUsageLimit(userId, resourceType) {
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
     const table = resourceType === 'deal' ? 'deals' :
                   resourceType === 'invoice' ? 'invoices' : 'expenses';
-    const { count, error } = await supabase
+    const { count, error } = supabaseAdmin
         .from(table)
         .select('id', { count: 'exact', head: true })
         .eq('user_id', userId)
