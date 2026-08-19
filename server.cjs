@@ -1378,16 +1378,6 @@ app.post('/api/expenses', authenticate, async (req, res) => {
                 max: usage.max
             });
         }
-        // ✅ Check usage limit – MUST BE BEFORE ANYTHING ELSE
-        const usage = await checkUsageLimit(userId, 'deal');
-        if (!usage.allowed) {
-            return res.status(403).json({
-                error: `Deal limit reached (${usage.max}). Upgrade to Pro for unlimited deals.`,
-                limit_reached: true,
-                current: usage.current,
-                max: usage.max
-            });
-        }
 
         const { vendor, amount, category, receipt_url, currency } = req.body;
         if (!vendor || !amount) {
