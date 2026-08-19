@@ -320,9 +320,12 @@
                 <div class="profile-card" id="subscriptionCard">
                     <h3>👑 Pro Subscription</h3>
                     <p style="color: #8A9AAB; font-size: 14px; margin-bottom: 12px;">
-                        Upgrade to Pro for <strong>$15/month</strong> or <strong>$150/year</strong> and unlock:
+                        Upgrade to Pro for <strong>$9/month</strong> or <strong>$90/year</strong> and unlock:
                         unlimited deals, unlimited invoices, advanced analytics, and more.
                     </p>
+                    <p id="priceDisplay" style="color: #8A9AAB; font-size: 12px; margin-top: 4px;">
+    Loading NGN equivalent...
+</p>
                     <div id="subscriptionStatus"></div>
                     <a href="pricing.html" class="btn-primary" style="display: inline-block; margin-top: 12px; text-decoration: none;">
                         💳 Upgrade Now
@@ -559,6 +562,24 @@
                 if (upgradeBtn) upgradeBtn.style.display = 'inline-block';
             }
         }
+        // Fetch exchange rate and update NGN equivalent
+async function updateCreatorPrice() {
+    try {
+        const res = await fetch('https://api.exchangerate-api.com/v4/latest/USD');
+        const data = await res.json();
+        const rate = data.rates.NGN;
+        if (rate) {
+            const monthlyNgn = Math.round(9 * rate);  // change 9 to your monthly price
+            const annualNgn = Math.round(90 * rate);  // change 90 to your annual price
+            const priceDisplay = document.getElementById('priceDisplay');
+            if (priceDisplay) {
+                priceDisplay.textContent = `(${monthlyNgn} NGN / month | ${annualNgn} NGN / year)`;
+            }
+        }
+    } catch (err) {
+        console.error('Failed to fetch exchange rate:', err);
+    }
+}
 
         // ============================================
         // LOAD STATS
