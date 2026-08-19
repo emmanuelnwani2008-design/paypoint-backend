@@ -316,30 +316,47 @@ async function getUserPlan(userId) {
     };
 }
 
-async function checkUsageLimit(userId, resourceType) {
-    const plan = await getUserPlan(userId);
+async function checkUsageLimit(userIdOrIds, resourceType) {
+    // Accept a single userId or an array of userIds (for reconciled/merged accounts)
+    const ids = Array.isArray(userIdOrIds) ? userIdOrIds.filter(Boolean) : [userIdOrIds];
+    // Use the first id to determine plan (primary account)
+    const plan = await getUserPlan(ids[0]);
     const limits = PLAN_LIMITS[plan.tier];
     const max = limits[`max_${resourceType}s`] || 999999;
     const now = new Date();
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
     const table = resourceType === 'deal' ? 'deals' :
                   resourceType === 'invoice' ? 'invoices' : 'expenses';
-    const { count, error } = supabaseAdmin
-        .from(table)
-        .select('id', { count: 'exact', head: true })
-        .eq('user_id', userId)
-        .gte('created_at', monthStart.toISOString());
-    if (error) {
-        console.error('Usage check error:', error);
-        return { allowed: true, current: 0, max: 999999 };
+
+    try {
+        let query = supabaseAdmin
+            .from(table)
+            .select('id', { count: 'exact', head: true })
+            .gte('created_at', monthStart.toISOString());
+
+        if (ids.length === 1) {
+            query = query.eq('user_id', ids[0]);
+        } else {
+            query = query.in('user_id', ids);
+        }
+
+        const { count, error } = await query;
+        if (error) {
+            console.error('Usage check error:', error);
+            return { allowed: true, current: 0, max: 999999, tier: plan.tier };
+        }
+
+        const current = count || 0;
+        return {
+            allowed: current < max,
+            current: current,
+            max: max,
+            tier: plan.tier
+        };
+    } catch (err) {
+        console.error('Usage check exception:', err);
+        return { allowed: true, current: 0, max: 999999, tier: plan.tier };
     }
-    const current = count || 0;
-    return {
-        allowed: current < max,
-        current: current,
-        max: max,
-        tier: plan.tier
-    };
 }
 
 // ============================================
@@ -572,9 +589,11 @@ app.get('/api/dashboard/stats', authenticate, async (req, res) => {
 app.get('/api/usage', authenticate, async (req, res) => {
     try {
         const userId = req.userId;
-        const dealUsage = await checkUsageLimit(userId, 'deal');
-        const invoiceUsage = await checkUsageLimit(userId, 'invoice');
-        const expenseUsage = await checkUsageLimit(userId, 'expense');
+        const fallbackUserId = req.reconciledUserId || null;
+        const ids = [userId, fallbackUserId].filter(Boolean);
+        const dealUsage = await checkUsageLimit(ids, 'deal');
+        const invoiceUsage = await checkUsageLimit(ids, 'invoice');
+        const expenseUsage = await checkUsageLimit(ids, 'expense');
         res.json({
             success: true,
             deals: { current: dealUsage.current, max: dealUsage.max },
@@ -1178,8 +1197,10 @@ app.get('/api/deals', authenticate, async (req, res) => {
 app.post('/api/deals', authenticate, async (req, res) => {
     try {
         const userId = req.userId;
+        const fallbackUserId = req.reconciledUserId || null;
+        const ids = [userId, fallbackUserId].filter(Boolean);
         // ✅ Check usage limit – MUST BE BEFORE ANYTHING ELSE
-        const usage = await checkUsageLimit(userId, 'deal');
+        const usage = await checkUsageLimit(ids, 'deal');
         if (!usage.allowed) {
             return res.status(403).json({
                 error: `Deal limit reached (${usage.max}). Upgrade to Pro for unlimited deals.`,
@@ -1368,8 +1389,10 @@ app.get('/api/deals/:id', authenticate, async (req, res) => {
 app.post('/api/expenses', authenticate, async (req, res) => {
     try {
         const userId = req.userId;
+        const fallbackUserId = req.reconciledUserId || null;
+        const ids = [userId, fallbackUserId].filter(Boolean);
         // ✅ Check usage limit – MUST BE BEFORE ANYTHING ELSE
-        const usage = await checkUsageLimit(userId, 'expense');
+        const usage = await checkUsageLimit(ids, 'expense');
         if (!usage.allowed) {
             return res.status(403).json({
                 error: `expense limit reached (${usage.max}). Upgrade to Pro for unlimited expense.`,
@@ -1650,8 +1673,10 @@ async function handleInvoiceCreate(req, res) {
     try {
         const { dealId, invoiceNumber, brandEmail } = req.body;
         const userId = req.userId;
+        const fallbackUserId = req.reconciledUserId || null;
+        const ids = [userId, fallbackUserId].filter(Boolean);
         // ✅ Check usage limit – MUST BE BEFORE ANYTHING ELSE
-        const usage = await checkUsageLimit(userId, 'invoice');
+        const usage = await checkUsageLimit(ids, 'invoice');
         if (!usage.allowed) {
             return res.status(403).json({
                 error: `invoice limit reached (${usage.max}). Upgrade to Pro for unlimited invoices.`,
