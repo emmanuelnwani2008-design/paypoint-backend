@@ -1178,6 +1178,16 @@ app.get('/api/deals', authenticate, async (req, res) => {
 app.post('/api/deals', authenticate, async (req, res) => {
     try {
         const userId = req.userId;
+        // ✅ Check usage limit – MUST BE BEFORE ANYTHING ELSE
+        const usage = await checkUsageLimit(userId, 'deal');
+        if (!usage.allowed) {
+            return res.status(403).json({
+                error: `Deal limit reached (${usage.max}). Upgrade to Pro for unlimited deals.`,
+                limit_reached: true,
+                current: usage.current,
+                max: usage.max
+            });
+        }
         const { brand_name, amount, due_date, deliverable, status, currency } = req.body;
         if (!brand_name || !amount) {
             return res.status(400).json({ error: 'brand_name and amount required' });
@@ -1208,17 +1218,6 @@ app.post('/api/deals', authenticate, async (req, res) => {
                 currency: currency || 'NGN'
             }])
             .select();
-
-            // ✅ Check usage limit for deals
-        const usage = await checkUsageLimit(userId, 'deal');
-        if (!usage.allowed) {
-            return res.status(403).json({
-                error: `Deal limit reached (${usage.max}). Upgrade to Pro for unlimited deals.`,
-                limit_reached: true,
-                current: usage.current,
-                max: usage.max
-            });
-        }
         if (error) {
             console.error('Supabase error:', error);
             return res.status(500).json({ error: error.message });
@@ -1369,6 +1368,27 @@ app.get('/api/deals/:id', authenticate, async (req, res) => {
 app.post('/api/expenses', authenticate, async (req, res) => {
     try {
         const userId = req.userId;
+        // ✅ Check usage limit – MUST BE BEFORE ANYTHING ELSE
+        const usage = await checkUsageLimit(userId, 'expense');
+        if (!usage.allowed) {
+            return res.status(403).json({
+                error: `expense limit reached (${usage.max}). Upgrade to Pro for unlimited expense.`,
+                limit_reached: true,
+                current: usage.current,
+                max: usage.max
+            });
+        }
+        // ✅ Check usage limit – MUST BE BEFORE ANYTHING ELSE
+        const usage = await checkUsageLimit(userId, 'deal');
+        if (!usage.allowed) {
+            return res.status(403).json({
+                error: `Deal limit reached (${usage.max}). Upgrade to Pro for unlimited deals.`,
+                limit_reached: true,
+                current: usage.current,
+                max: usage.max
+            });
+        }
+
         const { vendor, amount, category, receipt_url, currency } = req.body;
         if (!vendor || !amount) {
             return res.status(400).json({ error: 'vendor and amount required' });
@@ -1397,16 +1417,6 @@ app.post('/api/expenses', authenticate, async (req, res) => {
                 deal_id: req.body.deal_id || null 
             }])
             .select();
-            // ✅ Check usage limit for expenses
-        const usage = await checkUsageLimit(userId, 'expense');
-        if (!usage.allowed) {
-            return res.status(403).json({
-                error: `Expense limit reached (${usage.max}). Upgrade to Pro for unlimited expenses.`,
-                limit_reached: true,
-                current: usage.current,
-                max: usage.max
-            });
-        }
         if (error) {
             console.error('Supabase error:', error);
             return res.status(500).json({ error: error.message });
@@ -1650,6 +1660,17 @@ async function handleInvoiceCreate(req, res) {
     try {
         const { dealId, invoiceNumber, brandEmail } = req.body;
         const userId = req.userId;
+        // ✅ Check usage limit – MUST BE BEFORE ANYTHING ELSE
+        const usage = await checkUsageLimit(userId, 'invoice');
+        if (!usage.allowed) {
+            return res.status(403).json({
+                error: `invoice limit reached (${usage.max}). Upgrade to Pro for unlimited invoices.`,
+                limit_reached: true,
+                current: usage.current,
+                max: usage.max
+            });
+        }
+
 
         if (!dealId || !brandEmail) {
             return res.status(400).json({ error: 'dealId and brandEmail required' });
