@@ -3,10 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PayPoint · Finance OS for Creators</title>
+
+    <title>PayPoint — The Workspace for Creator Businesses</title>
+
     <link rel="stylesheet" href="mobile.css">
     <link rel="icon" type="image/png" href="logo.png">
-    <!-- Google tag (gtag.js) -->
+
+    <!-- Google Analytics -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-HFJ9JM358E"></script>
     <script>
         window.dataLayer = window.dataLayer || [];
@@ -14,56 +17,74 @@
         gtag('js', new Date());
         gtag('config', 'G-HFJ9JM358E');
     </script>
+
     <style>
-        /* ===== RESET & BASE ===== */
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
         body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont,
+                'Segoe UI', Roboto, sans-serif;
             background: #0A0E1A;
             color: #FFFFFF;
             -webkit-font-smoothing: antialiased;
             overflow-x: hidden;
         }
 
-        /* ===== GRADIENT BACKGROUND ===== */
         .bg-gradient {
             position: fixed;
-            top: 0;
-            left: 0;
+            inset: 0;
             width: 100%;
             height: 100%;
             z-index: -2;
-            background: radial-gradient(ellipse at 20% 50%, #1A1A3E 0%, #0A0E1A 70%);
+            background:
+                radial-gradient(
+                    ellipse at 20% 50%,
+                    #1A1A3E 0%,
+                    #0A0E1A 70%
+                );
         }
+
         .bg-gradient::after {
             content: '';
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
+            inset: 0;
             z-index: -1;
-            background: radial-gradient(ellipse at 80% 20%, #4F7CFF 0%, transparent 60%);
+            background:
+                radial-gradient(
+                    ellipse at 80% 20%,
+                    #4F7CFF 0%,
+                    transparent 60%
+                );
             opacity: 0.15;
         }
 
-        /* ===== CONTAINER ===== */
         .container {
             max-width: 1200px;
             margin: 0 auto;
             padding: 0 24px;
         }
 
-        /* ===== NAVBAR ===== */
+        /* =========================
+           NAVBAR
+        ========================= */
+
         .navbar {
             display: flex;
             justify-content: space-between;
             align-items: center;
             padding: 20px 0;
             border-bottom: 1px solid rgba(255,255,255,0.05);
-            flex-wrap: wrap;
-            gap: 16px;
+            gap: 20px;
         }
+
         .logo {
             font-size: 28px;
             font-weight: 800;
@@ -72,15 +93,24 @@
             display: flex;
             align-items: center;
             gap: 8px;
+            white-space: nowrap;
         }
-        .logo img { height: 36px; width: auto; }
-        .logo span { color: #4F7CFF; }
+
+        .logo img {
+            height: 36px;
+            width: auto;
+        }
+
+        .logo span {
+            color: #4F7CFF;
+        }
+
         .nav-links {
             display: flex;
-            gap: 32px;
+            gap: 30px;
             align-items: center;
-            flex-wrap: wrap;
         }
+
         .nav-links a {
             color: rgba(255,255,255,0.7);
             text-decoration: none;
@@ -88,208 +118,272 @@
             font-weight: 500;
             transition: color 0.3s ease;
         }
-        .nav-links a:hover { color: #FFFFFF; }
+
+        .nav-links a:hover {
+            color: #FFFFFF;
+        }
+
         .btn-nav {
             background: #4F7CFF;
-            color: #FFFFFF;
-            padding: 10px 28px;
+            color: #FFFFFF !important;
+            padding: 10px 26px;
             border-radius: 40px;
             font-weight: 600;
-            font-size: 14px;
-            text-decoration: none;
-            transition: all 0.3s ease;
-            border: none;
-            box-shadow: 0 4px 20px rgba(79, 124, 255, 0.3);
+            box-shadow: 0 4px 20px rgba(79,124,255,0.3);
         }
+
         .btn-nav:hover {
             background: #3A5FD9;
             transform: translateY(-2px);
-            box-shadow: 0 8px 30px rgba(79, 124, 255, 0.4);
         }
 
-        /* ===== HERO ===== */
+        /* =========================
+           HERO
+        ========================= */
+
         .hero {
-            padding: 60px 0 40px 0;
+            padding: 75px 0 55px;
             display: grid;
-            grid-template-columns: 1fr 1.4fr;
-            gap: 40px;
+            grid-template-columns: 0.9fr 1.3fr;
+            gap: 55px;
             align-items: center;
-            min-height: 70vh;
+            min-height: 72vh;
         }
+
         .hero-content h1 {
             font-size: 52px;
             font-weight: 800;
-            line-height: 1.1;
-            letter-spacing: -1px;
-            margin-bottom: 20px;
+            line-height: 1.08;
+            letter-spacing: -1.5px;
+            margin-bottom: 22px;
         }
-        .hero-content h1 .highlight { color: #4F7CFF; }
+
+        .highlight {
+            color: #4F7CFF;
+        }
+
         .hero-content p {
             font-size: 18px;
-            color: rgba(255,255,255,0.7);
+            color: rgba(255,255,255,0.68);
             line-height: 1.7;
-            max-width: 500px;
-            margin-bottom: 32px;
+            max-width: 520px;
+            margin-bottom: 30px;
         }
+
         .hero-buttons {
             display: flex;
-            gap: 16px;
+            gap: 14px;
             flex-wrap: wrap;
         }
+
+        .btn-primary,
+        .btn-secondary {
+            display: inline-block;
+            padding: 15px 34px;
+            border-radius: 40px;
+            font-size: 17px;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
         .btn-primary {
             background: #4F7CFF;
             color: #FFFFFF;
-            padding: 16px 40px;
-            border-radius: 40px;
             font-weight: 700;
-            font-size: 18px;
-            text-decoration: none;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 24px rgba(79, 124, 255, 0.35);
-            border: none;
-            display: inline-block;
+            box-shadow: 0 4px 24px rgba(79,124,255,0.35);
         }
+
         .btn-primary:hover {
             background: #3A5FD9;
             transform: translateY(-3px);
-            box-shadow: 0 8px 36px rgba(79, 124, 255, 0.5);
         }
+
         .btn-secondary {
             background: rgba(255,255,255,0.06);
             color: #FFFFFF;
-            padding: 16px 40px;
-            border-radius: 40px;
-            font-weight: 600;
-            font-size: 18px;
-            text-decoration: none;
-            transition: all 0.3s ease;
             border: 1px solid rgba(255,255,255,0.12);
-            display: inline-block;
+            font-weight: 600;
         }
+
         .btn-secondary:hover {
             background: rgba(255,255,255,0.12);
             transform: translateY(-3px);
         }
 
-        /* HERO IMAGE - LARGE */
         .hero-image {
             display: flex;
             justify-content: center;
             align-items: center;
-            width: 100%;
         }
+
         .hero-image img {
             width: 100%;
-            max-width: 100%;
-            height: auto;
-            border-radius: 16px;
+            border-radius: 18px;
             border: 1px solid rgba(255,255,255,0.08);
             box-shadow: 0 20px 60px rgba(0,0,0,0.5);
-            transition: transform 0.3s ease;
-        }
-        .hero-image img:hover {
-            transform: scale(1.02);
         }
 
-        /* TRUST BADGE — no fake avatars */
         .trust-badge {
-            margin-top: 40px;
-            display: flex;
-            align-items: center;
-            gap: 16px;
-            flex-wrap: wrap;
-            padding-top: 32px;
+            margin-top: 28px;
+            padding-top: 20px;
             border-top: 1px solid rgba(255,255,255,0.06);
-            color: rgba(255,255,255,0.5);
+            color: rgba(255,255,255,0.45);
             font-size: 14px;
         }
-        .trust-badge span {
-            color: rgba(255,255,255,0.5);
-        }
-        .trust-badge .sep {
-            opacity: 0.2;
+
+        /* =========================
+           GENERAL SECTIONS
+        ========================= */
+
+        .section {
+            padding: 85px 0;
         }
 
-        /* ===== SECTIONS ===== */
-        .section {
-            padding: 80px 0;
-        }
         .section-header {
             text-align: center;
-            max-width: 700px;
-            margin: 0 auto 60px auto;
+            max-width: 720px;
+            margin: 0 auto 55px;
         }
+
         .section-header h2 {
             font-size: 40px;
-            font-weight: 700;
-            letter-spacing: -0.5px;
+            font-weight: 750;
+            letter-spacing: -0.7px;
             margin-bottom: 16px;
         }
+
         .section-header p {
             color: rgba(255,255,255,0.6);
-            font-size: 18px;
+            font-size: 17px;
             line-height: 1.7;
         }
 
-        /* ===== FEATURES GRID ===== */
+        /* =========================
+           PROBLEM SECTION
+        ========================= */
+
+        .problem-section {
+            padding: 80px 0;
+        }
+
+        .problem-box {
+            max-width: 900px;
+            margin: auto;
+            padding: 50px;
+            border-radius: 20px;
+            background: rgba(255,255,255,0.035);
+            border: 1px solid rgba(255,255,255,0.07);
+        }
+
+        .problem-box h2 {
+            font-size: 38px;
+            margin-bottom: 25px;
+            text-align: center;
+        }
+
+        .problem-intro {
+            color: rgba(255,255,255,0.65);
+            font-size: 17px;
+            line-height: 1.7;
+            text-align: center;
+            margin-bottom: 35px;
+        }
+
+        .problem-list {
+            display: grid;
+            gap: 14px;
+        }
+
+        .problem-item {
+            padding: 16px 20px;
+            background: rgba(255,255,255,0.035);
+            border-radius: 10px;
+            color: rgba(255,255,255,0.72);
+        }
+
+        .problem-item strong {
+            color: #FFFFFF;
+        }
+
+        .problem-ending {
+            margin-top: 30px;
+            text-align: center;
+            color: #4F7CFF;
+            font-size: 20px;
+            font-weight: 700;
+        }
+
+        /* =========================
+           FEATURES
+        ========================= */
+
         .features-grid {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 24px;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 22px;
         }
+
         .feature-card {
             background: rgba(255,255,255,0.04);
             border: 1px solid rgba(255,255,255,0.06);
             border-radius: 16px;
-            padding: 32px 28px;
+            padding: 30px;
             transition: all 0.3s ease;
         }
+
         .feature-card:hover {
-            background: rgba(255,255,255,0.08);
+            background: rgba(255,255,255,0.075);
             transform: translateY(-4px);
             border-color: rgba(79,124,255,0.3);
         }
+
         .badge-number {
             width: 36px;
             height: 36px;
-            background: rgba(79, 124, 255, 0.1);
+            background: rgba(79,124,255,0.1);
             border-radius: 10px;
             display: flex;
             align-items: center;
             justify-content: center;
             color: #4F7CFF;
             font-weight: 700;
-            font-size: 14px;
-            margin-bottom: 16px;
-            font-family: 'Inter', monospace;
-            border: 1px solid rgba(79, 124, 255, 0.1);
+            font-size: 13px;
+            margin-bottom: 17px;
+            border: 1px solid rgba(79,124,255,0.1);
         }
+
         .feature-card h3 {
-            font-size: 20px;
-            font-weight: 700;
-            margin-bottom: 8px;
+            font-size: 21px;
+            margin-bottom: 10px;
         }
+
         .feature-card p {
             color: rgba(255,255,255,0.6);
             font-size: 15px;
-            line-height: 1.6;
-        }
-        .feature-card .benefit {
-            margin-top: 8px;
-            font-size: 14px;
-            color: #4F7CFF;
+            line-height: 1.65;
         }
 
-        /* ===== HOW IT WORKS ===== */
+        .feature-card .benefit {
+            margin-top: 12px;
+            color: #4F7CFF;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        /* =========================
+           HOW IT WORKS
+        ========================= */
+
         .steps-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
             gap: 40px;
-            margin-top: 40px;
         }
+
         .step {
             text-align: center;
         }
+
         .step-number {
             width: 64px;
             height: 64px;
@@ -300,521 +394,845 @@
             justify-content: center;
             font-size: 24px;
             font-weight: 800;
-            color: #FFFFFF;
-            margin: 0 auto 20px auto;
-            box-shadow: 0 4px 20px rgba(79, 124, 255, 0.3);
+            margin: 0 auto 20px;
+            box-shadow: 0 4px 20px rgba(79,124,255,0.3);
         }
+
         .step h4 {
             font-size: 20px;
-            font-weight: 700;
-            margin-bottom: 8px;
+            margin-bottom: 10px;
         }
+
         .step p {
             color: rgba(255,255,255,0.6);
             font-size: 15px;
             line-height: 1.6;
-            max-width: 280px;
-            margin: 0 auto;
-        }
-        .step .sub {
-            color: rgba(255,255,255,0.4);
-            font-size: 14px;
-            margin-top: 8px;
+            max-width: 290px;
+            margin: auto;
         }
 
-        /* ===== KITCHEN ANALOGY ===== */
-        .analogy-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 24px;
-            max-width: 900px;
-            margin: 0 auto;
-        }
-        .analogy-card {
-            background: rgba(255,255,255,0.04);
-            border-radius: 12px;
-            padding: 24px;
-            text-align: center;
-            border: 1px solid rgba(255,255,255,0.06);
-            transition: all 0.3s ease;
-        }
-        .analogy-card:hover {
-            background: rgba(255,255,255,0.08);
-            border-color: rgba(79,124,255,0.2);
-        }
-        .analogy-card .icon {
-            font-size: 40px;
-            display: block;
-            margin-bottom: 12px;
-        }
-        .analogy-card h4 {
-            color: #4F7CFF;
-            margin: 0 0 8px 0;
-            font-size: 18px;
-        }
-        .analogy-card p {
-            color: rgba(255,255,255,0.6);
-            font-size: 15px;
-            line-height: 1.6;
-        }
+        /* =========================
+           WHY PAYPOINT
+        ========================= */
 
-        /* ===== WHY CREATORS CHOOSE ===== */
         .why-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
-            gap: 30px;
+            gap: 22px;
             max-width: 900px;
-            margin: 0 auto;
+            margin: auto;
         }
+
         .why-card {
             background: rgba(255,255,255,0.04);
-            border-radius: 12px;
-            padding: 24px;
             border: 1px solid rgba(255,255,255,0.06);
-            transition: all 0.3s ease;
+            border-radius: 14px;
+            padding: 27px;
         }
-        .why-card:hover {
-            background: rgba(255,255,255,0.08);
-            border-color: rgba(79,124,255,0.2);
-        }
+
         .why-card h4 {
             color: #4F7CFF;
-            margin-bottom: 8px;
-            font-size: 18px;
+            font-size: 19px;
+            margin-bottom: 9px;
         }
+
         .why-card p {
             color: rgba(255,255,255,0.6);
             font-size: 15px;
-            line-height: 1.6;
+            line-height: 1.65;
         }
 
-        /* ===== PRICING ===== */
+        /* =========================
+           PRICING
+        ========================= */
+
         .pricing-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
-            gap: 30px;
-            max-width: 800px;
-            margin: 0 auto;
+            gap: 28px;
+            max-width: 820px;
+            margin: auto;
         }
+
         .pricing-card {
             background: rgba(255,255,255,0.04);
-            border: 1px solid rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.07);
             border-radius: 16px;
             padding: 40px 32px;
             text-align: center;
-            transition: all 0.3s ease;
         }
-        .pricing-card:hover {
-            transform: translateY(-4px);
-            border-color: rgba(79,124,255,0.3);
-        }
+
         .pricing-card.pro {
             border-color: #4F7CFF;
             background: rgba(79,124,255,0.06);
         }
+
         .pricing-card h3 {
             font-size: 24px;
-            font-weight: 700;
-            margin-bottom: 4px;
         }
-        .pricing-card .price {
+
+        .price {
             font-size: 48px;
             font-weight: 800;
             color: #4F7CFF;
-            margin: 16px 0 8px 0;
+            margin: 15px 0;
         }
-        .pricing-card .price span {
-            font-size: 16px;
-            font-weight: 400;
+
+        .price span {
+            font-size: 15px;
             color: rgba(255,255,255,0.5);
+            font-weight: 400;
         }
+
         .pricing-card ul {
             list-style: none;
-            margin: 24px 0;
+            margin: 25px 0;
         }
-        .pricing-card ul li {
+
+        .pricing-card li {
             color: rgba(255,255,255,0.7);
-            padding: 8px 0;
+            padding: 9px 0;
             font-size: 15px;
             border-bottom: 1px solid rgba(255,255,255,0.04);
         }
-        .pricing-card ul li:last-child { border-bottom: none; }
-        .pricing-card .btn-pricing {
+
+        .btn-pricing {
             display: inline-block;
-            padding: 12px 40px;
+            width: 100%;
+            padding: 13px 30px;
             border-radius: 40px;
             font-weight: 600;
-            font-size: 16px;
             text-decoration: none;
-            transition: all 0.3s ease;
-            width: 100%;
         }
+
         .btn-pricing.free {
             background: rgba(255,255,255,0.08);
             color: #FFFFFF;
-            border: 1px solid rgba(255,255,255,0.1);
         }
-        .btn-pricing.free:hover {
-            background: rgba(255,255,255,0.15);
-        }
+
         .btn-pricing.pro-btn {
             background: #4F7CFF;
             color: #FFFFFF;
-            box-shadow: 0 4px 20px rgba(79, 124, 255, 0.3);
-        }
-        .btn-pricing.pro-btn:hover {
-            background: #3A5FD9;
-            transform: translateY(-2px);
+            box-shadow: 0 4px 20px rgba(79,124,255,0.3);
         }
 
-        /* ===== CTA ===== */
+        /* =========================
+           CTA
+        ========================= */
+
         .cta-section {
             text-align: center;
-            padding: 80px 0 60px 0;
+            padding: 90px 0;
         }
+
         .cta-section h2 {
             font-size: 44px;
-            font-weight: 700;
-            letter-spacing: -0.5px;
-            margin-bottom: 16px;
+            margin-bottom: 18px;
         }
+
         .cta-section p {
             color: rgba(255,255,255,0.6);
             font-size: 18px;
-            max-width: 500px;
-            margin: 0 auto 32px auto;
             line-height: 1.7;
+            max-width: 580px;
+            margin: 0 auto 30px;
         }
 
-        /* ===== FOOTER ===== */
+        /* =========================
+           FOOTER
+        ========================= */
+
         .footer {
             border-top: 1px solid rgba(255,255,255,0.06);
             padding: 32px 0;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            gap: 20px;
             flex-wrap: wrap;
-            gap: 16px;
         }
-        .footer p {
+
+        .footer p,
+        .footer a {
             color: rgba(255,255,255,0.4);
             font-size: 14px;
+            text-decoration: none;
         }
+
         .footer-links {
             display: flex;
-            gap: 28px;
+            gap: 24px;
             flex-wrap: wrap;
         }
-        .footer-links a {
-            color: rgba(255,255,255,0.4);
-            text-decoration: none;
-            font-size: 14px;
-            transition: color 0.3s ease;
-        }
-        .footer-links a:hover { color: #FFFFFF; }
 
-        /* ===== RESPONSIVE ===== */
+        .footer a:hover {
+            color: #FFFFFF;
+        }
+
+        /* =========================
+           RESPONSIVE
+        ========================= */
+
         @media (max-width: 1024px) {
-            .hero { grid-template-columns: 1fr; text-align: center; gap: 40px; }
-            .hero-content p { max-width: 100%; margin-left: auto; margin-right: auto; }
-            .hero-buttons { justify-content: center; }
-            .hero-image { justify-content: center; }
-            .hero-image img { max-width: 80%; }
-            .trust-badge { justify-content: center; }
-            .features-grid { grid-template-columns: repeat(2, 1fr); }
-            .steps-grid { grid-template-columns: repeat(2, 1fr); }
-            .analogy-grid { grid-template-columns: repeat(2, 1fr); }
-            .why-grid { grid-template-columns: 1fr; max-width: 500px; }
-            .pricing-grid { grid-template-columns: 1fr; max-width: 400px; }
+            .hero {
+                grid-template-columns: 1fr;
+                text-align: center;
+            }
+
+            .hero-content p {
+                margin-left: auto;
+                margin-right: auto;
+            }
+
+            .hero-buttons,
+            .trust-badge {
+                justify-content: center;
+            }
+
+            .hero-image img {
+                max-width: 85%;
+            }
+
+            .steps-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
         }
+
         @media (max-width: 768px) {
-            .navbar { flex-direction: column; align-items: stretch; }
-            .nav-links { justify-content: center; gap: 16px; }
-            .hero { padding: 40px 0; min-height: auto; }
-            .hero-content h1 { font-size: 32px; }
-            .hero-content p { font-size: 16px; }
-            .btn-primary, .btn-secondary { padding: 14px 28px; font-size: 16px; }
-            .features-grid { grid-template-columns: 1fr; }
-            .steps-grid { grid-template-columns: 1fr; }
-            .analogy-grid { grid-template-columns: 1fr; }
-            .section-header h2 { font-size: 28px; }
-            .cta-section h2 { font-size: 30px; }
-            .footer { flex-direction: column; text-align: center; }
-            .footer-links { justify-content: center; }
-            .hero-image img { max-width: 100%; }
+            .navbar {
+                flex-direction: column;
+            }
+
+            .nav-links {
+                justify-content: center;
+                flex-wrap: wrap;
+                gap: 15px;
+            }
+
+            .hero {
+                padding: 45px 0;
+            }
+
+            .hero-content h1 {
+                font-size: 34px;
+            }
+
+            .hero-content p {
+                font-size: 16px;
+            }
+
+            .hero-image img {
+                max-width: 100%;
+            }
+
+            .features-grid,
+            .steps-grid,
+            .why-grid,
+            .pricing-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .section-header h2,
+            .problem-box h2 {
+                font-size: 30px;
+            }
+
+            .cta-section h2 {
+                font-size: 31px;
+            }
+
+            .problem-box {
+                padding: 30px 22px;
+            }
         }
+
         @media (max-width: 480px) {
-            .container { padding: 0 16px; }
-            .hero-content h1 { font-size: 26px; }
-            .hero-buttons { flex-direction: column; align-items: center; }
-            .btn-primary, .btn-secondary { width: 100%; text-align: center; }
-            .pricing-card .price { font-size: 36px; }
+            .container {
+                padding: 0 16px;
+            }
+
+            .logo {
+                font-size: 24px;
+            }
+
+            .hero-content h1 {
+                font-size: 29px;
+            }
+
+            .hero-buttons {
+                flex-direction: column;
+            }
+
+            .btn-primary,
+            .btn-secondary {
+                width: 100%;
+                text-align: center;
+            }
+
+            .pricing-card {
+                padding: 32px 22px;
+            }
+
+            .price {
+                font-size: 38px;
+            }
         }
     </style>
 </head>
+
 <body>
 
-    <!-- Gradient Background -->
-    <div class="bg-gradient"></div>
+<div class="bg-gradient"></div>
 
-    <!-- ===== NAVBAR ===== -->
-    <div class="container">
-        <nav class="navbar">
-            <a href="index.html" class="logo">
-                <img src="logo.png" alt="PayPoint" onerror="this.style.display='none'">
-                Pay<span>Point</span>
-            </a>
-            <div class="nav-links">
-                <a href="#features">Features</a>
-                <a href="#how-it-works">How It Works</a>
-                <a href="#why">Why PayPoint</a>
-                <a href="#pricing">Pricing</a>
-                <a href="login.html" class="btn-nav">Start Free</a>
+<!-- =========================
+     NAVBAR
+========================= -->
+
+<div class="container">
+    <nav class="navbar">
+
+        <a href="index.html" class="logo">
+            <img src="logo.png" alt="PayPoint">
+            Pay<span>Point</span>
+        </a>
+
+        <div class="nav-links">
+            <a href="#features">Features</a>
+            <a href="#how-it-works">How It Works</a>
+            <a href="#why">Why PayPoint</a>
+            <a href="#pricing">Pricing</a>
+            <a href="login.html" class="btn-nav">Start Free</a>
+        </div>
+
+    </nav>
+</div>
+
+
+<!-- =========================
+     HERO
+========================= -->
+
+<div class="container">
+
+    <section class="hero">
+
+        <div class="hero-content">
+
+            <h1>
+                Manage Your Creator Business
+                <br>
+                <span class="highlight">In One Place.</span>
+            </h1>
+
+            <p>
+                Track brand deals, send professional invoices,
+                manage expenses, and understand your real income —
+                without juggling spreadsheets and multiple apps.
+            </p>
+
+            <div class="hero-buttons">
+                <a href="login.html" class="btn-primary">
+                    Start Free →
+                </a>
+
+                <a href="#how-it-works" class="btn-secondary">
+                    See How It Works
+                </a>
             </div>
-        </nav>
-    </div>
 
-    <!-- ===== HERO ===== -->
-    <div class="container">
-        <section class="hero">
-            <div class="hero-content">
-                <h1>Your Creative Business <br><span class="highlight">Starts Here</span></h1>
+            <div class="trust-badge">
+                Built for creators who work with brands.
+            </div>
+
+        </div>
+
+        <div class="hero-image">
+            <img
+                src="dashboard-screenshot.png"
+                alt="PayPoint creator business dashboard"
+            >
+        </div>
+
+    </section>
+
+</div>
+
+
+<!-- =========================
+     PROBLEM
+========================= -->
+
+<div class="container">
+
+    <section class="problem-section">
+
+        <div class="problem-box">
+
+            <h2>
+                Your Creator Business Shouldn't Be Scattered.
+            </h2>
+
+            <p class="problem-intro">
+                Getting a brand deal is exciting.
+                Managing everything that comes after it can become messy.
+            </p>
+
+            <div class="problem-list">
+
+                <div class="problem-item">
+                    📋 <strong>Brand deals</strong> are tracked in one place.
+                </div>
+
+                <div class="problem-item">
+                    📄 <strong>Invoices</strong> are created somewhere else.
+                </div>
+
+                <div class="problem-item">
+                    🧾 <strong>Expenses</strong> end up in spreadsheets or notes.
+                </div>
+
+                <div class="problem-item">
+                    💰 <strong>Payments</strong> have to be manually monitored.
+                </div>
+
+                <div class="problem-item">
+                    📊 <strong>Income</strong> is difficult to understand after expenses.
+                </div>
+
+            </div>
+
+            <p class="problem-ending">
+                PayPoint brings the important parts together.
+            </p>
+
+        </div>
+
+    </section>
+
+</div>
+
+
+<!-- =========================
+     FEATURES
+========================= -->
+
+<div class="container" id="features">
+
+    <section class="section">
+
+        <div class="section-header">
+
+            <h2>
+                Everything You Need to Manage the Business Behind Your Content
+            </h2>
+
+            <p>
+                PayPoint gives creators one organized workspace
+                for the financial side of their creator business.
+            </p>
+
+        </div>
+
+        <div class="features-grid">
+
+            <div class="feature-card">
+
+                <div class="badge-number">01</div>
+
+                <h3>Track Brand Deals</h3>
+
                 <p>
-                    PayPoint is the all-in-one finance operating system for creators.
-                    Track brand deals, send professional invoices, manage expenses,
-                    and get paid all in one place. No spreadsheets. No chaos.
+                    Record the brand, agreed amount, currency,
+                    payment date, deliverables and deal status.
                 </p>
-                <div class="hero-buttons">
-                    <a href="login.html" class="btn-primary">Start Free →</a>
-                    <a href="#features" class="btn-secondary">Explore</a>
-                </div>
-                <!-- No fake avatars; real trust metrics -->
-                <div class="trust-badge">
-                    <span>⭐ 4.9/5 from early creators</span>
-                    <span class="sep">|</span>
-                    <span>📈 50+ deals tracked</span>
-                    <span class="sep">|</span>
-                    <span>🔒 100% free to start</span>
-                </div>
-            </div>
-            <div class="hero-image">
-                <img src="dashboard-screenshot.png" alt="PayPoint Dashboard Preview">
-            </div>
-        </section>
-    </div>
 
-    <!-- ===== FEATURES (with numbered badges, no emojis) ===== -->
-    <div class="container" id="features">
-        <section class="section">
-            <div class="section-header">
-                <h2>Everything You Need to Run Your Creator Business</h2>
-                <p>Stop juggling spreadsheets, emails, and invoices. PayPoint brings it all together in one powerful platform.</p>
-            </div>
-            <div class="features-grid">
-                <div class="feature-card">
-                    <div class="badge-number">01</div>
-                    <h3>Brand Deals</h3>
-                    <p>Track every brand deal from pitch to payment. Store brand name, deal value, deliverables, due dates, and payment status (Pending, Paid, Overdue).</p>
-                    <p class="benefit">✅ Never lose track of what you owe a brand.</p>
-                </div>
-                <div class="feature-card">
-                    <div class="badge-number">02</div>
-                    <h3>Professional Invoices</h3>
-                    <p>Generate beautiful PDF invoices in seconds. Send them directly to brands with a secure payment link. Paystack handles the rest automatically.</p>
-                    <p class="benefit">✅ No more chasing payments.</p>
-                </div>
-                <div class="feature-card">
-                    <div class="badge-number">03</div>
-                    <h3>Profit Tracking</h3>
-                    <p>Link every expense to a deal. PayPoint automatically calculates your profit: <strong>Deal Amount − Expenses = Profit</strong>. No guesswork.</p>
-                    <p class="benefit">✅ Know your true earnings.</p>
-                </div>
-                <div class="feature-card">
-                    <div class="badge-number">04</div>
-                    <h3>Expense Tracking</h3>
-                    <p>Log equipment rentals, travel, software subscriptions, and production costs. Upload receipts directly to your expenses.</p>
-                    <p class="benefit">✅ Stay tax‑ready.</p>
-                </div>
-                <div class="feature-card">
-                    <div class="badge-number">05</div>
-                    <h3>Real‑Time Dashboard</h3>
-                    <p>See total revenue, total expenses, taxes set aside (30%), and your real take‑home pay. All numbers update automatically.</p>
-                    <p class="benefit">✅ Know where your money is going.</p>
-                </div>
-                <div class="feature-card">
-                    <div class="badge-number">06</div>
-                    <h3>Campaign Workspace</h3>
-                    <p>Each deal has its own dedicated page. See brand name, deliverables, due date, notes, linked expenses, and profit — all on one screen.</p>
-                    <p class="benefit">✅ Replace Notion, Sheets, and Gmail.</p>
-                </div>
-            </div>
-        </section>
-    </div>
+                <p class="benefit">
+                    ✓ Know what deals you have and what's still outstanding.
+                </p>
 
-    <!-- ===== HOW IT WORKS ===== -->
-    <div class="container" id="how-it-works">
-        <section class="section" style="padding-top: 0;">
-            <div class="section-header">
-                <h2>How It Works</h2>
-                <p>Three simple steps to take control of your creator finances.</p>
             </div>
-            <div class="steps-grid">
-                <div class="step">
-                    <div class="step-number">1</div>
-                    <h4>Create Your Account</h4>
-                    <p>Sign up in under 30 seconds with your email. No credit card required. You get instant access to your creator dashboard.</p>
-                    <p class="sub">→ Start tracking your deals immediately.</p>
-                </div>
-                <div class="step">
-                    <div class="step-number">2</div>
-                    <h4>Log Your Deals &amp; Expenses</h4>
-                    <p>Add brand deals with deliverables, due dates, and amounts. Track every expense — equipment, travel, software — and link them to the right deal.</p>
-                    <p class="sub">→ Build your financial history in minutes.</p>
-                </div>
-                <div class="step">
-                    <div class="step-number">3</div>
-                    <h4>Invoice &amp; Get Paid</h4>
-                    <p>Send professional invoices with one click. Brands pay through Paystack. Your profit updates automatically when the payment is confirmed.</p>
-                    <p class="sub">→ Get paid faster. Know your profit instantly.</p>
-                </div>
-            </div>
-        </section>
-    </div>
 
-    <!-- ===== KITCHEN ANALOGY ===== -->
-    <div class="container" id="why">
-        <section class="section" style="padding-top: 0;">
-            <div class="section-header">
-                <h2>PayPoint Explained Simply</h2>
-                <p>Think of PayPoint as a kitchen for your creator business.</p>
-            </div>
-            <div class="analogy-grid">
-                <div class="analogy-card">
-                    <span class="icon">📝</span>
-                    <h4>The Deals = Recipes</h4>
-                    <p>Each brand deal is a recipe you know what goes into it and what you'll get out.</p>
-                </div>
-                <div class="analogy-card">
-                    <span class="icon">🧾</span>
-                    <h4>Expenses = Ingredients</h4>
-                    <p>Every cost (equipment, travel, software) is an ingredient you need to create the final dish.</p>
-                </div>
-                <div class="analogy-card">
-                    <span class="icon">💰</span>
-                    <h4>Profit = The Final Dish</h4>
-                    <p>What you actually keep after all costs. PayPoint calculates it automatically.</p>
-                </div>
-                <div class="analogy-card">
-                    <span class="icon">📄</span>
-                    <h4>Invoices = The Menu</h4>
-                    <p>The professional PDF you send to the brand so they know what to pay for.</p>
-                </div>
-                <div class="analogy-card">
-                    <span class="icon">📊</span>
-                    <h4>Dashboard = The Kitchen View</h4>
-                    <p>See everything at once — active deals, expenses, profit, and take‑home pay.</p>
-                </div>
-                <div class="analogy-card">
-                    <span class="icon">🔗</span>
-                    <h4>Everything Connected</h4>
-                    <p>Deals, expenses, invoices, and profit all talk to each other. No manual math.</p>
-                </div>
-            </div>
-        </section>
-    </div>
 
-    <!-- ===== WHY CREATORS CHOOSE PAYPOINT ===== -->
-    <div class="container">
-        <section class="section" style="padding-top: 0;">
-            <div class="section-header">
-                <h2>Why Creators Choose PayPoint</h2>
-                <p>Built by a creator, for creators.</p>
-            </div>
-            <div class="why-grid">
-                <div class="why-card">
-                    <h4>🎯 One Place for Everything</h4>
-                    <p>No more switching between Google Sheets, Notion, Gmail, and WhatsApp. PayPoint brings it all together.</p>
-                </div>
-                <div class="why-card">
-                    <h4>💰 Know Your Real Profit</h4>
-                    <p>Link expenses to deals and see exactly how much you actually made. No more spreadsheets.</p>
-                </div>
-                <div class="why-card">
-                    <h4>📄 Professional Invoices</h4>
-                    <p>Generate PDF invoices with one click. Brands get a professional payment link. You get paid faster.</p>
-                </div>
-                <div class="why-card">
-                    <h4>🔒 Secure &amp; Private</h4>
-                    <p>Your financial data is encrypted. Only you can see your deals, expenses, and earnings.</p>
-                </div>
-            </div>
-        </section>
-    </div>
+            <div class="feature-card">
 
-    <!-- ===== PRICING ===== -->
-    <div class="container" id="pricing">
-        <section class="section" style="padding-top: 0;">
-            <div class="section-header">
-                <h2>Simple, Transparent Pricing</h2>
-                <p>Start free and upgrade when you need more power.</p>
-            </div>
-            <div class="pricing-grid">
-                <div class="pricing-card">
-                    <h3>Free</h3>
-                    <div class="price">$0 <span>/ month</span></div>
-                    <ul>
-                        <li>✅ Track limited brand deals</li>
-                        <li>✅ Track limited expenses with receipts</li>
-                        <li>✅ Generate professional invoices</li>
-                        <li>✅ View revenue &amp; profit</li>
-                        <li>✅ Dashboard with real‑time metrics</li>
-                    </ul>
-                    <a href="login.html" class="btn-pricing free">Get Started</a>
-                </div>
-                <div class="pricing-card pro">
-                    <h3>Pro</h3>
-                    <div class="price">$9<span>/ month</span></div>
-                    <ul>
-                        <li>✅ Unlimited deals, expense, & invoice</li>
-                        <li>✅ Automated invoice reminders</li>
-                        <li>✅ Advanced analytics &amp; insights</li>
-                        <li>✅ Priority support</li>
-                        <li>✅ Early access to new features</li>
-                    </ul>
-                    <a href="login.html" class="btn-pricing pro-btn">Upgrade Now</a>
-                </div>
-            </div>
-        </section>
-    </div>
+                <div class="badge-number">02</div>
 
-    <!-- ===== CTA ===== -->
-    <div class="container">
-        <section class="cta-section">
-            <h2>Ready to Take Control of Your Finances?</h2>
-            <p>Join creators who are already using PayPoint to manage their brand deals, track expenses, and get paid faster.</p>
-            <a href="login.html" class="btn-primary" style="font-size: 20px; padding: 18px 56px;">Start Free →</a>
-        </section>
-    </div>
+                <h3>Professional Invoices</h3>
 
-    <!-- ===== FOOTER ===== -->
-    <div class="container">
-        <footer class="footer">
-            <p>&copy; 2026 PayPoint · Finance OS for Creators</p>
-            <div class="footer-links">
-                <a href="login.html">Log In</a>
-                <a href="#">Privacy</a>
-                <a href="#">Terms</a>
-                <a href="#">Support</a>
+                <p>
+                    Create professional PDF invoices for your brand deals
+                    without having to build them from scratch elsewhere.
+                </p>
+
+                <p class="benefit">
+                    ✓ Send invoices faster and look professional.
+                </p>
+
             </div>
-            <footer style="text-align: center; padding: 20px; color: #8A9AAB; font-size: 12px; border-top: 1px solid #E8EDF2; margin-top: 40px;">
-    <p>
-        <a href="/privacy.html" style="color: #4F7CFF; text-decoration: none;">Privacy Policy</a>
-        &nbsp;·&nbsp;
-        <a href="/terms.html" style="color: #4F7CFF; text-decoration: none;">Terms of Service</a>
-    </p>
-    <p>&copy; 2026 PayPoint. All rights reserved.</p>
-        </footer>
-    </div>
+
+
+            <div class="feature-card">
+
+                <div class="badge-number">03</div>
+
+                <h3>Track Expenses</h3>
+
+                <p>
+                    Keep expenses related to your creator business
+                    organized and connected to the work you're doing.
+                </p>
+
+                <p class="benefit">
+                    ✓ Stop trying to remember expenses months later.
+                </p>
+
+            </div>
+
+
+            <div class="feature-card">
+
+                <div class="badge-number">04</div>
+
+                <h3>Understand Your Real Income</h3>
+
+                <p>
+                    See your revenue, expenses and estimated
+                    take-home income instead of focusing only
+                    on the amount written on a brand deal.
+                </p>
+
+                <p class="benefit">
+                    ✓ Understand where your money actually goes.
+                </p>
+
+            </div>
+
+
+            <div class="feature-card">
+
+                <div class="badge-number">05</div>
+
+                <h3>One Organized Dashboard</h3>
+
+                <p>
+                    Get a clear view of your creator business
+                    without jumping between different tools.
+                </p>
+
+                <p class="benefit">
+                    ✓ Spend less time searching and more time creating.
+                </p>
+
+            </div>
+
+
+            <div class="feature-card">
+
+                <div class="badge-number">06</div>
+
+                <h3>Deal Workspace</h3>
+
+                <p>
+                    Keep the important information surrounding
+                    each brand deal together in one organized place.
+                </p>
+
+                <p class="benefit">
+                    ✓ Keep your work connected instead of scattered.
+                </p>
+
+            </div>
+
+        </div>
+
+    </section>
+
+</div>
+
+
+<!-- =========================
+     HOW IT WORKS
+========================= -->
+
+<div class="container" id="how-it-works">
+
+    <section class="section">
+
+        <div class="section-header">
+
+            <h2>How PayPoint Works</h2>
+
+            <p>
+                Keep the business side of your creator work simple.
+            </p>
+
+        </div>
+
+        <div class="steps-grid">
+
+            <div class="step">
+
+                <div class="step-number">1</div>
+
+                <h4>Add Your Brand Deal</h4>
+
+                <p>
+                    Enter the brand, agreed amount, currency,
+                    payment date and other important deal details.
+                </p>
+
+            </div>
+
+
+            <div class="step">
+
+                <div class="step-number">2</div>
+
+                <h4>Manage Everything Around It</h4>
+
+                <p>
+                    Create an invoice, track related expenses,
+                    and keep the important details connected to the deal.
+                </p>
+
+            </div>
+
+
+            <div class="step">
+
+                <div class="step-number">3</div>
+
+                <h4>Understand Your Numbers</h4>
+
+                <p>
+                    See your deals, expenses, revenue and estimated
+                    take-home income from one dashboard.
+                </p>
+
+            </div>
+
+        </div>
+
+    </section>
+
+</div>
+
+
+<!-- =========================
+     WHY PAYPOINT
+========================= -->
+
+<div class="container" id="why">
+
+    <section class="section">
+
+        <div class="section-header">
+
+            <h2>Why PayPoint?</h2>
+
+            <p>
+                You don't need another complicated system.
+                You need your creator business to feel organized.
+            </p>
+
+        </div>
+
+        <div class="why-grid">
+
+            <div class="why-card">
+
+                <h4>One Organized Workspace</h4>
+
+                <p>
+                    Keep your brand deals, invoices, expenses
+                    and income connected instead of scattered
+                    across different tools.
+                </p>
+
+            </div>
+
+
+            <div class="why-card">
+
+                <h4>Less Manual Work</h4>
+
+                <p>
+                    Spend less time moving information between
+                    spreadsheets, notes and separate apps.
+                </p>
+
+            </div>
+
+
+            <div class="why-card">
+
+                <h4>More Control</h4>
+
+                <p>
+                    Know what deals you have, what you've spent,
+                    and what you're actually making.
+                </p>
+
+            </div>
+
+
+            <div class="why-card">
+
+                <h4>Built Around Creator Businesses</h4>
+
+                <p>
+                    PayPoint isn't trying to replace every tool.
+                    It's focused on organizing the business side
+                    of working with brands.
+                </p>
+
+            </div>
+
+        </div>
+
+    </section>
+
+</div>
+
+
+<!-- =========================
+     PRICING
+========================= -->
+
+<div class="container" id="pricing">
+
+    <section class="section">
+
+        <div class="section-header">
+
+            <h2>Simple, Transparent Pricing</h2>
+
+            <p>
+                Start free and upgrade when your creator business needs more.
+            </p>
+
+        </div>
+
+        <div class="pricing-grid">
+
+            <div class="pricing-card">
+
+                <h3>Free</h3>
+
+                <div class="price">
+                    $0
+                    <span>/ month</span>
+                </div>
+
+                <ul>
+                    <li>✓ Track brand deals</li>
+                    <li>✓ Track expenses</li>
+                    <li>✓ Create professional invoices</li>
+                    <li>✓ View revenue and expenses</li>
+                    <li>✓ Creator business dashboard</li>
+                </ul>
+
+                <a href="login.html" class="btn-pricing free">
+                    Get Started
+                </a>
+
+            </div>
+
+
+            <div class="pricing-card pro">
+
+                <h3>Pro</h3>
+
+                <div class="price">
+                    $9
+                    <span>/ month</span>
+                </div>
+
+                <ul>
+                    <li>✓ Unlimited brand deals</li>
+                    <li>✓ Unlimited expenses</li>
+                    <li>✓ Unlimited invoices</li>
+                    <li>✓ Advanced analytics</li>
+                    <li>✓ Advanced creator insights</li>
+                </ul>
+
+                <a href="login.html" class="btn-pricing pro-btn">
+                    Upgrade to Pro
+                </a>
+
+            </div>
+
+        </div>
+
+    </section>
+
+</div>
+
+
+<!-- =========================
+     FINAL CTA
+========================= -->
+
+<div class="container">
+
+    <section class="cta-section">
+
+        <h2>
+            Your Creator Business Deserves One Workspace.
+        </h2>
+
+        <p>
+            Stop piecing everything together.
+            Manage your deals, invoices, expenses and income
+            in one organized place.
+        </p>
+
+        <a
+            href="login.html"
+            class="btn-primary"
+            style="font-size:20px; padding:18px 55px;"
+        >
+            Start Free →
+        </a>
+
+    </section>
+
+</div>
+
+
+<!-- =========================
+     FOOTER
+========================= -->
+
+<div class="container">
+
+    <footer class="footer">
+
+        <p>
+            © 2026 PayPoint. Built for creators who work with brands.
+        </p>
+
+        <div class="footer-links">
+
+            <a href="login.html">Log In</a>
+
+            <a href="/privacy.html">
+                Privacy
+            </a>
+
+            <a href="/terms.html">
+                Terms
+            </a>
+
+            <a href="mailto:support@paypoint.com">
+                Support
+            </a>
+
+        </div>
+
+    </footer>
+
+</div>
 
 </body>
 </html>
