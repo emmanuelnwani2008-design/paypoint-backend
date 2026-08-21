@@ -358,6 +358,35 @@ async function checkUsageLimit(userIdOrIds, resourceType) {
         return { allowed: true, current: 0, max: 999999, tier: plan.tier };
     }
 }
+// ============================================
+// GENERATE SEQUENTIAL INVOICE NUMBER
+// ============================================
+async function generateInvoiceNumber(userId) {
+    // Get or create sequence for this user
+    const { data: seq, error: seqError } = await supabaseAdmin
+        .from('invoice_sequences')
+        .select('last_number')
+        .eq('user_id', userId)
+        .single();
+
+    let nextNumber = 1;
+    if (seqError && seqError.code === 'PGRST116') {
+        // No sequence exists – create one
+        await supabaseAdmin.from('invoice_sequences').insert({
+            user_id: userId,
+            last_number: 0
+        });
+    } else if (seq) {
+        nextNumber = seq.last_number + 1;
+    }
+
+    // Update the sequence
+    await supabaseAdmin.from('invoice_sequences')
+        .update({ last_number: nextNumber })
+        .eq('user_id', userId);
+
+    return `INV-${String(nextNumber).padStart(4, '0')}`;
+}
 
 // ============================================
 // AUTHENTICATION
@@ -1667,49 +1696,76 @@ app.get('/api/payments/verify/:reference', authenticate, async (req, res) => {
 // ---- extracted handler for invoice creation ----
 async function handleInvoiceCreate(req, res) {
     try {
-        const { dealId, invoiceNumber, brandEmail } = req.body;
         const userId = req.userId;
-        const fallbackUserId = req.reconciledUserId || null;
-        const ids = [userId, fallbackUserId].filter(Boolean);
-        // ✅ Check usage limit – MUST BE BEFORE ANYTHING ELSE
-        const usage = await checkUsageLimit(ids, 'invoice');
+        const {
+            dealId,
+            brandEmail,
+            brandName,
+            brandAddress,
+            serviceDate,
+            dueDate,
+            lineItems,
+            vatRate,
+            notes
+        } = req.body;
+
+        // ✅ Check usage limit
+        const usage = await checkUsageLimit(userId, 'invoice');
         if (!usage.allowed) {
             return res.status(403).json({
-                error: `invoice limit reached (${usage.max}). Upgrade to Pro for unlimited invoices.`,
+                error: `Invoice limit reached (${usage.max}). Upgrade to Pro.`,
                 limit_reached: true,
                 current: usage.current,
                 max: usage.max
             });
         }
 
-
-        if (!dealId || !brandEmail) {
-            return res.status(400).json({ error: 'dealId and brandEmail required' });
-        }
-
-        if (!isValidEmail(brandEmail)) {
-            return res.status(400).json({ error: 'Invalid brand email format' });
-        }
-
+        // ✅ Get deal details
         const { data: deal, error: dealError } = await supabaseAdmin
             .from('deals')
             .select('*')
             .eq('id', dealId)
-            .in('user_id', ids)
+            .eq('user_id', userId)
             .single();
 
         if (dealError || !deal) {
             return res.status(404).json({ error: 'Deal not found' });
         }
 
-        const invNumber = invoiceNumber || `INV-${Date.now()}`;
+        // ✅ Auto‑generate invoice number
+        const invoiceNumber = await generateInvoiceNumber(userId);
+
+        // ✅ Calculate totals
+        const items = lineItems || [];
+        const subtotal = items.reduce((sum, item) => sum + (Number(item.price) * (item.quantity || 1)), 0);
+        const vatAmount = subtotal * ((vatRate || 0) / 100);
+        const total = subtotal + vatAmount;
+
+        // ✅ Get creator details from profile
+        const { data: profile } = await supabaseAdmin
+            .from('profiles')
+            .select('business_name, business_address, business_phone, is_vat_registered, vat_number, bank_account_name, bank_name, bank_account_number, payment_instructions')
+            .eq('id', userId)
+            .single();
+
+        // ✅ Create invoice
         const { data, error } = await supabaseAdmin
             .from('invoices')
             .insert([{
                 user_id: userId,
                 deal_id: dealId,
-                invoice_number: invNumber,
+                invoice_number: invoiceNumber,
                 brand_email: brandEmail.toLowerCase().trim(),
+                brand_name: brandName || deal.brand_name,
+                brand_address: brandAddress || null,
+                service_date: serviceDate || new Date().toISOString().split('T')[0],
+                due_date: dueDate || null,
+                line_items: items,
+                subtotal: subtotal,
+                vat_rate: vatRate || 0,
+                vat_amount: vatAmount,
+                total: total,
+                notes: notes || null,
                 status: 'sent'
             }])
             .select();
@@ -1721,46 +1777,29 @@ async function handleInvoiceCreate(req, res) {
 
         const newInvoice = data[0];
 
+        // ✅ Generate portal token
         const portalToken = crypto.randomBytes(32).toString('hex');
-        const { error: tokenError } = await  supabaseAdmin
+        await supabaseAdmin
             .from('invoices')
             .update({ portal_token: portalToken })
             .eq('id', newInvoice.id);
 
-        if (tokenError) {
-            console.error('❌ Failed to save portal token:', tokenError);
-        } else {
-            console.log(`✅ Portal token saved for invoice ${newInvoice.id}`);
-        }
-
         const portalLink = `${FRONTEND_URL}/portal/${portalToken}`;
 
-        const html = `
-            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #E8EDF2; border-radius: 12px;">
-                <h1 style="color: #4F7CFF; text-align: center;">PayPoint</h1>
-                <h2 style="text-align: center; color: #000000;">Invoice</h2>
-                <hr>
-                <p><strong>Invoice #:</strong> ${invNumber}</p>
-                <p><strong>Brand:</strong> ${deal.brand_name}</p>
-                <p><strong>Amount:</strong> <span style="font-size: 20px; font-weight: bold; color: #4F7CFF;">₦${Number(deal.amount).toLocaleString()}</span></p>
-                <p><strong>Deliverable:</strong> ${deal.deliverable || 'Not specified'}</p>
-                <p><strong>Due Date:</strong> ${deal.due_date ? new Date(deal.due_date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : 'Not set'}</p>
-                <hr>
-                <p style="text-align: center;">
-                    <a href="${portalLink}" style="color: #4F7CFF; text-decoration: none;">📄 View Invoice Portal</a>
-                </p>
-                <p style="text-align: center; color: #8A9AAB; font-size: 12px;">PayPoint · Finance OS for Creators</p>
-            </div>
-        `;
-        const subject = `📄 Invoice #${invNumber} from ${deal.brand_name}`;
+        // ✅ Build the email HTML with full invoice
+        const html = buildInvoiceEmail({
+            invoice: newInvoice,
+            deal,
+            profile,
+            items,
+            subtotal,
+            vatAmount,
+            total,
+            portalLink
+        });
 
+        const subject = `📄 Invoice #${invoiceNumber} from ${deal.brand_name}`;
         const sent = await sendEmailWithRetry(brandEmail, subject, html);
-
-        if (sent) {
-            console.log(`✅ Invoice logged for ${brandEmail}`);
-        } else {
-            console.warn(`⚠️ Invoice logging failed.`);
-        }
 
         res.status(201).json({
             success: true,
@@ -1897,6 +1936,77 @@ app.post('/api/invoices/generate', authenticate, async (req, res) => {
     } catch (err) {
         console.error('Invoice generation error:', err);
         res.status(500).json({ error: 'Failed to generate invoice: ' + err.message });
+    }
+});
+
+// ============================================
+// BUSINESS DETAILS (for invoices)
+// ============================================
+
+app.put('/api/profile/business-details', authenticate, async (req, res) => {
+    try {
+        const userId = req.userId;
+        const {
+            businessName,
+            businessAddress,
+            businessPhone,
+            isVatRegistered,
+            vatNumber,
+            paymentInstructions
+        } = req.body;
+
+        const { error } = await supabaseAdmin
+            .from('profiles')
+            .update({
+                business_name: businessName || null,
+                business_address: businessAddress || null,
+                business_phone: businessPhone || null,
+                is_vat_registered: isVatRegistered || false,
+                vat_number: vatNumber || null,
+                payment_instructions: paymentInstructions || null
+            })
+            .eq('id', userId);
+
+        if (error) {
+            console.error('Business details save error:', error);
+            return res.status(500).json({ error: 'Failed to save business details' });
+        }
+
+        res.json({ success: true, message: 'Business details saved' });
+    } catch (err) {
+        console.error('Business details error:', err);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+app.get('/api/profile/business-details', authenticate, async (req, res) => {
+    try {
+        const userId = req.userId;
+        const { data: profile, error } = await supabaseAdmin
+            .from('profiles')
+            .select('business_name, business_address, business_phone, is_vat_registered, vat_number, payment_instructions')
+            .eq('id', userId)
+            .single();
+
+        if (error) {
+            console.error('Business details fetch error:', error);
+            return res.status(500).json({ error: 'Failed to fetch business details' });
+        }
+
+        res.json({
+            success: true,
+            data: {
+                business_name: profile?.business_name || '',
+                business_address: profile?.business_address || '',
+                business_phone: profile?.business_phone || '',
+                is_vat_registered: profile?.is_vat_registered || false,
+                vat_number: profile?.vat_number || '',
+                payment_instructions: profile?.payment_instructions || ''
+            }
+        });
+    } catch (err) {
+        console.error('Business details fetch error:', err);
+        res.status(500).json({ error: 'Server error' });
     }
 });
 

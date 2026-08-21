@@ -296,24 +296,64 @@
 
     <!-- Modal -->
     <div class="modal-overlay" id="invoiceModal">
-        <div class="modal">
-            <h2>📄 Create Invoice</h2>
-            <p>Select a deal to convert into a professional invoice.</p>
-            <label for="modalDeal">Select Deal</label>
-            <select id="modalDeal"><option value="">Loading deals...</option></select>
+    <div class="modal">
+        <h2>📄 Create Invoice</h2>
+        <p>Select a deal and add invoice details.</p>
 
-            <label for="modalInvoiceNumber">Invoice Number (Optional)</label>
-            <input type="text" id="modalInvoiceNumber" placeholder="e.g. INV-001">
+        <label for="modalDeal">Select Deal</label>
+        <select id="modalDeal"><option value="">Loading deals...</option></select>
 
-            <label for="modalBrandEmail">Brand Email</label>
-            <input type="email" id="modalBrandEmail" placeholder="finance@brand.com">
-
-            <div class="modal-actions">
-                <button class="btn-cancel" id="closeModalBtn">Cancel</button>
-                <button class="btn-save" id="createInvoiceBtn">Create & Send</button>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+            <div>
+                <label for="modalServiceDate">Service Date</label>
+                <input type="date" id="modalServiceDate">
+            </div>
+            <div>
+                <label for="modalDueDate">Due Date</label>
+                <input type="date" id="modalDueDate">
             </div>
         </div>
+
+        <label for="modalBrandName">Brand Name</label>
+        <input type="text" id="modalBrandName" placeholder="e.g. Nike, Inc.">
+
+        <label for="modalBrandEmail">Brand Email</label>
+        <input type="email" id="modalBrandEmail" placeholder="finance@brand.com">
+
+        <label for="modalBrandAddress">Brand Address (Optional)</label>
+        <input type="text" id="modalBrandAddress" placeholder="Street, city, postcode, country">
+
+        <label>Line Items</label>
+        <div id="lineItemsContainer">
+            <div class="line-item" style="display: flex; gap: 8px; margin-bottom: 8px;">
+                <input type="text" class="item-description" placeholder="Description" style="flex: 2;">
+                <input type="number" class="item-quantity" placeholder="Qty" style="width: 60px;" value="1">
+                <input type="number" class="item-price" placeholder="Price" style="flex: 1;">
+                <button class="btn-remove-item" style="background: none; border: none; color: #FF3B30; cursor: pointer;">✕</button>
+            </div>
+        </div>
+        <button type="button" id="addLineItemBtn" style="background: #4F7CFF; color: white; border: none; padding: 4px 12px; border-radius: 6px; cursor: pointer; font-size: 13px;">+ Add Item</button>
+
+        <div style="margin-top: 12px;">
+            <label for="modalVatRate">VAT Rate (%)</label>
+            <input type="number" id="modalVatRate" placeholder="e.g. 20" value="0" min="0" max="100">
+        </div>
+
+        <label for="modalNotes">Notes (Optional)</label>
+        <textarea id="modalNotes" placeholder="Additional notes for the brand..." rows="2"></textarea>
+
+        <div style="background: #F8FAFC; padding: 12px; border-radius: 8px; margin: 12px 0;">
+            <p><strong>Subtotal:</strong> <span id="modalSubtotal">₦0.00</span></p>
+            <p><strong>VAT:</strong> <span id="modalVat">₦0.00</span></p>
+            <p><strong>Total:</strong> <span id="modalTotal">₦0.00</span></p>
+        </div>
+
+        <div class="modal-actions">
+            <button class="btn-cancel" id="closeModalBtn">Cancel</button>
+            <button class="btn-save" id="createInvoiceBtn">Create Invoice</button>
+        </div>
     </div>
+</div>
 
     <!-- Mobile Bottom Navigation -->
     <nav class="bottom-nav">
