@@ -258,6 +258,36 @@
 
     <script>
         const API_URL = '/api';
+        // ============================================
+// CHECK AUTHENTICATION
+// ============================================
+async function checkAuth() {
+    try {
+        const res = await fetch(`${API_URL}/auth/user`, {
+            credentials: 'include'
+        });
+
+        if (res.status === 401) {
+            console.log('🔐 Not authenticated, redirecting to login');
+            localStorage.removeItem('paypoint_user');
+            window.location.replace('login.html');
+            return false;
+        }
+
+        const data = await res.json();
+        if (data.success && data.user) {
+            localStorage.setItem('paypoint_user', JSON.stringify(data.user));
+            return true;
+        } else {
+            window.location.replace('login.html');
+            return false;
+        }
+    } catch (err) {
+        console.error('❌ Error checking auth:', err);
+        window.location.replace('login.html');
+        return false;
+    }
+}
 
         function getAuthHeaders() {
             return { 'Content-Type': 'application/json' };
@@ -282,16 +312,26 @@
                     document.getElementById('template').value = d.template || 'modern';
 
                     if (!d.is_pro) {
-                        statusEl.className = 'message info';
-                        statusEl.textContent = '🔒 This is a Pro feature. Upgrade to customize your invoices.';
-                        document.getElementById('customizationCard').classList.add('lock-overlay');
-                        document.getElementById('saveCustomizationBtn').disabled = true;
-                    } else {
-                        statusEl.className = 'message success';
-                        statusEl.textContent = '✅ Pro – Customize your invoices below!';
-                        document.getElementById('customizationCard').classList.remove('lock-overlay');
-                        document.getElementById('saveCustomizationBtn').disabled = false;
-                    }
+    // ✅ SHOW UPGRADE PROMPT
+    statusEl.className = 'message info';
+    statusEl.textContent = '🔒 This is a Pro feature. Upgrade to customize your invoices.';
+    document.getElementById('customizationCard').classList.add('lock-overlay');
+    document.getElementById('saveCustomizationBtn').disabled = true;
+
+    // ✅ ASK USER IF THEY WANT TO UPGRADE
+    const upgrade = confirm(
+        '🔒 Invoice customization is a Pro feature.\n\n' +
+        'Upgrade to Pro to customize your invoices with your logo, brand colors, and more.'
+    );
+    if (upgrade) {
+        window.location.href = 'pricing.html';
+    }
+} else {
+    statusEl.className = 'message success';
+    statusEl.textContent = '✅ Pro – Customize your invoices below!';
+    document.getElementById('customizationCard').classList.remove('lock-overlay');
+    document.getElementById('saveCustomizationBtn').disabled = false;
+}
 
                     updatePreview();
                 }
@@ -377,6 +417,12 @@
         });
 
         loadCustomization();
+        (async function init() {
+    const authed = await checkAuth();
+    if (authed) {
+        await loadCustomization();
+    }
+})();
     </script>
 </body>
 </html>
