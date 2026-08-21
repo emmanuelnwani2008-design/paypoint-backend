@@ -246,6 +246,7 @@
         }
     </style>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="mobile.css">
 </head>
 <body>
     <div class="app-container">
@@ -320,62 +321,85 @@
                 <div class="profile-card" id="subscriptionCard">
                     <h3>👑 Pro Subscription</h3>
                     <p style="color: #8A9AAB; font-size: 14px; margin-bottom: 12px;">
-                        Upgrade to Pro for <strong>$9/month</strong> or <strong>$90/year</strong> and unlock:
+                        Upgrade to Pro for <strong>$20/month</strong> or <strong>$200/year</strong> and unlock:
                         unlimited deals, unlimited invoices, advanced analytics, and more.
+                        <span style="display: block; font-size: 12px; color: #4F7CFF; margin-top: 4px;">
+                            💱 Charged in NGN at the current exchange rate.
+                        </span>
+                        <span id="priceDisplay" style="display: block; font-size: 12px; color: #8A9AAB; margin-top: 4px;">
+                            Loading NGN equivalent...
+                        </span>
                     </p>
-                    <p id="priceDisplay" style="color: #8A9AAB; font-size: 12px; margin-top: 4px;">
-    Loading NGN equivalent...
-</p>
                     <div id="subscriptionStatus"></div>
                     <a href="pricing.html" class="btn-primary" style="display: inline-block; margin-top: 12px; text-decoration: none;">
                         💳 Upgrade Now
                     </a>
                 </div>
 
+                <!-- Bank Details (Payment Instructions) -->
+                <div class="profile-card">
+                    <h3>🏦 Payment Instructions</h3>
+                    <p style="color: #8A9AAB; font-size: 14px; margin-bottom: 16px;">
+                        Add your bank details. These will appear on your invoices so brands know how to pay you.
+                        <span class="bank-status not-set" id="bankStatus">⚠️ Not Set</span>
+                    </p>
+                    <div class="form-group">
+                        <label>Account Name</label>
+                        <input type="text" id="accountName" placeholder="e.g. John Doe">
+                    </div>
+                    <div class="form-group">
+                        <label>Bank Name</label>
+                        <input type="text" id="bankName" placeholder="e.g. GTBank, Chase Bank">
+                    </div>
+                    <div class="form-group">
+                        <label>Account Number</label>
+                        <input type="text" id="accountNumber" placeholder="Enter your account number">
+                    </div>
+                    <div class="form-actions">
+                        <button class="btn-primary" id="saveBankDetailsBtn">💾 Save Payment Instructions</button>
+                    </div>
+                    <div id="bankMessage" style="margin-top:12px; display:none; padding:12px 16px; border-radius:8px;"></div>
+                </div>
+
                 <!-- Business Details (for invoices) -->
-<div class="profile-card">
-    <h3>🏢 Business Details (for invoices)</h3>
-    <p style="color: #8A9AAB; font-size: 14px; margin-bottom: 16px;">
-        These details will appear on your invoices.
-    </p>
-
-    <div class="form-group">
-        <label>Business Name</label>
-        <input type="text" id="businessName" placeholder="Your business name">
-    </div>
-
-    <div class="form-group">
-        <label>Business Address</label>
-        <textarea id="businessAddress" placeholder="Street, city, postcode, country" rows="3"></textarea>
-    </div>
-
-    <div class="form-group">
-        <label>Business Phone</label>
-        <input type="tel" id="businessPhone" placeholder="+44 1234 567890">
-    </div>
-
-    <div class="form-group">
-        <label>VAT Registered</label>
-        <select id="isVatRegistered">
-            <option value="false">No</option>
-            <option value="true">Yes</option>
-        </select>
-    </div>
-
-    <div class="form-group" id="vatNumberGroup" style="display:none;">
-        <label>VAT Number</label>
-        <input type="text" id="vatNumber" placeholder="GB123456789">
-    </div>
-
-    <div class="form-group">
-        <label>Payment Instructions (optional)</label>
-        <textarea id="paymentInstructions" placeholder="Bank transfer details or payment link..." rows="3"></textarea>
-        <small style="color: #8A9AAB; font-size: 12px;">These will appear on your invoices.</small>
-    </div>
-
-    <button class="btn-primary" id="saveBusinessDetailsBtn">💾 Save Business Details</button>
-    <div id="businessMessage" style="margin-top:12px; display:none; padding:12px 16px; border-radius:8px;"></div>
-</div>
+                <div class="profile-card">
+                    <h3>🏢 Business Details <span style="font-size: 12px; color: #8A9AAB;">(for invoices)</span></h3>
+                    <p style="color: #8A9AAB; font-size: 14px; margin-bottom: 16px;">
+                        These details will appear on your invoices (name, address, VAT, etc.).
+                    </p>
+                    <div class="form-group">
+                        <label>Business Name</label>
+                        <input type="text" id="businessName" placeholder="Your business name">
+                    </div>
+                    <div class="form-group">
+                        <label>Business Address</label>
+                        <textarea id="businessAddress" placeholder="Street, city, postcode, country" rows="3"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Business Phone</label>
+                        <input type="tel" id="businessPhone" placeholder="+44 1234 567890">
+                    </div>
+                    <div class="form-group">
+                        <label>VAT Registered</label>
+                        <select id="isVatRegistered">
+                            <option value="false">No</option>
+                            <option value="true">Yes</option>
+                        </select>
+                    </div>
+                    <div class="form-group" id="vatNumberGroup" style="display:none;">
+                        <label>VAT Number</label>
+                        <input type="text" id="vatNumber" placeholder="GB123456789">
+                    </div>
+                    <div class="form-group">
+                        <label>Payment Instructions (optional)</label>
+                        <textarea id="paymentInstructions" placeholder="Bank transfer details or payment link..." rows="3"></textarea>
+                        <small style="color: #8A9AAB; font-size: 12px;">These will appear on your invoices.</small>
+                    </div>
+                    <div class="form-actions">
+                        <button class="btn-primary" id="saveBusinessDetailsBtn">💾 Save Business Details</button>
+                    </div>
+                    <div id="businessMessage" style="margin-top:12px; display:none; padding:12px 16px; border-radius:8px;"></div>
+                </div>
 
                 <!-- Danger Zone -->
                 <div class="profile-card" style="border-color: rgba(255, 59, 48, 0.2);">
@@ -533,6 +557,8 @@
 
             // Load bank details
             loadBankDetails();
+            // Load business details
+            loadBusinessDetails();
         }
 
         // ============================================
@@ -577,24 +603,25 @@
                 if (upgradeBtn) upgradeBtn.style.display = 'inline-block';
             }
         }
+
         // Fetch exchange rate and update NGN equivalent
-async function updateCreatorPrice() {
-    try {
-        const res = await fetch('https://api.exchangerate-api.com/v4/latest/USD');
-        const data = await res.json();
-        const rate = data.rates.NGN;
-        if (rate) {
-            const monthlyNgn = Math.round(9 * rate);  // change 9 to your monthly price
-            const annualNgn = Math.round(90 * rate);  // change 90 to your annual price
-            const priceDisplay = document.getElementById('priceDisplay');
-            if (priceDisplay) {
-                priceDisplay.textContent = `(${monthlyNgn} NGN / month | ${annualNgn} NGN / year)`;
+        async function updateCreatorPrice() {
+            try {
+                const res = await fetch('https://api.exchangerate-api.com/v4/latest/USD');
+                const data = await res.json();
+                const rate = data.rates.NGN;
+                if (rate) {
+                    const monthlyNgn = Math.round(20 * rate);
+                    const annualNgn = Math.round(200 * rate);
+                    const priceDisplay = document.getElementById('priceDisplay');
+                    if (priceDisplay) {
+                        priceDisplay.textContent = `(${monthlyNgn} NGN / month | ${annualNgn} NGN / year)`;
+                    }
+                }
+            } catch (err) {
+                console.error('Failed to fetch exchange rate:', err);
             }
         }
-    } catch (err) {
-        console.error('Failed to fetch exchange rate:', err);
-    }
-}
 
         // ============================================
         // LOAD STATS
@@ -752,81 +779,6 @@ async function updateCreatorPrice() {
         });
 
         // ============================================
-// SAVE BUSINESS DETAILS
-// ============================================
-document.getElementById('saveBusinessDetailsBtn').addEventListener('click', async () => {
-    const businessName = document.getElementById('businessName').value.trim();
-    const businessAddress = document.getElementById('businessAddress').value.trim();
-    const businessPhone = document.getElementById('businessPhone').value.trim();
-    const isVatRegistered = document.getElementById('isVatRegistered').value === 'true';
-    const vatNumber = document.getElementById('vatNumber').value.trim();
-    const paymentInstructions = document.getElementById('paymentInstructions').value.trim();
-    const msg = document.getElementById('businessMessage');
-
-    try {
-        const res = await fetch(`${API_URL}/profile/business-details`, {
-            method: 'PUT',
-            headers: getAuthHeaders(),
-            credentials: 'include',
-            body: JSON.stringify({
-                businessName,
-                businessAddress,
-                businessPhone,
-                isVatRegistered,
-                vatNumber,
-                paymentInstructions
-            })
-        });
-
-        const result = await res.json();
-        if (result.success) {
-            msg.style.display = 'block';
-            msg.style.background = 'rgba(52, 199, 89, 0.1)';
-            msg.style.color = '#34C759';
-            msg.textContent = '✅ Business details saved!';
-            setTimeout(() => { msg.style.display = 'none'; }, 3000);
-        } else {
-            msg.style.display = 'block';
-            msg.style.background = 'rgba(255, 59, 48, 0.1)';
-            msg.style.color = '#FF3B30';
-            msg.textContent = '❌ ' + (result.error || 'Failed to save');
-        }
-    } catch (err) {
-        msg.style.display = 'block';
-        msg.style.background = 'rgba(255, 59, 48, 0.1)';
-        msg.style.color = '#FF3B30';
-        msg.textContent = '❌ Could not connect to server.';
-        console.error(err);
-    }
-});
-
-// Toggle VAT number field
-document.getElementById('isVatRegistered').addEventListener('change', function() {
-    document.getElementById('vatNumberGroup').style.display = this.value === 'true' ? 'block' : 'none';
-});
-
-// Load business details
-async function loadBusinessDetails() {
-    try {
-        const res = await fetch(`${API_URL}/profile/business-details`, {
-            credentials: 'include'
-        });
-        const data = await res.json();
-        if (data.success && data.data) {
-            document.getElementById('businessName').value = data.data.business_name || '';
-            document.getElementById('businessAddress').value = data.data.business_address || '';
-            document.getElementById('businessPhone').value = data.data.business_phone || '';
-            document.getElementById('isVatRegistered').value = data.data.is_vat_registered ? 'true' : 'false';
-            document.getElementById('vatNumber').value = data.data.vat_number || '';
-            document.getElementById('paymentInstructions').value = data.data.payment_instructions || '';
-            document.getElementById('vatNumberGroup').style.display = data.data.is_vat_registered ? 'block' : 'none';
-        }
-    } catch (err) {
-        console.error('Error loading business details:', err);
-    }
-}
-
-        // ============================================
         // DELETE ACCOUNT
         // ============================================
         document.getElementById('deleteAccountBtn').addEventListener('click', async () => {
@@ -857,7 +809,7 @@ async function loadBusinessDetails() {
         });
 
         // ============================================
-        // SAVE BANK DETAILS (NEW)
+        // SAVE BANK DETAILS
         // ============================================
         document.getElementById('saveBankDetailsBtn').addEventListener('click', async () => {
             const accountName = document.getElementById('accountName').value.trim();
@@ -928,6 +880,83 @@ async function loadBusinessDetails() {
                 }
             } catch (err) {
                 console.error('Error loading bank details:', err);
+            }
+        }
+
+        // ============================================
+        // SAVE BUSINESS DETAILS
+        // ============================================
+        document.getElementById('saveBusinessDetailsBtn').addEventListener('click', async () => {
+            const businessName = document.getElementById('businessName').value.trim();
+            const businessAddress = document.getElementById('businessAddress').value.trim();
+            const businessPhone = document.getElementById('businessPhone').value.trim();
+            const isVatRegistered = document.getElementById('isVatRegistered').value === 'true';
+            const vatNumber = document.getElementById('vatNumber').value.trim();
+            const paymentInstructions = document.getElementById('paymentInstructions').value.trim();
+            const msg = document.getElementById('businessMessage');
+
+            try {
+                const res = await fetch(`${API_URL}/profile/business-details`, {
+                    method: 'PUT',
+                    headers: getAuthHeaders(),
+                    credentials: 'include',
+                    body: JSON.stringify({
+                        businessName,
+                        businessAddress,
+                        businessPhone,
+                        isVatRegistered,
+                        vatNumber,
+                        paymentInstructions
+                    })
+                });
+
+                const result = await res.json();
+                if (result.success) {
+                    msg.style.display = 'block';
+                    msg.style.background = 'rgba(52, 199, 89, 0.1)';
+                    msg.style.color = '#34C759';
+                    msg.textContent = '✅ Business details saved!';
+                    setTimeout(() => { msg.style.display = 'none'; }, 3000);
+                } else {
+                    msg.style.display = 'block';
+                    msg.style.background = 'rgba(255, 59, 48, 0.1)';
+                    msg.style.color = '#FF3B30';
+                    msg.textContent = '❌ ' + (result.error || 'Failed to save');
+                }
+            } catch (err) {
+                msg.style.display = 'block';
+                msg.style.background = 'rgba(255, 59, 48, 0.1)';
+                msg.style.color = '#FF3B30';
+                msg.textContent = '❌ Could not connect to server.';
+                console.error(err);
+            }
+        });
+
+        // Toggle VAT number field
+        document.getElementById('isVatRegistered').addEventListener('change', function() {
+            document.getElementById('vatNumberGroup').style.display = this.value === 'true' ? 'block' : 'none';
+        });
+
+        // ============================================
+        // LOAD BUSINESS DETAILS
+        // ============================================
+        async function loadBusinessDetails() {
+            try {
+                const res = await fetch(`${API_URL}/profile/business-details`, {
+                    credentials: 'include'
+                });
+                const data = await res.json();
+                if (data.success && data.data) {
+                    document.getElementById('businessName').value = data.data.business_name || '';
+                    document.getElementById('businessAddress').value = data.data.business_address || '';
+                    document.getElementById('businessPhone').value = data.data.business_phone || '';
+                    document.getElementById('isVatRegistered').value = data.data.is_vat_registered ? 'true' : 'false';
+                    document.getElementById('vatNumber').value = data.data.vat_number || '';
+                    document.getElementById('paymentInstructions').value = data.data.payment_instructions || '';
+                    document.getElementById('vatNumberGroup').style.display = data.data.is_vat_registered ? 'block' : 'none';
+                }
+            } catch (err) {
+                console.error('Error loading business details:', err);
             }
         }
 
