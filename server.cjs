@@ -1838,23 +1838,22 @@ app.post('/api/invoices/generate', authenticate, async (req, res) => {
             return res.status(404).json({ error: 'Deal not found' });
         }
 
-        // 2. Get creator's bank details from profile
+        // 2. Get creator's profile (for business details)
         const { data: profile, error: profileError } = await supabaseAdmin
             .from('profiles')
-            .select('bank_account_name, bank_name, bank_account_number')
+            .select('business_name, business_address, business_phone, is_vat_registered, vat_number, bank_account_name, bank_name, bank_account_number')
             .eq('id', userId)
             .single();
 
         if (profileError) {
             console.error('Profile fetch error:', profileError);
-            // Continue without bank details – just don't show them.
+            // Continue without business details – they'll show as "Not provided"
         }
 
-        const bankName = profile?.bank_name || 'Not provided';
-        const accountName = profile?.bank_account_name || 'Not provided';
-        const accountNumber = profile?.bank_account_number || 'Not provided';
+        // 3. Get user's name (fallback)
+        const creatorName = req.user?.user_metadata?.name || req.user?.name || 'Creator';
 
-        // 3. Generate PDF
+        // 4. Generate PDF
         const invoiceNumber = `INV-${Date.now().toString().slice(-8)}`;
         const date = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
         const dueDate = deal.due_date ? new Date(deal.due_date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : 'Not set';
@@ -1868,25 +1867,38 @@ app.post('/api/invoices/generate', authenticate, async (req, res) => {
 
         doc.pipe(res);
 
-        // ----- Header -----
+        // ----- HEADER -----
         doc.fontSize(24).font('Helvetica-Bold').text('PayPoint', { align: 'center' });
         doc.fontSize(12).font('Helvetica').text('Finance OS for Creators', { align: 'center' });
         doc.moveDown(0.5);
         doc.moveTo(50, doc.y).lineTo(550, doc.y).stroke('#CCCCCC');
         doc.moveDown(1);
 
-        // ----- Invoice Title -----
+        // ----- INVOICE TITLE -----
         doc.fontSize(20).font('Helvetica-Bold').text('INVOICE', { align: 'center' });
         doc.moveDown(0.5);
 
-        // ----- Invoice Info -----
+        // ----- INVOICE INFO -----
         doc.fontSize(10).font('Helvetica');
         doc.text(`Invoice #: ${invoiceNumber}`, 50, doc.y);
         doc.text(`Date: ${date}`, 400, doc.y - 12);
         doc.text(`Status: ${(deal.status || 'pending').toUpperCase()}`, 50, doc.y + 12);
         doc.moveDown(2);
 
-        // ----- Brand Details -----
+        // ----- BUSINESS DETAILS (NEW) -----
+        doc.fontSize(14).font('Helvetica-Bold').text('Business Details', { underline: true });
+        doc.moveDown(0.3);
+        doc.fontSize(12).font('Helvetica');
+        const businessName = profile?.business_name || creatorName;
+        doc.text(`Business Name: ${businessName}`);
+        doc.text(`Business Address: ${profile?.business_address || 'Not provided'}`);
+        doc.text(`Business Phone: ${profile?.business_phone || 'Not provided'}`);
+        if (profile?.is_vat_registered) {
+            doc.text(`VAT Number: ${profile?.vat_number || 'Not provided'}`);
+        }
+        doc.moveDown(1);
+
+        // ----- BRAND DETAILS -----
         doc.fontSize(14).font('Helvetica-Bold').text('Brand Details', { underline: true });
         doc.moveDown(0.3);
         doc.fontSize(12).font('Helvetica');
@@ -1894,7 +1906,7 @@ app.post('/api/invoices/generate', authenticate, async (req, res) => {
         doc.text(`Email: ${req.user.email || 'Not provided'}`);
         doc.moveDown(1);
 
-        // ----- Deal Details -----
+        // ----- DEAL DETAILS -----
         doc.fontSize(14).font('Helvetica-Bold').text('Deal Details', { underline: true });
         doc.moveDown(0.3);
         doc.fontSize(12).font('Helvetica');
@@ -1902,17 +1914,20 @@ app.post('/api/invoices/generate', authenticate, async (req, res) => {
         doc.text(`Due Date: ${dueDate}`);
         doc.moveDown(1);
 
-        // ----- Payment Instructions -----
+        // ----- PAYMENT INSTRUCTIONS -----
         doc.fontSize(14).font('Helvetica-Bold').text('Payment Instructions', { underline: true });
         doc.moveDown(0.3);
         doc.fontSize(12).font('Helvetica');
+        const accountName = profile?.bank_account_name || 'Not provided';
+        const bankName = profile?.bank_name || 'Not provided';
+        const accountNumber = profile?.bank_account_number || 'Not provided';
         doc.text(`Account Name: ${accountName}`);
         doc.text(`Bank: ${bankName}`);
         doc.text(`Account Number: ${accountNumber}`);
         doc.text(`Please use the invoice number (${invoiceNumber}) as your payment reference.`);
         doc.moveDown(1);
 
-        // ----- Total Amount -----
+        // ----- TOTAL AMOUNT -----
         doc.moveTo(50, doc.y).lineTo(550, doc.y).stroke('#CCCCCC');
         doc.moveDown(0.5);
         doc.fontSize(16).font('Helvetica-Bold');
@@ -1920,7 +1935,7 @@ app.post('/api/invoices/generate', authenticate, async (req, res) => {
         doc.text(`Total Amount: ${currencySymbol}${Number(deal.amount).toLocaleString()}`, { align: 'right' });
         doc.moveDown(2);
 
-        // ----- Footer -----
+        // ----- FOOTER -----
         doc.fontSize(10).font('Helvetica');
         doc.text('Thank you for your business!', { align: 'center' });
         doc.text('Payment is due within 30 days of invoice date.', { align: 'center' });
@@ -1930,7 +1945,6 @@ app.post('/api/invoices/generate', authenticate, async (req, res) => {
         doc.moveDown(0.3);
         doc.fontSize(8).text('PayPoint · Finance OS for Creators · www.paypoint.com', { align: 'center' });
 
-        // ✅ CRITICAL: End the document
         doc.end();
 
     } catch (err) {
