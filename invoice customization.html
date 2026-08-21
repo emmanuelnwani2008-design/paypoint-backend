@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Invoice Customization · PayPoint</title>
+    <link rel="stylesheet" href="mobile.css">
+    <link rel="icon" type="image/png" href="logo.png">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: #F8FAFC;
+            color: #000000;
+            padding: 24px;
+            min-height: 100vh;
+        }
+        .container { max-width: 800px; margin: 0 auto; }
+
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0 28px 0;
+            border-bottom: 1px solid #E8EDF2;
+            margin-bottom: 32px;
+        }
+        .logo {
+            font-size: 24px;
+            font-weight: 700;
+            color: #000000;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .logo img { height: 32px; width: auto; }
+        .logo span { font-weight: 400; color: #8A9AAB; font-size: 14px; }
+        .back-link { color: #4F7CFF; text-decoration: none; font-size: 14px; }
+        .back-link:hover { text-decoration: underline; }
+
+        .page-header { margin-bottom: 32px; }
+        .page-header h1 { font-size: 28px; font-weight: 700; color: #000000; }
+        .page-header p { color: #8A9AAB; font-size: 14px; margin-top: 4px; }
+
+        .card {
+            background: #FFFFFF;
+            border: 1px solid #E8EDF2;
+            border-radius: 14px;
+            padding: 28px 32px;
+            margin-bottom: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+        }
+        .card h3 { font-size: 16px; font-weight: 600; margin-bottom: 4px; color: #000000; }
+        .card .description { color: #8A9AAB; font-size: 13px; margin-bottom: 16px; }
+
+        .form-group { margin-bottom: 16px; }
+        .form-group label {
+            display: block;
+            font-size: 13px;
+            font-weight: 500;
+            color: #5E6F82;
+            margin-bottom: 4px;
+        }
+        .form-group input, .form-group textarea, .form-group select {
+            width: 100%;
+            padding: 10px 14px;
+            background: #F8FAFC;
+            border: 1px solid #E8EDF2;
+            border-radius: 10px;
+            font-size: 14px;
+            font-family: 'Inter', sans-serif;
+            color: #000000;
+        }
+        .form-group input:focus, .form-group textarea:focus, .form-group select:focus {
+            outline: none;
+            border-color: #4F7CFF;
+        }
+        .form-group input[type="color"] { padding: 4px; height: 44px; cursor: pointer; }
+
+        .btn-primary {
+            background: #4F7CFF;
+            border: none;
+            padding: 12px 28px;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 14px;
+            color: #FFFFFF;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-family: 'Inter', sans-serif;
+            box-shadow: 0 2px 8px rgba(79, 124, 255, 0.25);
+        }
+        .btn-primary:hover { background: #3A5FD9; transform: translateY(-1px); }
+        .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+        .btn-secondary {
+            background: #F8FAFC;
+            border: 1px solid #E8EDF2;
+            padding: 12px 28px;
+            border-radius: 10px;
+            font-weight: 500;
+            font-size: 14px;
+            color: #5E6F82;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-family: 'Inter', sans-serif;
+        }
+        .btn-secondary:hover { background: #EEF2F7; }
+
+        .pro-badge {
+            display: inline-block;
+            background: #4F7CFF;
+            color: #FFFFFF;
+            font-size: 10px;
+            font-weight: 700;
+            padding: 2px 10px;
+            border-radius: 40px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-left: 8px;
+        }
+
+        .lock-overlay {
+            opacity: 0.6;
+            pointer-events: none;
+            position: relative;
+        }
+        .lock-overlay::after {
+            content: '🔒 Pro Feature';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(255,255,255,0.9);
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-weight: 600;
+            color: #4F7CFF;
+            border: 1px solid #E8EDF2;
+        }
+
+        .message {
+            padding: 10px 14px;
+            border-radius: 8px;
+            font-size: 13px;
+            margin-top: 12px;
+            display: none;
+        }
+        .message.success { display: block; background: rgba(52, 199, 89, 0.1); color: #34C759; border: 1px solid rgba(52, 199, 89, 0.2); }
+        .message.error { display: block; background: rgba(255, 59, 48, 0.1); color: #FF3B30; border: 1px solid rgba(255, 59, 48, 0.2); }
+        .message.info { display: block; background: rgba(79, 124, 255, 0.1); color: #4F7CFF; border: 1px solid rgba(79, 124, 255, 0.2); }
+
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+        @media (max-width: 768px) {
+            .form-row { grid-template-columns: 1fr; }
+            .card { padding: 20px; }
+            .navbar { flex-direction: column; gap: 12px; align-items: flex-start; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <nav class="navbar">
+            <a href="dashboard.html" class="logo">
+                <img src="logo.png" alt="PayPoint">
+                PayPoint <span>· Invoice Customization</span>
+            </a>
+            <a href="settings.html" class="back-link">← Back to Settings</a>
+        </nav>
+
+        <div class="page-header">
+            <h1>🎨 Invoice Customization <span class="pro-badge">Pro</span></h1>
+            <p>Make your invoices look professional and on‑brand.</p>
+        </div>
+
+        <div id="proStatus" class="message info">⏳ Checking your subscription...</div>
+
+        <!-- Customization Form -->
+        <div class="card" id="customizationCard">
+            <h3>Branding</h3>
+            <p class="description">Customize the look of your invoices.</p>
+
+            <div class="form-group">
+                <label>Logo URL</label>
+                <input type="text" id="logoUrl" placeholder="https://example.com/logo.png">
+                <small style="color: #8A9AAB; font-size: 12px;">Upload your logo to a hosting service and paste the URL here.</small>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Primary Color</label>
+                    <input type="color" id="primaryColor" value="#4F7CFF">
+                </div>
+                <div class="form-group">
+                    <label>Accent Color</label>
+                    <input type="color" id="accentColor" value="#1A1A2E">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Custom Invoice Header</label>
+                <input type="text" id="customHeader" placeholder="e.g. Invoice, Tax Invoice, Proforma Invoice">
+            </div>
+
+            <div class="form-group">
+                <label>Custom Footer / Payment Instructions</label>
+                <textarea id="customFooter" rows="3" placeholder="Thank you for your business! Payment due within 30 days."></textarea>
+            </div>
+
+            <div class="form-group">
+                <label>Business Links (social, website)</label>
+                <input type="text" id="businessLinks" placeholder="https://instagram.com/yourbrand, https://yourwebsite.com">
+                <small style="color: #8A9AAB; font-size: 12px;">Comma‑separated links.</small>
+            </div>
+
+            <div class="form-group">
+                <label>Invoice Template</label>
+                <select id="template">
+                    <option value="modern">Modern (clean, minimal)</option>
+                    <option value="classic">Classic (traditional)</option>
+                    <option value="bold">Bold (colorful header)</option>
+                    <option value="minimal">Minimal (text‑only)</option>
+                </select>
+            </div>
+
+            <button class="btn-primary" id="saveCustomizationBtn">💾 Save Customization</button>
+            <div class="message success" id="saveMessage">✅ Invoice customization saved!</div>
+        </div>
+
+        <!-- Preview -->
+        <div class="card">
+            <h3>👁️ Invoice Preview</h3>
+            <p class="description">Your invoice will look like this.</p>
+            <div id="invoicePreview" style="border: 1px solid #E8EDF2; border-radius: 10px; padding: 24px; background: #FFFFFF; margin-top: 12px;">
+                <div style="text-align: center; padding: 20px 0; border-bottom: 2px solid #E8EDF2;">
+                    <div id="previewLogo" style="font-size: 28px; font-weight: 700; color: #4F7CFF;">PayPoint</div>
+                    <div style="color: #8A9AAB; font-size: 12px; margin-top: 4px;">Finance OS for Creators</div>
+                </div>
+                <div style="padding: 16px 0;">
+                    <div style="display: flex; justify-content: space-between; flex-wrap: wrap;">
+                        <div><strong>Invoice #:</strong> <span id="previewNumber">INV-0001</span></div>
+                        <div><strong>Date:</strong> <span id="previewDate">Aug 21, 2026</span></div>
+                    </div>
+                    <div style="margin-top: 12px; padding: 12px; background: #F8FAFC; border-radius: 8px;">
+                        <div><strong>Brand:</strong> <span id="previewBrand">Nike, Inc.</span></div>
+                        <div><strong>Deliverable:</strong> <span id="previewDeliverable">Social media campaign</span></div>
+                        <div style="font-size: 24px; font-weight: 700; color: #4F7CFF; margin-top: 8px;" id="previewAmount">$5,000.00</div>
+                    </div>
+                </div>
+                <div id="previewFooter" style="text-align: center; padding-top: 12px; border-top: 1px solid #E8EDF2; font-size: 12px; color: #8A9AAB;">
+                    Thank you for your business!
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = '/api';
+
+        function getAuthHeaders() {
+            return { 'Content-Type': 'application/json' };
+        }
+
+        async function loadCustomization() {
+            try {
+                const res = await fetch(`${API_URL}/profile/invoice-customization`, {
+                    credentials: 'include'
+                });
+                const data = await res.json();
+
+                const statusEl = document.getElementById('proStatus');
+                if (data.success) {
+                    const d = data.data;
+                    document.getElementById('logoUrl').value = d.logo_url || '';
+                    document.getElementById('primaryColor').value = d.primary_color || '#4F7CFF';
+                    document.getElementById('accentColor').value = d.accent_color || '#1A1A2E';
+                    document.getElementById('customHeader').value = d.custom_header || '';
+                    document.getElementById('customFooter').value = d.custom_footer || '';
+                    document.getElementById('businessLinks').value = (d.business_links || []).join(', ');
+                    document.getElementById('template').value = d.template || 'modern';
+
+                    if (!d.is_pro) {
+                        statusEl.className = 'message info';
+                        statusEl.textContent = '🔒 This is a Pro feature. Upgrade to customize your invoices.';
+                        document.getElementById('customizationCard').classList.add('lock-overlay');
+                        document.getElementById('saveCustomizationBtn').disabled = true;
+                    } else {
+                        statusEl.className = 'message success';
+                        statusEl.textContent = '✅ Pro – Customize your invoices below!';
+                        document.getElementById('customizationCard').classList.remove('lock-overlay');
+                        document.getElementById('saveCustomizationBtn').disabled = false;
+                    }
+
+                    updatePreview();
+                }
+            } catch (err) {
+                console.error('Error loading customization:', err);
+            }
+        }
+
+        function updatePreview() {
+            const primary = document.getElementById('primaryColor').value || '#4F7CFF';
+            const accent = document.getElementById('accentColor').value || '#1A1A2E';
+            const header = document.getElementById('customHeader').value || 'Invoice';
+            const footer = document.getElementById('customFooter').value || 'Thank you for your business!';
+            const logo = document.getElementById('logoUrl').value;
+
+            const logoEl = document.getElementById('previewLogo');
+            if (logo) {
+                logoEl.innerHTML = `<img src="${logo}" style="max-height: 40px; max-width: 200px;">`;
+            } else {
+                logoEl.textContent = 'PayPoint';
+                logoEl.style.color = primary;
+            }
+
+            document.getElementById('previewLogo').style.color = primary;
+            document.getElementById('previewAmount').style.color = primary;
+            document.getElementById('previewFooter').textContent = footer;
+        }
+
+        document.getElementById('primaryColor').addEventListener('input', updatePreview);
+        document.getElementById('accentColor').addEventListener('input', updatePreview);
+        document.getElementById('customHeader').addEventListener('input', updatePreview);
+        document.getElementById('customFooter').addEventListener('input', updatePreview);
+        document.getElementById('logoUrl').addEventListener('input', updatePreview);
+        document.getElementById('template').addEventListener('change', updatePreview);
+
+        document.getElementById('saveCustomizationBtn').addEventListener('click', async () => {
+            const logoUrl = document.getElementById('logoUrl').value.trim();
+            const primaryColor = document.getElementById('primaryColor').value;
+            const accentColor = document.getElementById('accentColor').value;
+            const customHeader = document.getElementById('customHeader').value.trim();
+            const customFooter = document.getElementById('customFooter').value.trim();
+            const businessLinks = document.getElementById('businessLinks').value.split(',').map(s => s.trim()).filter(Boolean);
+            const template = document.getElementById('template').value;
+
+            const msg = document.getElementById('saveMessage');
+
+            try {
+                const res = await fetch(`${API_URL}/profile/invoice-customization`, {
+                    method: 'PUT',
+                    headers: getAuthHeaders(),
+                    credentials: 'include',
+                    body: JSON.stringify({
+                        logoUrl,
+                        primaryColor,
+                        accentColor,
+                        customHeader,
+                        customFooter,
+                        businessLinks,
+                        template
+                    })
+                });
+
+                const result = await res.json();
+                if (result.success) {
+                    msg.className = 'message success';
+                    msg.textContent = '✅ Invoice customization saved!';
+                    msg.style.display = 'block';
+                    setTimeout(() => { msg.style.display = 'none'; }, 3000);
+                } else if (result.upgrade_required) {
+                    alert('🔒 This is a Pro feature. Please upgrade to customize your invoices.');
+                    window.location.href = 'pricing.html';
+                } else {
+                    msg.className = 'message error';
+                    msg.textContent = '❌ ' + (result.error || 'Failed to save');
+                    msg.style.display = 'block';
+                }
+            } catch (err) {
+                msg.className = 'message error';
+                msg.textContent = '❌ Could not connect to server.';
+                msg.style.display = 'block';
+                console.error(err);
+            }
+        });
+
+        loadCustomization();
+    </script>
+</body>
+</html>

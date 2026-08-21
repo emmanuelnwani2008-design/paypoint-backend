@@ -1837,6 +1837,16 @@ app.post('/api/invoices/generate', authenticate, async (req, res) => {
         if (dealError || !deal) {
             return res.status(404).json({ error: 'Deal not found' });
         }
+        
+        // Get user's customization
+const { data: customization } = await supabaseAdmin
+    .from('profiles')
+    .select('invoice_logo_url, invoice_primary_color, invoice_accent_color, invoice_custom_header, invoice_custom_footer, invoice_business_links, invoice_template')
+    .eq('id', userId)
+    .single();
+
+const primaryColor = customization?.invoice_primary_color || '#4F7CFF';
+const accentColor = customization?.invoice_accent_color || '#1A1A2E';
 
         // 2. Get creator's profile (for business details)
         const { data: profile, error: profileError } = await supabaseAdmin
@@ -2020,6 +2030,90 @@ app.get('/api/profile/business-details', authenticate, async (req, res) => {
         });
     } catch (err) {
         console.error('Business details fetch error:', err);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+// ============================================
+// INVOICE CUSTOMIZATION (PRO FEATURE)
+// ============================================
+
+app.put('/api/profile/invoice-customization', authenticate, async (req, res) => {
+    try {
+        const userId = req.userId;
+        const {
+            logoUrl,
+            primaryColor,
+            accentColor,
+            customHeader,
+            customFooter,
+            businessLinks,
+            template
+        } = req.body;
+
+        // ✅ Check if user is Pro
+        const plan = await getUserPlan(userId);
+        if (plan.tier !== 'pro') {
+            return res.status(403).json({ 
+                error: 'Pro feature. Upgrade to customize invoices.',
+                upgrade_required: true
+            });
+        }
+
+        const { error } = await supabaseAdmin
+            .from('profiles')
+            .update({
+                invoice_logo_url: logoUrl || null,
+                invoice_primary_color: primaryColor || '#4F7CFF',
+                invoice_accent_color: accentColor || '#1A1A2E',
+                invoice_custom_header: customHeader || null,
+                invoice_custom_footer: customFooter || null,
+                invoice_business_links: businessLinks || [],
+                invoice_template: template || 'modern'
+            })
+            .eq('id', userId);
+
+        if (error) {
+            console.error('Invoice customization save error:', error);
+            return res.status(500).json({ error: 'Failed to save customization' });
+        }
+
+        res.json({ success: true, message: 'Invoice customization saved' });
+    } catch (err) {
+        console.error('Invoice customization error:', err);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+app.get('/api/profile/invoice-customization', authenticate, async (req, res) => {
+    try {
+        const userId = req.userId;
+        const { data: profile, error } = await supabaseAdmin
+            .from('profiles')
+            .select('invoice_logo_url, invoice_primary_color, invoice_accent_color, invoice_custom_header, invoice_custom_footer, invoice_business_links, invoice_template, subscription_tier')
+            .eq('id', userId)
+            .single();
+
+        if (error) {
+            console.error('Invoice customization fetch error:', error);
+            return res.status(500).json({ error: 'Failed to fetch customization' });
+        }
+
+        res.json({
+            success: true,
+            data: {
+                logo_url: profile?.invoice_logo_url || '',
+                primary_color: profile?.invoice_primary_color || '#4F7CFF',
+                accent_color: profile?.invoice_accent_color || '#1A1A2E',
+                custom_header: profile?.invoice_custom_header || '',
+                custom_footer: profile?.invoice_custom_footer || '',
+                business_links: profile?.invoice_business_links || [],
+                template: profile?.invoice_template || 'modern',
+                is_pro: profile?.subscription_tier === 'pro'
+            }
+        });
+    } catch (err) {
+        console.error('Invoice customization fetch error:', err);
         res.status(500).json({ error: 'Server error' });
     }
 });
