@@ -753,22 +753,23 @@ function setCachedData(key, data) {
         // AUTH HELPERS
         // ============================================
         function getAuthHeaders() {
-    return { 'Content-Type': 'application/json' };
-            return {
-                'Content-Type': 'application/json',
-                ...(token ? { Authorization: `Bearer ${token}` } : {})
-            };
-        }
+    const token = localStorage.getItem('paypoint_session');
+    return {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {})
+    };
+}
 
         // ============================================
         // CURRENCY HELPER
         // ============================================
-        function formatCurrency(amount) {
-    if (!amount) return '₦0';
+        function formatCurrency(amount, currency) {
+    if (!amount && amount !== 0) return '₦0';
     const userData = JSON.parse(localStorage.getItem('paypoint_user') || '{}');
-    const userCurrency = userData?.user_metadata?.default_currency || 'USD';
+    const userCurrency = (userData?.user_metadata?.default_currency || 'NGN').toUpperCase();
+    const normalizedCurrency = (currency || userCurrency || 'NGN').toUpperCase();
     const symbols = { USD: '$', NGN: '₦' };
-    const symbol = symbols[userCurrency] || '₦';
+    const symbol = symbols[normalizedCurrency] || symbols[userCurrency] || '₦';
     return symbol + Number(amount).toLocaleString();
 }
 
@@ -965,11 +966,14 @@ function setCachedData(key, data) {
     const total = expenses.length;
     document.getElementById('totalExpenses').textContent = total;
 
-    // ✅ Group amounts by currency
+    const userData = JSON.parse(localStorage.getItem('paypoint_user') || '{}');
+    const defaultCurrency = (userData?.user_metadata?.default_currency || 'NGN').toUpperCase();
+
+    // ✅ Group amounts by currency and normalize missing values
     const totals = {};
     expenses.forEach(exp => {
-        const currency = exp.currency || 'NGN';
-        const amount = Number(exp.amount);
+        const currency = ((exp.currency || defaultCurrency || 'NGN')).toUpperCase();
+        const amount = Number(exp.amount) || 0;
         if (!totals[currency]) totals[currency] = 0;
         totals[currency] += amount;
     });
@@ -978,7 +982,7 @@ function setCachedData(key, data) {
     const currencySymbols = { USD: '$', NGN: '₦' };
     let totalText = '';
     let avgText = '';
-    const currencyKeys = Object.keys(totals);
+    const currencyKeys = Object.keys(totals).sort();
 
     if (currencyKeys.length === 0) {
         totalText = '₦0';
@@ -991,11 +995,9 @@ function setCachedData(key, data) {
         const avg = total > 0 ? totalAmount / total : 0;
         avgText = symbol + avg.toLocaleString();
     } else {
-        // Multiple currencies → show breakdown
         totalText = currencyKeys.map(cur =>
             (currencySymbols[cur] || '₦') + totals[cur].toLocaleString()
         ).join(' | ');
-        // Average isn't meaningful across currencies – show combined or remove
         avgText = 'Mixed currencies';
     }
 
@@ -1167,9 +1169,17 @@ if (result.success) {
 
         checkAuth();
         loadExpenses();
-        document.getElementById('loadingIndicator').style.display = 'block';
-// ... fetch data ...
-document.getElementById('loadingIndicator').style.display = 'none';
+        const loadingEl = document.getElementById('loadingIndicator');
+        if (loadingEl) {
+            loadingEl.classList.add('visible');
+            loadingEl.setAttribute('aria-busy', 'true');
+        }
+        setTimeout(() => {
+            if (loadingEl) {
+                loadingEl.classList.remove('visible');
+                loadingEl.setAttribute('aria-busy', 'false');
+            }
+        }, 400);
 
         console.log('🧾 PayPoint Expenses Page loaded');
         console.log('📡 Connected to:', API_URL);
