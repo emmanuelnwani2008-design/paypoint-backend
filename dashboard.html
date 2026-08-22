@@ -513,9 +513,27 @@
         flex: 0 0 auto;
     }
 }
+.spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid #E8EDF2;
+    border-top: 4px solid #4F7CFF;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin: 0 auto;
+}
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
     </style>
 </head>
 <body>
+    <!-- Loading Indicator -->
+<div id="loadingIndicator" style="display: none; text-align: center; padding: 40px;">
+    <div class="spinner"></div>
+    <p style="color: #8A9AAB; margin-top: 12px;">Loading your data...</p>
+</div>
 
     <button class="menu-toggle" id="menuToggle">☰</button>
     <div class="sidebar-overlay" id="sidebarOverlay"></div>
@@ -674,6 +692,19 @@
         // 🚀 BULLETPROOF AUTH (FIXED)
         // ============================================
         const API_URL = '/api';
+        function getCachedData(key, ttl = 60000) {
+    const cached = sessionStorage.getItem(key);
+    if (!cached) return null;
+    try {
+        const { data, timestamp } = JSON.parse(cached);
+        if (Date.now() - timestamp > ttl) return null;
+        return data;
+    } catch { return null; }
+}
+
+function setCachedData(key, data) {
+    sessionStorage.setItem(key, JSON.stringify({ data, timestamp: Date.now() }));
+}
 
         // ----- Helper Functions -----
         function getAuthHeaders() {
@@ -759,33 +790,58 @@
 // ============================================
 async function loadUsageRings() {
     try {
+        const cached = getCachedData('usage');
+        if (cached) {
+            updateRings(cached);
+            return;
+        }
+
         const res = await fetch(`${API_URL}/usage`, {
             headers: getAuthHeaders(),
             credentials: 'include'
         });
-        const data = await res.json();
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const result = await res.json();
 
-        if (data.success) {
-            // Deals ring
-            const dealProgress = data.deals.current / data.deals.max;
-            updateRing('deals-ring', dealProgress);
-            document.getElementById('dealsCount').textContent = data.deals.current;
-            document.getElementById('dealsMax').textContent = data.deals.max;
-
-            // Invoices ring
-            const invoiceProgress = data.invoices.current / data.invoices.max;
-            updateRing('invoices-ring', invoiceProgress);
-            document.getElementById('invoicesCount').textContent = data.invoices.current;
-            document.getElementById('invoicesMax').textContent = data.invoices.max;
-
-            // Expenses ring
-            const expenseProgress = data.expenses.current / data.expenses.max;
-            updateRing('expenses-ring', expenseProgress);
-            document.getElementById('expensesCount').textContent = data.expenses.current;
-            document.getElementById('expensesMax').textContent = data.expenses.max;
+        if (result.success) {
+            setCachedData('usage', result);
+            updateRings(result);
+        } else {
+            throw new Error(result.error || 'Failed to load usage');
         }
     } catch (err) {
         console.error('Error loading usage rings:', err);
+        throw err;
+    }
+}
+
+function updateRings(data) {
+    // Deals ring
+    const dealProgress = data.deals.current / data.deals.max;
+    updateRing('deals-ring', dealProgress);
+    document.getElementById('dealsCount').textContent = data.deals.current;
+    document.getElementById('dealsMax').textContent = data.deals.max;
+
+    // Invoices ring
+    const invoiceProgress = data.invoices.current / data.invoices.max;
+    updateRing('invoices-ring', invoiceProgress);
+    document.getElementById('invoicesCount').textContent = data.invoices.current;
+    document.getElementById('invoicesMax').textContent = data.invoices.max;
+
+    // Expenses ring
+    const expenseProgress = data.expenses.current / data.expenses.max;
+    updateRing('expenses-ring', expenseProgress);
+    document.getElementById('expensesCount').textContent = data.expenses.current;
+    document.getElementById('expensesMax').textContent = data.expenses.max;
+}
+
+function updateRing(className, progress) {
+    const circumference = 251.2;
+    const ring = document.querySelector(`.${className}`);
+    if (ring) {
+        const clamped = Math.min(1, Math.max(0, progress));
+        const offset = circumference - (clamped * circumference);
+        ring.style.strokeDashoffset = offset;
     }
 }
 
@@ -815,23 +871,23 @@ function updateRing(className, progress) {
 async function loadDashboardStats() {
     try {
         const userData = JSON.parse(localStorage.getItem('paypoint_user') || '{}');
-const currency = userData?.user_metadata?.default_currency || 'USD';
-const currencySymbol = currency === 'USD' ? '$' : '₦';
+        const currency = userData?.user_metadata?.default_currency || 'USD';
+        const currencySymbol = currency === 'USD' ? '$' : '₦';
 
+        // ✅ Fetch from backend (now using await)
         const res = await fetch(`${API_URL}/dashboard/stats`, {
             headers: getAuthHeaders(),
-            cache: 'no-store'
+            credentials: 'include'
         });
         const result = await res.json();
 
         if (result.success) {
             const data = result.data;
-
-            // Display totals
+            // ✅ Display stats (using currencySymbol)
             document.getElementById('totalRevenue').textContent = currencySymbol + data.totalRevenue.toLocaleString();
-document.getElementById('totalExpenses').textContent = currencySymbol + data.totalExpenses.toLocaleString();
-document.getElementById('totalTaxes').textContent = currencySymbol + data.taxes.toLocaleString();
-document.getElementById('takeHome').textContent = currencySymbol + data.takeHome.toLocaleString();
+            document.getElementById('totalExpenses').textContent = currencySymbol + data.totalExpenses.toLocaleString();
+            document.getElementById('totalTaxes').textContent = currencySymbol + data.taxes.toLocaleString();
+            document.getElementById('takeHome').textContent = currencySymbol + data.takeHome.toLocaleString();
 
             // Tax rate display
             document.getElementById('taxRateDisplay').textContent = `${data.taxRate}% tax rate`;
@@ -875,70 +931,131 @@ document.getElementById('takeHome').textContent = currencySymbol + data.takeHome
 
         // ----- LOAD DEALS -----
         async function loadDeals() {
-            try {
-                const res = await fetch(`${API_URL}/deals`, { headers: getAuthHeaders() });
-                const result = await res.json();
-                const list = document.getElementById('dealsList');
-                if (result.success && result.data && result.data.length > 0) {
-                    list.innerHTML = '';
-                    result.data.slice(0, 5).forEach(deal => {
-                        const div = document.createElement('div');
-                        div.className = 'deal-item';
-
-                        const leftDiv = document.createElement('div');
-                        const brandDiv = document.createElement('div');
-                        brandDiv.className = 'deal-brand';
-                        brandDiv.textContent = escapeHtml(deal.brand_name || deal.brand || 'Unknown');
-                        leftDiv.appendChild(brandDiv);
-
-                        const rightDiv = document.createElement('div');
-                        rightDiv.style.textAlign = 'right';
-                        const amountDiv = document.createElement('div');
-                        amountDiv.className = 'deal-amount';
-                        amountDiv.textContent = formatCurrency(deal.amount || 0, deal.currency || undefined);
-                        rightDiv.appendChild(amountDiv);
-
-                        const statusSpan = document.createElement('span');
-                        statusSpan.className = 'deal-status ' + (deal.status || 'pending');
-                        statusSpan.textContent = deal.status || 'pending';
-                        rightDiv.appendChild(statusSpan);
-
-                        div.appendChild(leftDiv);
-                        div.appendChild(rightDiv);
-                        list.appendChild(div);
-                    });
-                } else {
-                    list.innerHTML = '<div style="color:#8A9AAB; font-size:14px; padding:12px 0;">No deals yet. Add your first one!</div>';
-                }
-            } catch (err) {
-                console.error('Error loading deals:', err);
-                document.getElementById('dealsList').innerHTML = '<div style="color:#FF3B30; font-size:14px; padding:12px 0;">⚠️ Could not connect to backend.</div>';
-            }
+    try {
+        const cached = getCachedData('deals');
+        if (cached) {
+            renderDeals(cached);
+            return;
         }
+
+        const res = await fetch(`${API_URL}/deals`, {
+            headers: getAuthHeaders(),
+            credentials: 'include'
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const result = await res.json();
+
+        if (result.success && result.data) {
+            setCachedData('deals', result.data);
+            renderDeals(result.data);
+        } else {
+            throw new Error(result.error || 'Failed to load deals');
+        }
+    } catch (err) {
+        console.error('Error loading deals:', err);
+        throw err;
+    }
+}
+
+function renderDeals(deals) {
+    const list = document.getElementById('dealsList');
+    if (!list) return;
+
+    if (!deals || deals.length === 0) {
+        list.innerHTML = '<div style="color:#8A9AAB; font-size:14px; padding:12px 0;">No deals yet. Add your first one!</div>';
+        return;
+    }
+
+    list.innerHTML = '';
+    deals.slice(0, 5).forEach(deal => {
+        const div = document.createElement('div');
+        div.className = 'deal-item';
+
+        const leftDiv = document.createElement('div');
+        const brandDiv = document.createElement('div');
+        brandDiv.className = 'deal-brand';
+        brandDiv.textContent = escapeHtml(deal.brand_name || deal.brand || 'Unknown');
+        leftDiv.appendChild(brandDiv);
+
+        const rightDiv = document.createElement('div');
+        rightDiv.style.textAlign = 'right';
+        const amountDiv = document.createElement('div');
+        amountDiv.className = 'deal-amount';
+        amountDiv.textContent = formatCurrency(deal.amount || 0, deal.currency || undefined);
+        rightDiv.appendChild(amountDiv);
+
+        const statusSpan = document.createElement('span');
+        statusSpan.className = 'deal-status ' + (deal.status || 'pending');
+        statusSpan.textContent = deal.status || 'pending';
+        rightDiv.appendChild(statusSpan);
+
+        div.appendChild(leftDiv);
+        div.appendChild(rightDiv);
+        list.appendChild(div);
+    });
+}
 
         async function loadExpenses() {
-            try {
-                const res = await fetch(`${API_URL}/expenses`, { headers: getAuthHeaders() });
-                const result = await res.json();
-                const list = document.getElementById('expensesList');
-                if (result.success && result.data.length > 0) {
-                    list.innerHTML = '';
-                    result.data.slice(0, 5).forEach(exp => {
-                        const div = document.createElement('div');
-                        div.className = 'expense-item';
-                        div.innerHTML = `
-                            <div class="expense-vendor">${exp.vendor}</div>
-                            <div><span class="expense-category">${exp.category || 'Uncategorized'}</span><span class="expense-amount">-${formatCurrency(exp.amount, exp.currency)}</span></div>
-                        `;
-                        list.appendChild(div);
-                    });
-                } else {
-                    list.innerHTML = '<div style="color:#8A9AAB; font-size:14px; padding:12px 0;">No expenses logged yet.</div>';
-                }
-            } catch (err) {
-                console.error('Error loading expenses:', err);
-            }
+    try {
+        const cached = getCachedData('expenses');
+        if (cached) {
+            renderExpenses(cached);
+            return;
         }
+
+        const res = await fetch(`${API_URL}/expenses`, {
+            headers: getAuthHeaders(),
+            credentials: 'include'
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const result = await res.json();
+
+        if (result.success && result.data) {
+            setCachedData('expenses', result.data);
+            renderExpenses(result.data);
+        } else {
+            throw new Error(result.error || 'Failed to load expenses');
+        }
+    } catch (err) {
+        console.error('Error loading expenses:', err);
+        throw err;
+    }
+}
+
+function renderExpenses(expenses) {
+    const list = document.getElementById('expensesList');
+    if (!list) return;
+
+    if (!expenses || expenses.length === 0) {
+        list.innerHTML = '<div style="color:#8A9AAB; font-size:14px; padding:12px 0;">No expenses logged yet.</div>';
+        return;
+    }
+
+    list.innerHTML = '';
+    expenses.slice(0, 5).forEach(exp => {
+        const div = document.createElement('div');
+        div.className = 'expense-item';
+
+        const vendorDiv = document.createElement('div');
+        vendorDiv.className = 'expense-vendor';
+        vendorDiv.textContent = escapeHtml(exp.vendor || 'Unknown');
+
+        const rightDiv = document.createElement('div');
+        const catSpan = document.createElement('span');
+        catSpan.className = 'expense-category';
+        catSpan.textContent = exp.category || 'Uncategorized';
+        const amountSpan = document.createElement('span');
+        amountSpan.className = 'expense-amount';
+        amountSpan.textContent = '-' + formatCurrency(exp.amount || 0, exp.currency || undefined);
+
+        rightDiv.appendChild(catSpan);
+        rightDiv.appendChild(amountSpan);
+
+        div.appendChild(vendorDiv);
+        div.appendChild(rightDiv);
+        list.appendChild(div);
+    });
+}
 
         // ----- MODAL CONTROLS -----
         const modal = document.getElementById('dealModal');
@@ -1019,21 +1136,43 @@ document.getElementById('takeHome').textContent = currencySymbol + data.takeHome
 }
 
         // ============================================
-        // ⭐ INIT
-        // ============================================
-        (async function init() {
-            const isAuth = await checkAuth();
-            if (isAuth) {
-                loadDashboardStats();   // ✅ now called
-                loadDeals();
-                loadExpenses();
-                loadUsageRings();
-                console.log('🚀 PayPoint Dashboard loaded successfully');
-                console.log('📡 Connected to:', API_URL);
-            } else {
-                console.log('⛔ Auth failed, redirecting...');
-            }
-        })();
+// ⭐ INIT
+// ============================================
+(async function init() {
+    try {
+        const isAuth = await checkAuth();
+        if (!isAuth) {
+            console.log('⛔ Auth failed, redirecting...');
+            return;
+        }
+
+        // ✅ Show loading
+        const loadingEl = document.getElementById('loadingIndicator');
+        if (loadingEl) loadingEl.style.display = 'block';
+
+        // ✅ Fetch all data in parallel
+        await Promise.all([
+            loadDashboardStats(),
+            loadDeals(),
+            loadExpenses(),
+            loadUsageRings()
+        ]);
+
+        // ✅ Hide loading
+        if (loadingEl) loadingEl.style.display = 'none';
+
+        console.log('🚀 PayPoint Dashboard loaded successfully');
+        console.log('📡 Connected to:', API_URL);
+
+    } catch (err) {
+        console.error('❌ Init error:', err);
+        const loadingEl = document.getElementById('loadingIndicator');
+        if (loadingEl) loadingEl.style.display = 'none';
+        // Show error state if you have it
+        const errorEl = document.getElementById('errorState');
+        if (errorEl) errorEl.style.display = 'block';
+    }
+})();
     </script>
 </body>
 </html>
