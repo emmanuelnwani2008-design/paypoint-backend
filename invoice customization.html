@@ -232,7 +232,7 @@
 
         <!-- Preview -->
         <div class="card">
-            <h3>👁️ Invoice Preview</h3>
+            <h3><i class="fas fa-eye"></i> Invoice Preview</h3>
             <p class="description">Your invoice will look like this.</p>
             <div id="invoicePreview" style="border: 1px solid #E8EDF2; border-radius: 10px; padding: 24px; background: #FFFFFF; margin-top: 12px;">
                 <div style="text-align: center; padding: 20px 0; border-bottom: 2px solid #E8EDF2;">
@@ -398,7 +398,7 @@ async function checkAuth() {
                 const result = await res.json();
                 if (result.success) {
                     msg.className = 'message success';
-                    msg.textContent = '✅ Invoice customization saved!';
+                    msg.innerHTML = '<i class="fas fa-check-circle" style="color: #34C759;"></i> Invoice customization saved!';
                     msg.style.display = 'block';
                     setTimeout(() => { msg.style.display = 'none'; }, 3000);
                 } else if (result.upgrade_required) {

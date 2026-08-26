@@ -269,12 +269,12 @@
         <div class="subtitle">Finance OS for Creators</div>
 
         <div class="confirm-banner" id="confirmBanner">
-            <h4>📧 Confirm Your Email</h4>
+            <h4><i class="fas fa-envelope"></i> Confirm Your Email</h4>
             <p>
                 We sent a confirmation link to <span class="email-highlight" id="confirmEmail"></span>.
                 Please check your inbox (and <strong>spam folder</strong>) and click the link to verify your account.
             </p>
-            <span class="check-spam">💡 If you don't see the email, check your spam or junk folder.</span>
+            <span class="check-spam"><i class="fas fa-lightbulb"></i> If you don't see the email, check your spam or junk folder.</span>
         </div>
 
         <div class="tab-switch">
@@ -513,7 +513,7 @@ window.location.replace('dashboard.html');
                     e.preventDefault();
                     const isPassword = input.type === 'password';
                     input.type = isPassword ? 'text' : 'password';
-                    toggle.textContent = isPassword ? '🙈' : '👁️';
+                    toggle.innerHTML = isPassword ? '<i class="fas fa-eye-slash"></i>' : '<i class="fas fa-eye"></i>';
                 });
             }
             setupToggle('loginPassword', 'toggleLoginPassword');

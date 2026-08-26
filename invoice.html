@@ -277,7 +277,7 @@
                     <input type="checkbox" id="autoChaseToggle" style="width: 20px; height: 20px; accent-color: #4F7CFF;">
                     <span id="autoChaseLabel" style="font-weight: 500;">Enable Auto-Chasing</span>
                 </label>
-                <span id="autoChaseStatus" style="font-size: 12px; color: #8A9AAB; margin-left: 30px;"></span>
+                autoChaseStatus.innerHTML = '<i class="fas fa-check-circle" style="color: #34C759;"></i> Pro feature – active';
             </div>
         </div>
     </div>
@@ -535,7 +535,7 @@ function setCachedData(key, data) {
             if (deals.length === 0) {
                 invoiceGrid.innerHTML = `
                     <div class="empty-state">
-                        <div class="icon">📄</div>
+                        <div class="icon"><i class="fas fa-file-invoice"></i></div>
                         <h3>No invoices yet</h3>
                         <p>Create your first invoice from a brand deal.</p>
                     </div>

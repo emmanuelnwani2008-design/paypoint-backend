@@ -826,7 +826,7 @@
                     bankMessage.textContent = '✅ Payment instructions saved successfully!';
                     setTimeout(() => { bankMessage.style.display = 'none'; }, 3000);
 
-                    document.getElementById('bankStatus').textContent = '✅ Active';
+                    document.getElementById('bankStatus').innerHTML = '<i class="fas fa-check-circle" style="color: #34C759;"></i> Active';
                     document.getElementById('bankStatus').className = 'bank-status saved';
                 } else {
                     bankMessage.style.display = 'block';
@@ -858,7 +858,7 @@
                     document.getElementById('accountNumber').value = data.data.account_number || '';
 
                     if (data.data.account_name && data.data.bank_name && data.data.account_number) {
-                        document.getElementById('bankStatus').textContent = '✅ Active';
+                        document.getElementById('bankStatus').innerHTML = '<i class="fas fa-check-circle" style="color: #34C759;"></i> Active';
                         document.getElementById('bankStatus').className = 'bank-status saved';
                     }
                 }
