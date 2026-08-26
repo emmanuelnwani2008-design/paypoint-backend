@@ -570,7 +570,7 @@
                 <a href="expense.html" class="active">Expenses</a>
                 <a href="invoice.html">Invoices</a>
                 <a href="creator.html">Creator</a>
-                <span class="user-badge" id="userBadge">👤 Creator</span>
+                <span class="user-badge" id="userBadge"><i class="fas fa-user"></i> Creator</span>
                 <a href="#" class="logout" id="navLogout">Logout</a>
             </div>
         </nav>
@@ -601,7 +601,7 @@
 
         <!-- SEARCH & FILTER -->
         <div class="search-filter-row">
-            <input type="text" class="search-box" id="searchInput" placeholder="🔍 Search by vendor...">
+            <input type="text" class="search-box" id="searchInput" placeholder="Search by vendor...">
             <select class="filter-select" id="filterSelect">
                 <option value="all">All Categories</option>
                 <option value="equipment">Equipment</option>
@@ -611,7 +611,7 @@
                 <option value="office">Office</option>
                 <option value="other">Other</option>
             </select>
-            <button class="btn-secondary" id="refreshBtn">🔄 Refresh</button>
+            <button class="btn-secondary" id="refreshBtn"><i class="fas fa-sync-alt"></i> Refresh</button>
         </div>
 
         <!-- EXPENSES TABLE -->
@@ -631,7 +631,7 @@
                     <tr>
                         <td colspan="6">
                             <div class="empty-state">
-                                <div class="icon">🧾</div>
+                                <div class="icon"><i class="fas fa-receipt"></i></div>
                                 <h3>No expenses yet</h3>
                                 <p>Add your first expense to start tracking.</p>
                             </div>
@@ -645,7 +645,7 @@
     <!-- MODAL -->
     <div class="modal-overlay" id="expenseModal">
         <div class="modal">
-            <h2>🧾 Add Expense</h2>
+            <h2><i class="fas fa-receipt"></i> Add Expense</h2>
             <p>Track what you spend on your content creation.</p>
 
             <label for="modalVendor">Vendor Name</label>
@@ -877,7 +877,7 @@ function setCachedData(key, data) {
                     <tr>
                         <td colspan="6">
                             <div class="empty-state">
-                                <div class="icon">⚠️</div>
+                                <div class="icon"><i class="fas fa-exclamation-triangle"></i></div>
                                 <h3>Connection Error</h3>
                                 <p>Could not connect to backend.</p>
                             </div>
@@ -950,7 +950,7 @@ function setCachedData(key, data) {
         const deleteBtn = document.createElement('button');
         deleteBtn.className = 'action-btn delete';
         deleteBtn.dataset.id = exp.id;
-        deleteBtn.textContent = '🗑️';
+            deleteBtn.innerHTML = '<i class="fas fa-trash"></i>';
         deleteBtn.addEventListener('click', () => deleteExpense(exp.id));
         actionCell.appendChild(deleteBtn);
         tr.appendChild(actionCell);
@@ -1111,7 +1111,7 @@ function setCachedData(key, data) {
                 const result = await res.json();
 
 if (result.success) {
-    alert('✅ Expense added successfully!');
+    alert('Expense added successfully!');
     closeModal();
     loadExpenses();
 } else if (result.limit_reached) {
@@ -1147,10 +1147,10 @@ if (result.success) {
 
                 const result = await res.json();
                 if (result.success) {
-                    alert('🗑️ Expense deleted successfully!');
+                                alert('Expense deleted successfully!');
                     loadExpenses();
                 } else {
-                    alert('❌ Error: ' + (result.error || 'Unknown error'));
+                                alert('Error: ' + (result.error || 'Unknown error'));
                 }
             } catch (err) {
                 alert('❌ Could not connect to backend.');
@@ -1182,8 +1182,8 @@ if (result.success) {
             }
         }, 400);
 
-        console.log('🧾 PayPoint Expenses Page loaded');
-        console.log('📡 Connected to:', API_URL);
+        console.log('PayPoint Expenses Page loaded');
+        console.log('Connected to:', API_URL);
     </script>
 
 </body>

@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Invoice Customization · PayPoint</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link rel="stylesheet" href="mobile.css">
     <link rel="icon" type="image/png" href="logo.png">
     <style>
@@ -127,7 +128,7 @@
             position: relative;
         }
         .lock-overlay::after {
-            content: '🔒 Pro Feature';
+            content: 'Pro Feature';
             position: absolute;
             top: 50%;
             left: 50%;
@@ -171,7 +172,7 @@
         </nav>
 
         <div class="page-header">
-            <h1>🎨 Invoice Customization <span class="pro-badge">Pro</span></h1>
+            <h1><i class="fas fa-paint-roller"></i> Invoice Customization <span class="pro-badge">Pro</span></h1>
             <p>Make your invoices look professional and on‑brand.</p>
         </div>
 
@@ -225,7 +226,7 @@
                 </select>
             </div>
 
-            <button class="btn-primary" id="saveCustomizationBtn">💾 Save Customization</button>
+            <button class="btn-primary" id="saveCustomizationBtn"><i class="fas fa-save"></i> Save Customization</button>
             <div class="message success" id="saveMessage">✅ Invoice customization saved!</div>
         </div>
 

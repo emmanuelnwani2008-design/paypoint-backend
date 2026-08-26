@@ -70,7 +70,7 @@
 </head>
 <body>
     <div class="admin-container">
-        <h1>🔑 Admin Panel</h1>
+        <h1><i class="fas fa-key"></i> Admin Panel</h1>
         <p>Upgrade any user to Pro instantly (free trial).</p>
 
         <div class="form-group">
@@ -85,7 +85,7 @@
     <small style="color: #8A9AAB; font-size: 12px;">Ask the admin for the secret key.</small>
 </div>
 
-        <button class="btn-primary" id="upgradeBtn">⬆️ Upgrade to Pro</button>
+        <button class="btn-primary" id="upgradeBtn"><i class="fas fa-arrow-up"></i> Upgrade to Pro</button>
 
         <div class="message" id="adminMessage"></div>
         <a href="dashboard.html" class="back-link">← Back to Dashboard</a>
@@ -109,12 +109,12 @@
 
     if (!email || !secret) {
         messageEl.className = 'message error';
-        messageEl.textContent = '❌ Please enter both email and secret.';
+        messageEl.textContent = 'Please enter both email and secret.';
         return;
     }
 
     messageEl.className = 'message';
-    messageEl.textContent = '⏳ Upgrading...';
+    messageEl.textContent = 'Upgrading...';
 
     try {
         const response = await fetch(`${API_URL}/admin/force-pro`, {
@@ -130,14 +130,14 @@
 
         if (data.success) {
             messageEl.className = 'message success';
-            messageEl.textContent = `✅ ${email} is now Pro! Expires: ${data.expires_at}`;
+            messageEl.textContent = `${email} is now Pro. Expires: ${data.expires_at}`;
         } else {
             messageEl.className = 'message error';
-            messageEl.textContent = `❌ ${data.error || 'Upgrade failed'}`;
+            messageEl.textContent = `${data.error || 'Upgrade failed'}`;
         }
     } catch (err) {
         messageEl.className = 'message error';
-        messageEl.textContent = '❌ Could not connect to server.';
+        messageEl.textContent = 'Could not connect to server.';
     }
     function escapeHtml(text) {
     if (!text) return '';

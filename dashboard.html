@@ -661,7 +661,7 @@
             </div>
 
             <section class="split-panel">
-                <div class="panel"><div class="panel-header"><h3>📋 Active Deals</h3><a href="deals.html">View all →</a></div><div id="dealsList"><div style="color:#8A9AAB; font-size:14px; padding:12px 0;">No deals yet. Add your first one!</div></div></div>
+                <div class="panel"><div class="panel-header"><h3><i class="fas fa-clipboard-list"></i> Active Deals</h3><a href="deals.html">View all →</a></div><div id="dealsList"><div style="color:#8A9AAB; font-size:14px; padding:12px 0;">No deals yet. Add your first one!</div></div></div>
                 <div class="panel"><div class="panel-header"><h3>🧾 Recent Expenses</h3><a href="expense.html">View all →</a></div><div id="expensesList"><div style="color:#8A9AAB; font-size:14px; padding:12px 0;">No expenses logged yet.</div></div></div>
             </section>
         </div>
@@ -669,7 +669,7 @@
 
     <div class="modal-overlay" id="dealModal">
         <div class="modal">
-            <h2>💰 New Brand Deal</h2><p>Log a new deal to start tracking your income.</p>
+            <h2><i class="fas fa-money-bill-wave"></i> New Brand Deal</h2><p>Log a new deal to start tracking your income.</p>
             <label for="brandName">Brand Name</label><input type="text" id="brandName" placeholder="e.g. Nike, Glossier, Samsung">
             <label for="dealAmount">Amount</label><input type="number" id="dealAmount" placeholder="e.g. 5000">
             <label for="dealDeliverable">Deliverable</label><input type="text" id="dealDeliverable" placeholder="e.g. 1 TikTok video">
@@ -689,7 +689,7 @@
 </nav>
     <script>
         // ============================================
-        // 🚀 BULLETPROOF AUTH (FIXED)
+        // BULLETPROOF AUTH (FIXED)
         // ============================================
         const API_URL = '/api';
         function getCachedData(key, ttl = 60000) {
@@ -1168,8 +1168,8 @@ function renderExpenses(expenses) {
             loadingEl.setAttribute('aria-busy', 'false');
         }
 
-        console.log('🚀 PayPoint Dashboard loaded successfully');
-        console.log('📡 Connected to:', API_URL);
+        console.log('PayPoint Dashboard loaded successfully');
+        console.log('Connected to:', API_URL);
 
     } catch (err) {
         console.error('❌ Init error:', err);
