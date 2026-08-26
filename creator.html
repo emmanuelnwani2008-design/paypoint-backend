@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PayPoint · Creator Profile</title>
     <link rel="icon" type="image/png" href="logo.png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link rel="stylesheet" href="mobile.css">
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-HFJ9JM358E"></script>
     <script>
@@ -139,6 +140,7 @@
             box-shadow: 0 1px 3px rgba(0,0,0,0.04);
         }
         .profile-card h3 { font-size: 16px; font-weight: 600; margin-bottom: 20px; color: #000000; }
+        .profile-card h3 i { margin-right: 8px; color: #4F7CFF; }
         .form-group { margin-bottom: 18px; }
         .form-group label {
             display: block;
@@ -147,6 +149,7 @@
             color: #5E6F82;
             margin-bottom: 4px;
         }
+        .form-group label i { margin-right: 6px; font-size: 12px; color: #8A9AAB; }
         .form-group input, .form-group textarea, .form-group select {
             width: 100%;
             padding: 12px 16px;
@@ -178,6 +181,7 @@
         }
         .btn-primary:hover { background: #3A5FD9; transform: translateY(-1px); }
         .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+        .btn-primary i { margin-right: 8px; color: #FFFFFF; }
         .btn-success {
             background: #34C759;
             border: none;
@@ -191,6 +195,7 @@
             font-family: 'Inter', sans-serif;
         }
         .btn-success:hover { background: #2DB84D; transform: translateY(-1px); }
+        .btn-success i { margin-right: 8px; color: #FFFFFF; }
         .btn-danger {
             background: rgba(255, 59, 48, 0.1);
             border: 1px solid rgba(255, 59, 48, 0.2);
@@ -204,6 +209,7 @@
             font-family: 'Inter', sans-serif;
         }
         .btn-danger:hover { background: rgba(255, 59, 48, 0.2); }
+        .btn-danger i { margin-right: 8px; color: #FF3B30; }
         .form-actions { display: flex; gap: 12px; margin-top: 8px; flex-wrap: wrap; }
         .message-success {
             display: none;
@@ -216,6 +222,7 @@
             margin-bottom: 16px;
         }
         .message-success.show { display: block; }
+        .message-success i { margin-right: 6px; }
         .message-error {
             display: none;
             background: rgba(255, 59, 48, 0.1);
@@ -227,6 +234,7 @@
             margin-bottom: 16px;
         }
         .message-error.show { display: block; }
+        .message-error i { margin-right: 6px; }
         .bank-status {
             display: inline-block;
             padding: 2px 12px;
@@ -236,6 +244,18 @@
         }
         .bank-status.saved { background: #E8F9EF; color: #34C759; }
         .bank-status.not-set { background: #FFF5E6; color: #FF9500; }
+        .pro-badge {
+            display: inline-block;
+            background: #4F7CFF;
+            color: #FFFFFF;
+            font-size: 10px;
+            font-weight: 700;
+            padding: 2px 10px;
+            border-radius: 40px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-left: 8px;
+        }
         @media (max-width: 768px) {
             .navbar { flex-direction: column; gap: 12px; align-items: flex-start; }
             .nav-links { flex-wrap: wrap; gap: 14px; }
@@ -244,29 +264,9 @@
             .form-actions { flex-direction: column; }
             .form-actions button { width: 100%; }
         }
-        .spinner {
-    width: 40px;
-    height: 40px;
-    border: 4px solid #E8EDF2;
-    border-top: 4px solid #4F7CFF;
-    border-radius: 50%;
-    animation: spin 0.8s linear infinite;
-    margin: 0 auto;
-}
-@keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-}
     </style>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <link rel="stylesheet" href="mobile.css">
 </head>
 <body>
-    <!-- Loading Indicator -->
-<div id="loadingIndicator" style="display: none; text-align: center; padding: 40px;">
-    <div class="spinner"></div>
-    <p style="color: #8A9AAB; margin-top: 12px;">Loading your data...</p>
-</div>
     <div class="app-container">
         <nav class="navbar">
             <a href="dashboard.html" class="logo">
@@ -274,18 +274,18 @@
                 PayPoint <span>· Profile</span>
             </a>
             <div class="nav-links">
-                <a href="dashboard.html">Dashboard</a>
-                <a href="deals.html">Deals</a>
-                <a href="expense.html">Expenses</a>
-                <a href="invoice.html">Invoices</a>
-                <a href="creator.html" class="active">Creator</a>
-                <span class="user-badge" id="userBadge">👤 Creator</span>
-                <a href="#" class="logout" id="navLogout">Logout</a>
+                <a href="dashboard.html"><i class="fas fa-chart-pie"></i> Dashboard</a>
+                <a href="deals.html"><i class="fas fa-handshake"></i> Deals</a>
+                <a href="expense.html"><i class="fas fa-credit-card"></i> Expenses</a>
+                <a href="invoice.html"><i class="fas fa-file-invoice"></i> Invoices</a>
+                <a href="creator.html" class="active"><i class="fas fa-user"></i> Creator</a>
+                <span class="user-badge" id="userBadge"><i class="fas fa-user"></i> Creator</span>
+                <a href="#" class="logout" id="navLogout"><i class="fas fa-sign-out-alt"></i> Logout</a>
             </div>
         </nav>
 
         <div class="page-header">
-            <h1>Profile <span>· Manage your account</span></h1>
+            <h1><i class="fas fa-user"></i> Profile <span>· Manage your account</span></h1>
         </div>
 
         <div class="profile-grid">
@@ -301,14 +301,14 @@
                 <div class="profile-name" id="profileName">Creator</div>
                 <div class="profile-email" id="profileEmail">creator@example.com</div>
                 <div class="profile-tier">
-                    🏷️ Tier: <span id="userTierDisplay">Free</span>
+                    <i class="fas fa-tag"></i> Tier: <span id="userTierDisplay">Free</span>
                 </div>
-                <div class="profile-joined" id="profileJoined">Joined: Today</div>
+                <div class="profile-joined" id="profileJoined"><i class="fas fa-calendar"></i> Joined: Today</div>
                 <div class="sidebar-stats">
-                    <div class="sidebar-stat"><div class="num" id="statDeals">0</div><div class="label">Deals</div></div>
-                    <div class="sidebar-stat"><div class="num" id="statRevenue">₦0</div><div class="label">Revenue</div></div>
-                    <div class="sidebar-stat"><div class="num" id="statExpenses">0</div><div class="label">Expenses</div></div>
-                    <div class="sidebar-stat"><div class="num" id="statSpent">₦0</div><div class="label">Spent</div></div>
+                    <div class="sidebar-stat"><div class="num" id="statDeals">0</div><div class="label"><i class="fas fa-handshake"></i> Deals</div></div>
+                    <div class="sidebar-stat"><div class="num" id="statRevenue">₦0</div><div class="label"><i class="fas fa-money-bill-wave"></i> Revenue</div></div>
+                    <div class="sidebar-stat"><div class="num" id="statExpenses">0</div><div class="label"><i class="fas fa-credit-card"></i> Expenses</div></div>
+                    <div class="sidebar-stat"><div class="num" id="statSpent">₦0</div><div class="label"><i class="fas fa-receipt"></i> Spent</div></div>
                 </div>
             </div>
 
@@ -316,114 +316,114 @@
             <div class="profile-main">
                 <!-- Edit Profile -->
                 <div class="profile-card">
-                    <h3>✏️ Edit Profile</h3>
-                    <div class="message-success" id="profileSuccess">✅ Profile updated successfully!</div>
-                    <div class="message-error" id="profileError">❌ Something went wrong.</div>
-                    <div class="form-group"><label>Display Name</label><input type="text" id="editName" placeholder="Your name"></div>
-                    <div class="form-group"><label>Bio / About You</label><textarea id="editBio" placeholder="Tell people about yourself..."></textarea></div>
-                    <div class="form-actions"><button class="btn-primary" id="updateProfileBtn">💾 Save Profile</button></div>
+                    <h3><i class="fas fa-pen"></i> Edit Profile</h3>
+                    <div class="message-success" id="profileSuccess"><i class="fas fa-check-circle"></i> Profile updated successfully!</div>
+                    <div class="message-error" id="profileError"><i class="fas fa-times-circle"></i> Something went wrong.</div>
+                    <div class="form-group"><label><i class="fas fa-user"></i> Display Name</label><input type="text" id="editName" placeholder="Your name"></div>
+                    <div class="form-group"><label><i class="fas fa-align-left"></i> Bio / About You</label><textarea id="editBio" placeholder="Tell people about yourself..."></textarea></div>
+                    <div class="form-actions"><button class="btn-primary" id="updateProfileBtn"><i class="fas fa-floppy-disk"></i> Save Profile</button></div>
                 </div>
 
                 <!-- Change Password -->
                 <div class="profile-card">
-                    <h3>🔑 Change Password</h3>
-                    <div class="message-success" id="passwordSuccess">✅ Password updated successfully!</div>
-                    <div class="message-error" id="passwordError">❌ Current password is incorrect.</div>
-                    <div class="form-group"><label>Current Password</label><input type="password" id="currentPassword" placeholder="Enter current password"></div>
-                    <div class="form-group"><label>New Password</label><input type="password" id="newPassword" placeholder="Enter new password (min 6 characters)"></div>
-                    <div class="form-group"><label>Confirm New Password</label><input type="password" id="confirmPassword" placeholder="Confirm new password"></div>
-                    <div class="form-actions"><button class="btn-primary" id="changePasswordBtn">🔒 Change Password</button></div>
+                    <h3><i class="fas fa-key"></i> Change Password</h3>
+                    <div class="message-success" id="passwordSuccess"><i class="fas fa-check-circle"></i> Password updated successfully!</div>
+                    <div class="message-error" id="passwordError"><i class="fas fa-times-circle"></i> Current password is incorrect.</div>
+                    <div class="form-group"><label><i class="fas fa-lock"></i> Current Password</label><input type="password" id="currentPassword" placeholder="Enter current password"></div>
+                    <div class="form-group"><label><i class="fas fa-lock"></i> New Password</label><input type="password" id="newPassword" placeholder="Enter new password (min 6 characters)"></div>
+                    <div class="form-group"><label><i class="fas fa-lock"></i> Confirm New Password</label><input type="password" id="confirmPassword" placeholder="Confirm new password"></div>
+                    <div class="form-actions"><button class="btn-primary" id="changePasswordBtn"><i class="fas fa-key"></i> Change Password</button></div>
                 </div>
 
                 <!-- Subscription Card -->
                 <div class="profile-card" id="subscriptionCard">
-                    <h3>👑 Pro Subscription</h3>
+                    <h3><i class="fas fa-crown"></i> Pro Subscription</h3>
                     <p style="color: #8A9AAB; font-size: 14px; margin-bottom: 12px;">
-                        Upgrade to Pro for <strong>$9/month</strong> or <strong>$90/year</strong> and unlock:
+                        Upgrade to Pro for <strong>$20/month</strong> or <strong>$200/year</strong> and unlock:
                         unlimited deals, unlimited invoices, advanced analytics, and more.
                         <span style="display: block; font-size: 12px; color: #4F7CFF; margin-top: 4px;">
-                            💱 Charged in NGN at the current exchange rate.
+                            <i class="fas fa-exchange-alt"></i> Charged in NGN at the current exchange rate.
                         </span>
                         <span id="priceDisplay" style="display: block; font-size: 12px; color: #8A9AAB; margin-top: 4px;">
-                            Loading NGN equivalent...
+                            <i class="fas fa-spinner fa-spin"></i> Loading NGN equivalent...
                         </span>
                     </p>
                     <div id="subscriptionStatus"></div>
                     <a href="pricing.html" class="btn-primary" style="display: inline-block; margin-top: 12px; text-decoration: none;">
-                        💳 Upgrade Now
+                        <i class="fas fa-rocket"></i> Upgrade Now
                     </a>
                 </div>
 
                 <!-- Bank Details (Payment Instructions) -->
                 <div class="profile-card">
-                    <h3>🏦 Payment Instructions</h3>
+                    <h3><i class="fas fa-building-columns"></i> Payment Instructions</h3>
                     <p style="color: #8A9AAB; font-size: 14px; margin-bottom: 16px;">
                         Add your bank details. These will appear on your invoices so brands know how to pay you.
-                        <span class="bank-status not-set" id="bankStatus">⚠️ Not Set</span>
+                        <span class="bank-status not-set" id="bankStatus"><i class="fas fa-exclamation-circle"></i> Not Set</span>
                     </p>
                     <div class="form-group">
-                        <label>Account Name</label>
+                        <label><i class="fas fa-user"></i> Account Name</label>
                         <input type="text" id="accountName" placeholder="e.g. John Doe">
                     </div>
                     <div class="form-group">
-                        <label>Bank Name</label>
+                        <label><i class="fas fa-building"></i> Bank Name</label>
                         <input type="text" id="bankName" placeholder="e.g. GTBank, Chase Bank">
                     </div>
                     <div class="form-group">
-                        <label>Account Number</label>
+                        <label><i class="fas fa-hashtag"></i> Account Number</label>
                         <input type="text" id="accountNumber" placeholder="Enter your account number">
                     </div>
                     <div class="form-actions">
-                        <button class="btn-primary" id="saveBankDetailsBtn">💾 Save Payment Instructions</button>
+                        <button class="btn-primary" id="saveBankDetailsBtn"><i class="fas fa-floppy-disk"></i> Save Payment Instructions</button>
                     </div>
                     <div id="bankMessage" style="margin-top:12px; display:none; padding:12px 16px; border-radius:8px;"></div>
                 </div>
 
                 <!-- Business Details (for invoices) -->
                 <div class="profile-card">
-                    <h3>🏢 Business Details <span style="font-size: 12px; color: #8A9AAB;">(for invoices)</span></h3>
+                    <h3><i class="fas fa-building"></i> Business Details <span style="font-size: 12px; color: #8A9AAB;">(for invoices)</span></h3>
                     <p style="color: #8A9AAB; font-size: 14px; margin-bottom: 16px;">
                         These details will appear on your invoices (name, address, VAT, etc.).
                     </p>
                     <div class="form-group">
-                        <label>Business Name</label>
+                        <label><i class="fas fa-building"></i> Business Name</label>
                         <input type="text" id="businessName" placeholder="Your business name">
                     </div>
                     <div class="form-group">
-                        <label>Business Address</label>
+                        <label><i class="fas fa-location-dot"></i> Business Address</label>
                         <textarea id="businessAddress" placeholder="Street, city, postcode, country" rows="3"></textarea>
                     </div>
                     <div class="form-group">
-                        <label>Business Phone</label>
+                        <label><i class="fas fa-phone"></i> Business Phone</label>
                         <input type="tel" id="businessPhone" placeholder="+44 1234 567890">
                     </div>
                     <div class="form-group">
-                        <label>VAT Registered</label>
+                        <label><i class="fas fa-file-invoice"></i> VAT Registered</label>
                         <select id="isVatRegistered">
                             <option value="false">No</option>
                             <option value="true">Yes</option>
                         </select>
                     </div>
                     <div class="form-group" id="vatNumberGroup" style="display:none;">
-                        <label>VAT Number</label>
+                        <label><i class="fas fa-hashtag"></i> VAT Number</label>
                         <input type="text" id="vatNumber" placeholder="GB123456789">
                     </div>
                     <div class="form-group">
-                        <label>Payment Instructions (optional)</label>
+                        <label><i class="fas fa-pen"></i> Payment Instructions (optional)</label>
                         <textarea id="paymentInstructions" placeholder="Bank transfer details or payment link..." rows="3"></textarea>
                         <small style="color: #8A9AAB; font-size: 12px;">These will appear on your invoices.</small>
                     </div>
                     <div class="form-actions">
-                        <button class="btn-primary" id="saveBusinessDetailsBtn">💾 Save Business Details</button>
+                        <button class="btn-primary" id="saveBusinessDetailsBtn"><i class="fas fa-floppy-disk"></i> Save Business Details</button>
                     </div>
                     <div id="businessMessage" style="margin-top:12px; display:none; padding:12px 16px; border-radius:8px;"></div>
                 </div>
 
                 <!-- Danger Zone -->
                 <div class="profile-card" style="border-color: rgba(255, 59, 48, 0.2);">
-                    <h3 style="color: #FF3B30;">⚠️ Danger Zone</h3>
+                    <h3 style="color: #FF3B30;"><i class="fas fa-triangle-exclamation"></i> Danger Zone</h3>
                     <p style="color: #8A9AAB; font-size: 14px; margin-bottom: 16px;">Delete your account and all data. This cannot be undone.</p>
-                    <button class="btn-danger" id="deleteAccountBtn">🗑️ Delete Account</button>
+                    <button class="btn-danger" id="deleteAccountBtn"><i class="fas fa-trash"></i> Delete Account</button>
                 </div>
             </div>
         </div>
@@ -432,56 +432,28 @@
     <!-- Mobile Bottom Navigation -->
     <nav class="bottom-nav">
         <a href="dashboard.html" class="active">
-            <span class="icon">
-                <img src="chart-pie.png" alt="Dashboard" onerror="this.style.display='none'; this.parentElement.querySelector('.fallback').style.display='inline';">
-                <span class="fallback" style="display:none;">📊</span>
-            </span>
+            <span class="icon"><i class="fas fa-chart-pie"></i></span>
             <span>Home</span>
         </a>
         <a href="deals.html">
-            <span class="icon">
-                <img src="handshake.png" alt="Deals" onerror="this.style.display='none'; this.parentElement.querySelector('.fallback').style.display='inline';">
-                <span class="fallback" style="display:none;">🤝</span>
-            </span>
+            <span class="icon"><i class="fas fa-handshake"></i></span>
             <span>Deals</span>
         </a>
         <a href="expense.html">
-            <span class="icon">
-                <img src="credit-card.png" alt="Expenses" onerror="this.style.display='none'; this.parentElement.querySelector('.fallback').style.display='inline';">
-                <span class="fallback" style="display:none;">💳</span>
-            </span>
+            <span class="icon"><i class="fas fa-credit-card"></i></span>
             <span>Expenses</span>
         </a>
         <a href="invoice.html">
-            <span class="icon">
-                <img src="file-invoice.png" alt="Invoices" onerror="this.style.display='none'; this.parentElement.querySelector('.fallback').style.display='inline';">
-                <span class="fallback" style="display:none;">📄</span>
-            </span>
+            <span class="icon"><i class="fas fa-file-invoice"></i></span>
             <span>Invoices</span>
         </a>
         <a href="creator.html">
-            <span class="icon">
-                <img src="user.png" alt="Profile" onerror="this.style.display='none'; this.parentElement.querySelector('.fallback').style.display='inline';">
-                <span class="fallback" style="display:none;">👤</span>
-            </span>
+            <span class="icon"><i class="fas fa-user"></i></span>
             <span>Profile</span>
         </a>
     </nav>
 
     <script>
-        function getCachedData(key, ttl = 60000) {
-    const cached = sessionStorage.getItem(key);
-    if (!cached) return null;
-    try {
-        const { data, timestamp } = JSON.parse(cached);
-        if (Date.now() - timestamp > ttl) return null;
-        return data;
-    } catch { return null; }
-}
-
-function setCachedData(key, data) {
-    sessionStorage.setItem(key, JSON.stringify({ data, timestamp: Date.now() }));
-}
         // ============================================
         // CONFIGURATION
         // ============================================
@@ -627,30 +599,11 @@ function setCachedData(key, data) {
 
             tierDisplay.textContent = tier.charAt(0).toUpperCase() + tier.slice(1);
             if (tier === 'pro') {
-                if (statusDiv) statusDiv.innerHTML = '<span style="color: #34C759;">✅ Active Pro – expires in 30 days</span>';
+                if (statusDiv) statusDiv.innerHTML = '<span style="color: #34C759;"><i class="fas fa-check-circle"></i> Active Pro – expires in 30 days</span>';
                 if (upgradeBtn) upgradeBtn.style.display = 'none';
             } else {
-                if (statusDiv) statusDiv.innerHTML = '<span style="color: #FF9500;">⚠️ Free tier – upgrade to unlock Pro features</span>';
+                if (statusDiv) statusDiv.innerHTML = '<span style="color: #FF9500;"><i class="fas fa-exclamation-triangle"></i> Free tier – upgrade to unlock Pro features</span>';
                 if (upgradeBtn) upgradeBtn.style.display = 'inline-block';
-            }
-        }
-
-        // Fetch exchange rate and update NGN equivalent
-        async function updateCreatorPrice() {
-            try {
-                const res = await fetch('https://api.exchangerate-api.com/v4/latest/USD');
-                const data = await res.json();
-                const rate = data.rates.NGN;
-                if (rate) {
-                    const monthlyNgn = Math.round(20 * rate);
-                    const annualNgn = Math.round(200 * rate);
-                    const priceDisplay = document.getElementById('priceDisplay');
-                    if (priceDisplay) {
-                        priceDisplay.textContent = `(${monthlyNgn} NGN / month | ${annualNgn} NGN / year)`;
-                    }
-                }
-            } catch (err) {
-                console.error('Failed to fetch exchange rate:', err);
             }
         }
 
@@ -743,7 +696,7 @@ function setCachedData(key, data) {
                     if (freshUser) {
                         updateUI(freshUser);
                     }
-                    showMessage('profileSuccess', '✅ Profile updated successfully!');
+                    showMessage('profileSuccess', 'Profile updated successfully!');
                     hideMessage('profileError');
                 } else {
                     showMessage('profileError', result.error || 'Failed to update profile');
@@ -793,7 +746,7 @@ function setCachedData(key, data) {
                 const result = await res.json();
 
                 if (result.success) {
-                    showMessage('passwordSuccess', '✅ Password updated successfully!');
+                    showMessage('passwordSuccess', 'Password updated successfully!');
                     hideMessage('passwordError');
                     document.getElementById('currentPassword').value = '';
                     document.getElementById('newPassword').value = '';
@@ -1083,10 +1036,6 @@ function setCachedData(key, data) {
                 const tier = await fetchUserWithSubscription();
                 updateSubscriptionUI(tier);
                 loadStats();
-                updateCreatorPrice();
-                document.getElementById('loadingIndicator').style.display = 'block';
-// ... fetch data ...
-document.getElementById('loadingIndicator').style.display = 'none';
             }
         })();
 
