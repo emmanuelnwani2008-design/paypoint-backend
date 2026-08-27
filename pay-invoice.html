@@ -59,13 +59,9 @@
     </div>
 
     <script>
-    const API_URL = window.__API_URL__ || (
-        window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-            ? '/api'
-            : 'https://paypoint-7dmc.onrender.com/api'
-    );
+    const API_URL = window.__API_URL__ || (window.location.hostname === 'localhost' ? '/api' : 'https://paypoint-7dmc.onrender.com/api');
     const params = new URLSearchParams(window.location.search);
-    const dealId = params.get('deal');
+    const token = params.get('token');
 
     const loadingIndicator = document.getElementById('loadingIndicator');
     const errorMessage = document.getElementById('errorMessage');
@@ -73,33 +69,68 @@
     const invoiceInfo = document.getElementById('invoiceInfo');
 
     async function loadInvoice() {
-        if (!dealId) {
-            errorMessage.textContent = '❌ Invalid invoice link.';
+        if (!token) {
+            errorMessage.textContent = '❌ Missing invoice token.';
             errorMessage.style.display = 'block';
             loadingIndicator.style.display = 'none';
             return;
         }
 
         try {
-            const res = await fetch(`${API_URL}/public/deal/${dealId}`);
+            const res = await fetch(`${API_URL}/public/invoice/${encodeURIComponent(token)}`);
             const data = await res.json();
 
             if (!data.success || !data.data) {
-                errorMessage.textContent = '❌ Invoice not found.';
+                errorMessage.textContent = '❌ Invoice not found or expired.';
                 errorMessage.style.display = 'block';
                 loadingIndicator.style.display = 'none';
                 return;
             }
 
-            const deal = data.data;
-            const currencySymbol = deal.currency === 'USD' ? '$' : '₦';
-            const formattedAmount = currencySymbol + Number(deal.amount).toLocaleString();
+            const inv = data.data;
+            const currencySymbol = inv.currency === 'USD' ? '$' : '₦';
+            const formattedAmount = currencySymbol + Number(inv.amount).toLocaleString();
+
+            // Build the bank details block
+            let bankHtml = '';
+            if (inv.bank_account_name && inv.bank_account_number) {
+                bankHtml = `
+                    <div style="margin-top: 20px; padding: 16px; background: #F8FAFC; border-radius: 8px; border: 1px solid #E8EDF2; text-align: left;">
+                        <h4 style="margin-bottom: 8px;">💳 Payment Instructions (Bank Transfer)</h4>
+                        <p><strong>Account Name:</strong> ${inv.bank_account_name}</p>
+                        <p><strong>Bank:</strong> ${inv.bank_name}</p>
+                        <p><strong>Account Number:</strong> ${inv.bank_account_number}</p>
+                        <p style="font-size: 12px; color: #8A9AAB; margin-top: 8px;">${inv.payment_instructions || 'Please use the invoice number as reference.'}</p>
+                    </div>
+                `;
+            } else {
+                bankHtml = `<p style="color: #8A9AAB; margin-top: 16px;">The creator has not added payment details yet. Please contact them directly.</p>`;
+            }
+
+            // Invoice line items (if any)
+            let itemsHtml = '';
+            if (inv.line_items && inv.line_items.length > 0) {
+                itemsHtml = '<ul style="list-style: none; padding: 0; margin: 12px 0;">';
+                inv.line_items.forEach(item => {
+                    itemsHtml += `<li style="display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid #eee;">
+                        <span>${item.description || 'Item'}</span>
+                        <span>${currencySymbol}${Number(item.price * (item.quantity || 1)).toLocaleString()}</span>
+                    </li>`;
+                });
+                itemsHtml += '</ul>';
+            }
 
             invoiceInfo.innerHTML = `
-                <strong>${deal.brand_name}</strong><br>
-                Amount: <span style="font-size: 24px; font-weight: bold; color: #4F7CFF;">${formattedAmount}</span><br>
-                Deliverable: ${deal.deliverable || 'Not specified'}<br>
-                Due: ${deal.due_date ? new Date(deal.due_date).toLocaleDateString() : 'Not set'}
+                <div style="text-align: left;">
+                    <p><strong>Invoice #:</strong> ${inv.invoice_number}</p>
+                    <p><strong>Brand:</strong> ${inv.brand_name}</p>
+                    <p><strong>Amount:</strong> <span style="font-size: 24px; font-weight: bold; color: #4F7CFF;">${formattedAmount}</span></p>
+                    <p><strong>Due Date:</strong> ${inv.due_date ? new Date(inv.due_date).toLocaleDateString() : 'Not set'}</p>
+                    ${itemsHtml}
+                    ${inv.notes ? `<p><strong>Notes:</strong> ${inv.notes}</p>` : ''}
+                    <p><strong>Status:</strong> ${inv.status.toUpperCase()}</p>
+                </div>
+                ${bankHtml}
             `;
 
             loadingIndicator.style.display = 'none';
@@ -109,65 +140,17 @@
             errorMessage.textContent = '❌ Could not load invoice details. Please try again.';
             errorMessage.style.display = 'block';
             loadingIndicator.style.display = 'none';
+            console.error(err);
         }
     }
 
-    // Fetch creator's bank details
-const bankRes = await fetch(`${API_URL}/profile/bank-details`, {
-    credentials: 'include'
-});
-const bankData = await bankRes.json();
-
-if (bankData.success && bankData.data && bankData.data.account_name) {
-    invoiceInfo.innerHTML += `
-        <div style="margin-top: 20px; padding: 16px; background: #F8FAFC; border-radius: 8px; border: 1px solid #E8EDF2; text-align: left;">
-            <h4 style="margin-bottom: 8px;">💳 Payment Instructions</h4>
-            <p><strong>Account Name:</strong> ${bankData.data.account_name}</p>
-            <p><strong>Bank:</strong> ${bankData.data.bank_name}</p>
-            <p><strong>Account Number:</strong> ${bankData.data.account_number}</p>
-            <p style="font-size: 12px; color: #8A9AAB; margin-top: 8px;">Please use the invoice number as your payment reference.</p>
-        </div>
-    `;
-}
+    // Payment button (optional – you could also just show bank details)
+    payNowBtn.addEventListener('click', () => {
+        // Since we're using bank transfer, we can simply show a message or copy details.
+        alert('Please transfer the amount to the bank account shown above. Use the invoice number as reference.');
+    });
 
     loadInvoice();
-
-    // Payment button handler (unchanged)
-    payNowBtn.addEventListener('click', async () => {
-        try {
-            payNowBtn.disabled = true;
-            payNowBtn.textContent = '⏳ Processing...';
-
-            const token = localStorage.getItem('paypoint_session');
-            const res = await fetch(`${API_URL}/payments/initialize`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    ...(token ? { 'Authorization': `Bearer ${token}` } : {})
-                },
-                body: JSON.stringify({
-                    dealId: dealId,
-                    email: 'customer@paypoint.com'
-                })
-            });
-
-            const data = await res.json();
-
-            if (data.success && data.authorization_url) {
-                window.location.href = data.authorization_url;
-            } else {
-                errorMessage.textContent = '❌ ' + (data.error || 'Payment initialization failed');
-                errorMessage.style.display = 'block';
-                payNowBtn.disabled = false;
-                payNowBtn.textContent = '💳 Proceed to Pay';
-            }
-        } catch (err) {
-            errorMessage.textContent = '❌ Could not connect to server.';
-            errorMessage.style.display = 'block';
-            payNowBtn.disabled = false;
-            payNowBtn.textContent = '💳 Proceed to Pay';
-        }
-    });
 </script>
 </body>
 </html>

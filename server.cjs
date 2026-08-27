@@ -1569,10 +1569,6 @@ app.post('/api/payments/initialize', authenticate, async (req, res) => {
         const totalAmount = Math.round(deal.amount * 100);
         const callbackUrl = `${FRONTEND_URL}/success.html`;
 
-        const subaccountCode = req.user?.user_metadata?.subaccount_code;
-        if (!subaccountCode) {
-            return res.status(400).json({ error: 'Please add your bank account in the Profile page first.' });
-        }
 
         const response = await fetch('https://api.paystack.co/transaction/initialize', {
             method: 'POST',
@@ -1585,7 +1581,6 @@ app.post('/api/payments/initialize', authenticate, async (req, res) => {
                 amount: totalAmount,
                 currency: deal.currency || 'NGN',
                 callback_url: callbackUrl,
-                subaccount: subaccountCode,
                 metadata: {
                     deal_id: dealId,
                     brand_name: deal.brand_name,
@@ -2240,6 +2235,75 @@ app.post('/api/subscribe', authenticate, async (req, res) => {
 });
 
 // ============================================
+// PUBLIC INVOICE DETAILS (by portal token)
+// ============================================
+app.get('/api/public/invoice/:token', async (req, res) => {
+    try {
+        const { token } = req.params;
+        if (!token || token.length < 20) {
+            return res.status(400).json({ error: 'Invalid token' });
+        }
+
+        // 1. Find the invoice with this portal token
+        const { data: invoice, error: invError } = await supabaseAdmin
+            .from('invoices')
+            .select('deal_id, invoice_number, brand_name, brand_email, total, currency, due_date, line_items, notes, status, created_at')
+            .eq('portal_token', token)
+            .single();
+
+        if (invError || !invoice) {
+            return res.status(404).json({ error: 'Invoice not found' });
+        }
+
+        // 2. Get the deal to fetch user_id (creator)
+        const { data: deal, error: dealError } = await supabaseAdmin
+            .from('deals')
+            .select('user_id, brand_name, amount, status')
+            .eq('id', invoice.deal_id)
+            .single();
+
+        if (dealError || !deal) {
+            return res.status(404).json({ error: 'Associated deal not found' });
+        }
+
+        // 3. Fetch creator’s bank details (public info)
+        const { data: profile, error: profError } = await supabaseAdmin
+            .from('profiles')
+            .select('bank_account_name, bank_name, bank_account_number, payment_instructions')
+            .eq('id', deal.user_id)
+            .single();
+
+        // Even if profile missing, we return what we have
+        const bankDetails = profile || {};
+
+        // 4. Return consolidated invoice data (no sensitive user info)
+        res.json({
+            success: true,
+            data: {
+                invoice_number: invoice.invoice_number,
+                brand_name: invoice.brand_name || deal.brand_name,
+                amount: invoice.total || deal.amount,
+                currency: invoice.currency || 'NGN',
+                due_date: invoice.due_date,
+                line_items: invoice.line_items || [],
+                notes: invoice.notes || '',
+                status: invoice.status || 'sent',
+                created_at: invoice.created_at,
+                // Bank details
+                bank_account_name: bankDetails.bank_account_name || 'Not provided',
+                bank_name: bankDetails.bank_name || 'Not provided',
+                bank_account_number: bankDetails.bank_account_number || 'Not provided',
+                payment_instructions: bankDetails.payment_instructions || 'Please use the invoice number as reference.'
+            }
+        });
+
+    } catch (err) {
+        console.error('Public invoice fetch error:', err);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// ============================================
 // WEBHOOKS
 // ============================================
 app.post('/api/webhooks/paystack',
@@ -2306,8 +2370,25 @@ app.post('/api/webhooks/paystack',
 // ============================================
 // PUBLIC PORTAL - View Invoice
 // ============================================
+// ============================================
+// PUBLIC PORTAL – Redirect to payment page
+// ============================================
 app.get('/portal/:token', async (req, res) => {
-    // ... keep existing ...
+    const { token } = req.params;
+    // Optional: validate token exists (quick check)
+    const { data: invoice, error } = await supabaseAdmin
+        .from('invoices')
+        .select('portal_token')
+        .eq('portal_token', token)
+        .single();
+
+    if (error || !invoice) {
+        return res.status(404).send('Invalid invoice link.');
+    }
+
+    // Redirect to the payment page with the token as parameter
+    const frontendUrl = process.env.FRONTEND_URL || 'https://paypoint-backend.vercel.app';
+    res.redirect(`${frontendUrl}/pay-invoice.html?token=${encodeURIComponent(token)}`);
 });
 
 // ============================================
