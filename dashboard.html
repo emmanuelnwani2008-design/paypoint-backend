@@ -15,7 +15,7 @@
         gtag('config', 'G-HFJ9JM358E');
     </script>
     <style>
-        /* (Your existing styles — keep them exactly as they are) */
+        /* ===== YOUR ORIGINAL CSS – UNCHANGED ===== */
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -155,8 +155,6 @@
             min-height: 100vh;
             background: #F8FAFC;
         }
-        /* Ensure main content fills remaining viewport width on desktop
-           without affecting mobile rules (mobile overrides under 768px). */
         @media (min-width: 769px) {
             .main-content { width: calc(100vw - 240px); }
         }
@@ -375,189 +373,173 @@
             .metrics-grid { grid-template-columns: 1fr; }
             .top-bar h1 { font-size: 18px; }
         }
-        /* ===== USAGE RINGS – Responsive, below metric boxes ===== */
-.usage-rings-container {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 40px;
-    margin: 24px 0 28px 0;
-    background: #FFFFFF;
-    border: 1px solid #E8EDF2;
-    border-radius: 14px;
-    padding: 24px 32px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
-    flex-wrap: nowrap;
-}
-
-.ring-item {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    flex: 0 1 auto;
-}
-
-.ring-wrapper {
-    position: relative;
-    width: 110px;
-    height: 110px;
-}
-
-.ring-wrapper svg {
-    transform: rotate(-90deg);
-    width: 100%;
-    height: 100%;
-}
-
-.ring-wrapper .track {
-    fill: none;
-    stroke: #E8EDF2;
-    stroke-width: 10;
-}
-
-.ring-wrapper .progress-fill {
-    fill: none;
-    stroke-width: 10;
-    stroke-linecap: round;
-    transition: stroke-dashoffset 0.8s ease;
-}
-
-.ring-wrapper .deals-ring   { stroke: #4F7CFF; }
-.ring-wrapper .invoices-ring { stroke: #34C759; }
-.ring-wrapper .expenses-ring { stroke: #FF9500; }
-
-.ring-label {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    text-align: center;
-    line-height: 1.2;
-}
-
-.ring-label .ring-count {
-    font-size: 26px;
-    font-weight: 700;
-    color: #000000;
-}
-
-.ring-label .ring-name {
-    font-size: 12px;
-    font-weight: 500;
-    color: #8A9AAB;
-}
-
-.ring-limit {
-    font-size: 12px;
-    color: #8A9AAB;
-    margin-top: 8px;
-    font-weight: 500;
-}
-
-/* ===== RESPONSIVE: smaller on mobile, larger on desktop ===== */
-@media (max-width: 768px) {
-    .usage-rings-container {
-        gap: 20px;
-        padding: 16px 16px;
-        flex-wrap: nowrap;
-        overflow-x: auto;
-    }
-    .ring-wrapper {
-        width: 85px;
-        height: 85px;
-    }
-    .ring-wrapper .track,
-    .ring-wrapper .progress-fill {
-        stroke-width: 8;
-    }
-    .ring-label .ring-count {
-        font-size: 20px;
-    }
-    .ring-label .ring-name {
-        font-size: 10px;
-    }
-    .ring-limit {
-        font-size: 10px;
-        margin-top: 6px;
-    }
-}
-
-@media (max-width: 480px) {
-    .usage-rings-container {
-        gap: 10px;
-        padding: 12px 10px;
-    }
-    .ring-wrapper {
-        width: 70px;
-        height: 70px;
-    }
-    .ring-wrapper .track,
-    .ring-wrapper .progress-fill {
-        stroke-width: 6;
-    }
-    .ring-label .ring-count {
-        font-size: 16px;
-    }
-    .ring-label .ring-name {
-        font-size: 8px;
-    }
-    .ring-limit {
-        font-size: 8px;
-        margin-top: 4px;
-    }
-}
-
-/* ===== Optional: make rings scrollable on very small screens ===== */
-@media (max-width: 380px) {
-    .usage-rings-container {
-        justify-content: flex-start;
-        overflow-x: auto;
-        gap: 14px;
-        padding: 12px 16px;
-    }
-    .ring-item {
-        flex: 0 0 auto;
-    }
-}
-.spinner {
-    width: 40px;
-    height: 40px;
-    border: 4px solid #E8EDF2;
-    border-top: 4px solid #4F7CFF;
-    border-radius: 50%;
-    animation: spin 0.8s linear infinite;
-    margin: 0 auto;
-}
-#loadingIndicator {
-    position: fixed;
-    inset: 0;
-    display: none;
-    align-items: center;
-    justify-content: center;
-    flex-direction: column;
-    background: rgba(248, 250, 252, 0.78);
-    backdrop-filter: blur(2px);
-    -webkit-backdrop-filter: blur(2px);
-    z-index: 2000;
-}
-#loadingIndicator.visible {
-    display: flex;
-}
-.dashboard-shell {
-    opacity: 0;
-    visibility: hidden;
-    pointer-events: none;
-    transition: opacity 0.25s ease, visibility 0.25s ease;
-}
-.dashboard-shell.ready {
-    opacity: 1;
-    visibility: visible;
-    pointer-events: auto;
-}
-@keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-}
+        .usage-rings-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 40px;
+            margin: 24px 0 28px 0;
+            background: #FFFFFF;
+            border: 1px solid #E8EDF2;
+            border-radius: 14px;
+            padding: 24px 32px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+            flex-wrap: nowrap;
+        }
+        .ring-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            flex: 0 1 auto;
+        }
+        .ring-wrapper {
+            position: relative;
+            width: 110px;
+            height: 110px;
+        }
+        .ring-wrapper svg {
+            transform: rotate(-90deg);
+            width: 100%;
+            height: 100%;
+        }
+        .ring-wrapper .track {
+            fill: none;
+            stroke: #E8EDF2;
+            stroke-width: 10;
+        }
+        .ring-wrapper .progress-fill {
+            fill: none;
+            stroke-width: 10;
+            stroke-linecap: round;
+            transition: stroke-dashoffset 0.8s ease;
+        }
+        .ring-wrapper .deals-ring   { stroke: #4F7CFF; }
+        .ring-wrapper .invoices-ring { stroke: #34C759; }
+        .ring-wrapper .expenses-ring { stroke: #FF9500; }
+        .ring-label {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            line-height: 1.2;
+        }
+        .ring-label .ring-count {
+            font-size: 26px;
+            font-weight: 700;
+            color: #000000;
+        }
+        .ring-label .ring-name {
+            font-size: 12px;
+            font-weight: 500;
+            color: #8A9AAB;
+        }
+        .ring-limit {
+            font-size: 12px;
+            color: #8A9AAB;
+            margin-top: 8px;
+            font-weight: 500;
+        }
+        @media (max-width: 768px) {
+            .usage-rings-container {
+                gap: 20px;
+                padding: 16px 16px;
+                flex-wrap: nowrap;
+                overflow-x: auto;
+            }
+            .ring-wrapper {
+                width: 85px;
+                height: 85px;
+            }
+            .ring-wrapper .track,
+            .ring-wrapper .progress-fill {
+                stroke-width: 8;
+            }
+            .ring-label .ring-count {
+                font-size: 20px;
+            }
+            .ring-label .ring-name {
+                font-size: 10px;
+            }
+            .ring-limit {
+                font-size: 10px;
+                margin-top: 6px;
+            }
+        }
+        @media (max-width: 480px) {
+            .usage-rings-container {
+                gap: 10px;
+                padding: 12px 10px;
+            }
+            .ring-wrapper {
+                width: 70px;
+                height: 70px;
+            }
+            .ring-wrapper .track,
+            .ring-wrapper .progress-fill {
+                stroke-width: 6;
+            }
+            .ring-label .ring-count {
+                font-size: 16px;
+            }
+            .ring-label .ring-name {
+                font-size: 8px;
+            }
+            .ring-limit {
+                font-size: 8px;
+                margin-top: 4px;
+            }
+        }
+        @media (max-width: 380px) {
+            .usage-rings-container {
+                justify-content: flex-start;
+                overflow-x: auto;
+                gap: 14px;
+                padding: 12px 16px;
+            }
+            .ring-item {
+                flex: 0 0 auto;
+            }
+        }
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #E8EDF2;
+            border-top: 4px solid #4F7CFF;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto;
+        }
+        #loadingIndicator {
+            position: fixed;
+            inset: 0;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            background: rgba(248, 250, 252, 0.78);
+            backdrop-filter: blur(2px);
+            -webkit-backdrop-filter: blur(2px);
+            z-index: 2000;
+        }
+        #loadingIndicator.visible {
+            display: flex;
+        }
+        .dashboard-shell {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+            transition: opacity 0.25s ease, visibility 0.25s ease;
+        }
+        .dashboard-shell.ready {
+            opacity: 1;
+            visibility: visible;
+            pointer-events: auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
     </style>
 </head>
 <body>
@@ -573,15 +555,14 @@
         <nav class="sidebar" id="sidebar">
             <div class="sidebar-logo"><img src="logo.png" alt="PayPoint" style="height: 32px;"></div>
             <div class="sidebar-nav">
-                <div class="sidebar-nav">
-    <a href="dashboard.html" class="active"><span class="icon"><i class="fas fa-chart-pie"></i></span> Dashboard</a>
-    <a href="deals.html"><span class="icon"><i class="fas fa-handshake"></i></span> Deals <span class="badge">New</span></a>
-    <a href="expense.html"><span class="icon"><i class="fas fa-credit-card"></i></span> Expenses</a>
-    <a href="invoice.html"><span class="icon"><i class="fas fa-file-invoice"></i></span> Invoices</a>
-    <a href="creator.html"><span class="icon"><i class="fas fa-user"></i></span> Profile</a>
-    <a href="settings.html"><span class="icon"><i class="fas fa-gear"></i></span> Settings</a>
-    <a href="#" id="navLogout" class="logout"><span class="icon"><i class="fas fa-sign-out-alt"></i></span> Logout</a>
-</div>
+                <a href="dashboard.html" class="active"><span class="icon"><i class="fas fa-chart-pie"></i></span> Dashboard</a>
+                <a href="deals.html"><span class="icon"><i class="fas fa-handshake"></i></span> Deals <span class="badge">New</span></a>
+                <a href="expense.html"><span class="icon"><i class="fas fa-credit-card"></i></span> Expenses</a>
+                <a href="invoice.html"><span class="icon"><i class="fas fa-file-invoice"></i></span> Invoices</a>
+                <a href="creator.html"><span class="icon"><i class="fas fa-user"></i></span> Profile</a>
+                <a href="settings.html"><span class="icon"><i class="fas fa-gear"></i></span> Settings</a>
+                <a href="#" id="navLogout" class="logout"><span class="icon"><i class="fas fa-sign-out-alt"></i></span> Logout</a>
+            </div>
             <div class="sidebar-user">
                 <div class="avatar" id="sidebarAvatar"><img id="sidebarAvatarImg" src="user.png" alt="Profile" onerror="this.src='user.png'"></div>
                 <div class="info"><div class="name" id="sidebarName">Creator</div><div class="email" id="sidebarEmail">creator@paypoint.com</div></div>
@@ -591,7 +572,7 @@
         <div class="main-content">
             <header class="top-bar">
                 <h1>Dashboard <span>· Overview</span></h1>
-                <div class="top-bar-actions"><span class="date" id="currentDate"></span><button class="btn-primary" id="openModalBtn"><i class="fas fa-plus-circle"></i> New Deal</button>
+                <div class="top-bar-actions"><span class="date" id="currentDate"></span><button class="btn-primary" id="openModalBtn"><i class="fas fa-plus-circle"></i> New Deal</button></div>
             </header>
 
             <section class="metrics-grid" id="metricsGrid">
@@ -616,6 +597,7 @@
                     <div class="sub">What you actually keep</div>
                 </div>
             </section>
+
             <div class="usage-rings-container">
                 <div class="ring-item">
                     <div class="ring-wrapper">
@@ -661,15 +643,22 @@
             </div>
 
             <section class="split-panel">
-                <div class="panel"><div class="panel-header"><h3><i class="fas fa-clipboard-list"></i> Active Deals</h3><a href="deals.html">View all →</a></div><div id="dealsList"><div style="color:#8A9AAB; font-size:14px; padding:12px 0;">No deals yet. Add your first one!</div></div></div>
-                <div class="panel"><div class="panel-header"><h3>🧾 Recent Expenses</h3><a href="expense.html">View all →</a></div><div id="expensesList"><div style="color:#8A9AAB; font-size:14px; padding:12px 0;">No expenses logged yet.</div></div></div>
+                <div class="panel">
+                    <div class="panel-header"><h3><i class="fas fa-clipboard-list"></i> Active Deals</h3><a href="deals.html">View all →</a></div>
+                    <div id="dealsList"><div style="color:#8A9AAB; font-size:14px; padding:12px 0;">No deals yet. Add your first one!</div></div>
+                </div>
+                <div class="panel">
+                    <div class="panel-header"><h3>🧾 Recent Expenses</h3><a href="expense.html">View all →</a></div>
+                    <div id="expensesList"><div style="color:#8A9AAB; font-size:14px; padding:12px 0;">No expenses logged yet.</div></div>
+                </div>
             </section>
         </div>
     </div>
 
     <div class="modal-overlay" id="dealModal">
         <div class="modal">
-            <h2><i class="fas fa-money-bill-wave"></i> New Brand Deal</h2><p>Log a new deal to start tracking your income.</p>
+            <h2><i class="fas fa-money-bill-wave"></i> New Brand Deal</h2>
+            <p>Log a new deal to start tracking your income.</p>
             <label for="brandName">Brand Name</label><input type="text" id="brandName" placeholder="e.g. Nike, Glossier, Samsung">
             <label for="dealAmount">Amount</label><input type="number" id="dealAmount" placeholder="e.g. 5000">
             <label for="dealDeliverable">Deliverable</label><input type="text" id="dealDeliverable" placeholder="e.g. 1 TikTok video">
@@ -679,45 +668,26 @@
         </div>
     </div>
 
-    <!-- Mobile Bottom Navigation -->
     <nav class="bottom-nav">
-    <a href="dashboard.html" class="active"><span class="icon"><i class="fas fa-chart-pie"></i></span><span>Home</span></a>
-    <a href="deals.html"><span class="icon"><i class="fas fa-handshake"></i></span><span>Deals</span></a>
-    <a href="expense.html"><span class="icon"><i class="fas fa-credit-card"></i></span><span>Expenses</span></a>
-    <a href="invoice.html"><span class="icon"><i class="fas fa-file-invoice"></i></span><span>Invoices</span></a>
-    <a href="creator.html"><span class="icon"><i class="fas fa-user"></i></span><span>Profile</span></a>
-</nav>
+        <a href="dashboard.html" class="active"><span class="icon"><i class="fas fa-chart-pie"></i></span><span>Home</span></a>
+        <a href="deals.html"><span class="icon"><i class="fas fa-handshake"></i></span><span>Deals</span></a>
+        <a href="expense.html"><span class="icon"><i class="fas fa-credit-card"></i></span><span>Expenses</span></a>
+        <a href="invoice.html"><span class="icon"><i class="fas fa-file-invoice"></i></span><span>Invoices</span></a>
+        <a href="creator.html"><span class="icon"><i class="fas fa-user"></i></span><span>Profile</span></a>
+    </nav>
 
-    <!-- ===== SHARED AUTH & TOAST ===== -->
+    <!-- ===== SHARED SCRIPTS ===== -->
     <script src="auth.js"></script>
     <script src="toast.js"></script>
 
     <script>
         // ============================================
-        // SHARED FUNCTIONS (now from auth.js & toast.js)
+        // ORIGINAL DASHBOARD JAVASCRIPT – MINIMAL CHANGES
         // ============================================
-        const API_URL = window.__API_URL__ || (window.location.hostname === 'localhost' ? '/api' : 'https://paypoint-7dmc.onrender.com/api');
-        const getAuthHeaders = window.getAuthHeaders;
-        const showToast = window.showToast;
-        const escapeHtml = window.escapeHtml || function(text) {
-            if (!text) return '';
-            const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
-        };
-        const formatCurrency = (amount, currency) => {
-            if (!amount && amount !== 0) return '₦0';
-            const userData = JSON.parse(localStorage.getItem('paypoint_user') || '{}');
-            const userCurrency = (userData?.user_metadata?.default_currency || 'NGN').toUpperCase();
-            const normalizedCurrency = (currency || userCurrency || 'NGN').toUpperCase();
-            const symbols = { USD: '$', NGN: '₦' };
-            const symbol = symbols[normalizedCurrency] || symbols[userCurrency] || '₦';
-            return symbol + Number(amount).toLocaleString();
-        };
+        // Removed local checkAuth, getAuthHeaders, escapeHtml, logout.
+        // Using window.API_URL, window.getAuthHeaders(), window.escapeHtml(), window.logout()
+        // Replaced alert() with window.showToast() in modal flow.
 
-        // ============================================
-        // CACHING HELPERS
-        // ============================================
         function getCachedData(key, ttl = 60000) {
             const cached = sessionStorage.getItem(key);
             if (!cached) return null;
@@ -727,13 +697,21 @@
                 return data;
             } catch { return null; }
         }
+
         function setCachedData(key, data) {
             sessionStorage.setItem(key, JSON.stringify({ data, timestamp: Date.now() }));
         }
 
-        // ============================================
-        // SIDEBAR UPDATE
-        // ============================================
+        function formatCurrency(amount, currency) {
+            if (!amount && amount !== 0) return '₦0';
+            const userData = JSON.parse(localStorage.getItem('paypoint_user') || '{}');
+            const userCurrency = (userData?.user_metadata?.default_currency || 'NGN').toUpperCase();
+            const normalizedCurrency = (currency || userCurrency || 'NGN').toUpperCase();
+            const symbols = { USD: '$', NGN: '₦' };
+            const symbol = symbols[normalizedCurrency] || symbols[userCurrency] || '₦';
+            return symbol + Number(amount).toLocaleString();
+        }
+
         function updateSidebarUI(userData) {
             if (!userData) return;
             const name = userData?.user_metadata?.name || userData?.name || 'Creator';
@@ -746,15 +724,13 @@
             else sidebarAvatarImg.src = 'user.png';
         }
 
-        // ============================================
-        // LOAD FUNCTIONS (unchanged logic, but use shared helpers)
-        // ============================================
+        // ----- LOAD FUNCTIONS -----
         async function loadUsageRings() {
             try {
                 const cached = getCachedData('usage');
                 if (cached) { updateRings(cached); return; }
-                const res = await fetch(`${API_URL}/usage`, {
-                    headers: getAuthHeaders(),
+                const res = await fetch(`${window.API_URL}/usage`, {
+                    headers: window.getAuthHeaders(),
                     credentials: 'include'
                 });
                 if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -793,8 +769,7 @@
                 const clamped = Math.min(1, Math.max(0, progress));
                 const offset = circumference - (clamped * circumference);
                 ring.style.strokeDashoffset = offset;
-                const warningColor = '#FF3B30';
-                ring.style.stroke = clamped >= 0.8 ? warningColor : '';
+                ring.style.stroke = clamped >= 0.8 ? '#FF3B30' : '';
             }
         }
 
@@ -803,8 +778,8 @@
                 const userData = JSON.parse(localStorage.getItem('paypoint_user') || '{}');
                 const currency = userData?.user_metadata?.default_currency || 'USD';
                 const currencySymbol = currency === 'USD' ? '$' : '₦';
-                const res = await fetch(`${API_URL}/dashboard/stats`, {
-                    headers: getAuthHeaders(),
+                const res = await fetch(`${window.API_URL}/dashboard/stats`, {
+                    headers: window.getAuthHeaders(),
                     credentials: 'include'
                 });
                 const result = await res.json();
@@ -853,8 +828,8 @@
             try {
                 const cached = getCachedData('deals');
                 if (cached) { renderDeals(cached); return; }
-                const res = await fetch(`${API_URL}/deals`, {
-                    headers: getAuthHeaders(),
+                const res = await fetch(`${window.API_URL}/deals`, {
+                    headers: window.getAuthHeaders(),
                     credentials: 'include'
                 });
                 if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -885,7 +860,7 @@
                 const leftDiv = document.createElement('div');
                 const brandDiv = document.createElement('div');
                 brandDiv.className = 'deal-brand';
-                brandDiv.textContent = escapeHtml(deal.brand_name || deal.brand || 'Unknown');
+                brandDiv.textContent = window.escapeHtml(deal.brand_name || deal.brand || 'Unknown');
                 leftDiv.appendChild(brandDiv);
                 const rightDiv = document.createElement('div');
                 rightDiv.style.textAlign = 'right';
@@ -907,8 +882,8 @@
             try {
                 const cached = getCachedData('expenses');
                 if (cached) { renderExpenses(cached); return; }
-                const res = await fetch(`${API_URL}/expenses`, {
-                    headers: getAuthHeaders(),
+                const res = await fetch(`${window.API_URL}/expenses`, {
+                    headers: window.getAuthHeaders(),
                     credentials: 'include'
                 });
                 if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -938,7 +913,7 @@
                 div.className = 'expense-item';
                 const vendorDiv = document.createElement('div');
                 vendorDiv.className = 'expense-vendor';
-                vendorDiv.textContent = escapeHtml(exp.vendor || 'Unknown');
+                vendorDiv.textContent = window.escapeHtml(exp.vendor || 'Unknown');
                 const rightDiv = document.createElement('div');
                 const catSpan = document.createElement('span');
                 catSpan.className = 'expense-category';
@@ -954,9 +929,7 @@
             });
         }
 
-        // ============================================
-        // MODAL CONTROLS
-        // ============================================
+        // ----- MODAL CONTROLS -----
         const modal = document.getElementById('dealModal');
         document.getElementById('openModalBtn').addEventListener('click', () => modal.classList.add('active'));
         document.getElementById('closeModalBtn').addEventListener('click', () => modal.classList.remove('active'));
@@ -969,13 +942,13 @@
             const due_date = document.getElementById('dealDueDate').value;
             const currency = document.getElementById('dealCurrency').value;
             if (!brand_name || !amount) {
-                showToast('Brand Name and Amount are required!', 'error');
+                window.showToast('Brand Name and Amount are required!', 'error');
                 return;
             }
             try {
-                const res = await fetch(`${API_URL}/deals`, {
+                const res = await fetch(`${window.API_URL}/deals`, {
                     method: 'POST',
-                    headers: getAuthHeaders(),
+                    headers: window.getAuthHeaders(),
                     body: JSON.stringify({
                         brand_name,
                         amount: parseFloat(amount),
@@ -987,7 +960,7 @@
                 });
                 const result = await res.json();
                 if (result.success) {
-                    showToast('✅ Deal added successfully!', 'success');
+                    window.showToast('✅ Deal added successfully!', 'success');
                     modal.classList.remove('active');
                     document.getElementById('brandName').value = '';
                     document.getElementById('dealAmount').value = '';
@@ -995,17 +968,15 @@
                     document.getElementById('dealDueDate').value = '';
                     await loadDeals();
                 } else {
-                    showToast('❌ Error: ' + (result.error || 'Unknown error'), 'error');
+                    window.showToast('❌ Error: ' + (result.error || 'Unknown error'), 'error');
                 }
             } catch (err) {
-                showToast('❌ Could not connect to backend.', 'error');
+                window.showToast('❌ Could not connect to backend.', 'error');
                 console.error(err);
             }
         });
 
-        // ============================================
-        // SIDEBAR TOGGLE
-        // ============================================
+        // ----- SIDEBAR TOGGLE -----
         document.getElementById('menuToggle').addEventListener('click', () => {
             document.getElementById('sidebar').classList.toggle('open');
             document.getElementById('sidebarOverlay').classList.toggle('active');
@@ -1015,17 +986,13 @@
             document.getElementById('sidebarOverlay').classList.remove('active');
         });
 
-        // ============================================
-        // LOGOUT
-        // ============================================
+        // ----- LOGOUT -----
         document.getElementById('navLogout')?.addEventListener('click', async (e) => {
             e.preventDefault();
             await window.logout();
         });
 
-        // ============================================
-        // DATE
-        // ============================================
+        // ----- DATE -----
         document.getElementById('currentDate').textContent = new Date().toLocaleDateString('en-US', {
             month: 'short',
             day: 'numeric',
@@ -1033,7 +1000,7 @@
         });
 
         // ============================================
-        // INIT
+        // ⭐ INIT
         // ============================================
         (async function init() {
             try {
@@ -1066,7 +1033,7 @@
                 }
 
                 console.log('PayPoint Dashboard loaded successfully');
-                console.log('Connected to:', API_URL);
+                console.log('Connected to:', window.API_URL);
             } catch (err) {
                 console.error('❌ Init error:', err);
                 const loadingEl = document.getElementById('loadingIndicator');
@@ -1074,7 +1041,7 @@
                     loadingEl.classList.remove('visible');
                     loadingEl.setAttribute('aria-busy', 'false');
                 }
-                showToast('Failed to load dashboard. Please refresh.', 'error');
+                window.showToast('Failed to load dashboard. Please refresh.', 'error');
             }
         })();
     </script>
