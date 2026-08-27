@@ -490,7 +490,6 @@ function setCachedData(key, data) {
         const createInvoiceBtn = document.getElementById('createInvoiceBtn');
         const modal = document.getElementById('invoiceModal');
         const modalDeal = document.getElementById('modalDeal');
-        const modalInvoiceNumber = document.getElementById('modalInvoiceNumber');
         const modalBrandEmail = document.getElementById('modalBrandEmail');
 
         // ============================================
@@ -692,7 +691,6 @@ function setCachedData(key, data) {
         // ============================================
         createInvoiceBtn.addEventListener('click', async () => {
             const dealId = modalDeal.value;
-            const invoiceNumber = modalInvoiceNumber.value.trim();
             const brandEmail = modalBrandEmail.value.trim();
 
             if (!dealId) {
