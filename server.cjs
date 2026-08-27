@@ -1685,8 +1685,10 @@ app.get('/api/payments/verify/:reference', authenticate, async (req, res) => {
 });
 
 // ============================================
-// GET USER INVOICES (with deal details)
+// INVOICE ROUTES – RESTful
 // ============================================
+
+// GET all invoices for the user
 app.get('/api/invoices', authenticate, async (req, res) => {
     try {
         const userId = req.userId;
@@ -1707,6 +1709,68 @@ app.get('/api/invoices', authenticate, async (req, res) => {
     } catch (err) {
         console.error('Invoices GET error:', err);
         res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// POST – Create a new invoice
+app.post('/api/invoices', authenticate, handleInvoiceCreate);
+
+// POST – Resend an invoice email
+app.post('/api/invoices/:id/resend', authenticate, async (req, res) => {
+    try {
+        const { id: invoiceId } = req.params;
+        const userId = req.userId;
+
+        // Fetch invoice with deal and profile
+        const { data: invoice, error: invErr } = await supabaseAdmin
+            .from('invoices')
+            .select('*, deals(*)')
+            .eq('id', invoiceId)
+            .eq('user_id', userId)
+            .single();
+
+        if (invErr || !invoice) {
+            return res.status(404).json({ error: 'Invoice not found' });
+        }
+
+        const deal = invoice.deals;
+        if (!deal) return res.status(404).json({ error: 'Deal not found' });
+
+        // Fetch creator profile (bank details etc.)
+        const { data: profile, error: profErr } = await supabaseAdmin
+            .from('profiles')
+            .select('bank_account_name, bank_name, bank_account_number, payment_instructions')
+            .eq('id', userId)
+            .single();
+
+        // Build email HTML
+        const portalToken = invoice.portal_token;
+        const portalLink = `${process.env.FRONTEND_URL || 'https://paypoint-app.netlify.app'}/portal/${portalToken}`;
+
+        const html = buildInvoiceEmail({
+            invoice,
+            deal,
+            profile: profile || {},
+            items: invoice.line_items || [],
+            subtotal: invoice.subtotal || 0,
+            vatAmount: invoice.vat_amount || 0,
+            total: invoice.total || deal.amount,
+            portalLink
+        });
+
+        const subject = `📄 Invoice #${invoice.invoice_number} from ${deal.brand_name}`;
+
+        // Send email (currently logs only, but you can replace with Resend)
+        const sent = await sendEmailWithRetry(invoice.brand_email, subject, html);
+
+        res.json({
+            success: true,
+            email_sent: sent,
+            portal_link: portalLink
+        });
+    } catch (err) {
+        console.error('Resend error:', err);
+        res.status(500).json({ error: 'Failed to resend' });
     }
 });
 
