@@ -587,7 +587,8 @@
                 width: 100%;
                 max-width: 100%;
                 margin-left: 0;
-                padding: 64px 14px 92px;
+                /* Extra bottom space keeps content clear of the larger mobile nav. */
+                padding: 64px 14px 124px;
                 overflow-x: hidden;
             }
             .menu-toggle {
@@ -650,6 +651,7 @@
             .modal { width: 100%; max-width: 440px; margin: 0; max-height: calc(100vh - 24px); overflow-y: auto; }
 
             /* Keep the bottom navigation inside the viewport on phones. */
+            /* ===== LARGE, EASY-TO-TAP MOBILE BOTTOM NAV ===== */
             .bottom-nav {
                 display: flex;
                 position: fixed;
@@ -657,38 +659,64 @@
                 right: 0;
                 bottom: 0;
                 z-index: 1100;
-                height: 68px;
-                padding: 6px 8px calc(6px + env(safe-area-inset-bottom));
-                background: rgba(255,255,255,.97);
+                min-height: 92px;
+                height: calc(92px + env(safe-area-inset-bottom));
+                padding: 8px 10px calc(8px + env(safe-area-inset-bottom));
+                box-sizing: border-box;
+                background: rgba(255,255,255,.98);
                 border-top: 1px solid #E8EDF2;
-                box-shadow: 0 -4px 18px rgba(0,0,0,.06);
+                box-shadow: 0 -5px 20px rgba(0,0,0,.07);
                 align-items: stretch;
                 justify-content: space-around;
-                backdrop-filter: blur(12px);
-                -webkit-backdrop-filter: blur(12px);
+                backdrop-filter: blur(14px);
+                -webkit-backdrop-filter: blur(14px);
             }
             .bottom-nav a {
                 flex: 1 1 0;
                 min-width: 0;
+                min-height: 74px;
                 display: flex;
                 flex-direction: column;
                 align-items: center;
                 justify-content: center;
-                gap: 3px;
+                gap: 5px;
+                margin: 0 2px;
                 color: #8A9AAB;
                 text-decoration: none;
-                font-size: 10px;
+                font-size: 12px;
+                line-height: 1.15;
                 font-weight: 600;
-                border-radius: 10px;
+                border-radius: 12px;
+                -webkit-tap-highlight-color: transparent;
             }
-            .bottom-nav a .icon { font-size: 18px; line-height: 1; }
-            .bottom-nav a.active { color: #4F7CFF; }
+            .bottom-nav a .icon {
+                width: 30px;
+                height: 30px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 25px;
+                line-height: 1;
+            }
+            .bottom-nav a .icon i {
+                font-size: inherit;
+            }
+            .bottom-nav a.active {
+                color: #4F7CFF;
+            }
+            .bottom-nav a:active {
+                transform: scale(.96);
+            }
             .sidebar-overlay { z-index: 1050; }
             .sidebar { z-index: 1101; }
         }
 
         @media (max-width: 480px) {
-            .main-content { padding-left: 10px; padding-right: 10px; }
+            .main-content {
+                padding-left: 10px;
+                padding-right: 10px;
+                padding-bottom: 124px;
+            }
             .metrics-grid { gap: 8px; }
             .metric-card { padding: 13px 11px; }
             .metric-card .value { font-size: 19px; }
@@ -702,8 +730,24 @@
             .metrics-grid { grid-template-columns: 1fr; }
             .top-bar-actions { align-items: center; }
             .top-bar-actions .date { max-width: 45%; }
-            .bottom-nav a { font-size: 9px; }
-            .bottom-nav a .icon { font-size: 16px; }
+
+            /* Keep the nav large, but fit five items on very narrow phones. */
+            .bottom-nav {
+                min-height: 88px;
+                height: calc(88px + env(safe-area-inset-bottom));
+                padding-left: 4px;
+                padding-right: 4px;
+            }
+            .bottom-nav a {
+                min-height: 70px;
+                font-size: 11px;
+                gap: 4px;
+            }
+            .bottom-nav a .icon {
+                width: 28px;
+                height: 28px;
+                font-size: 23px;
+            }
         }
     </style>
 </head>
