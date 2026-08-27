@@ -688,102 +688,560 @@
     <a href="creator.html"><span class="icon"><i class="fas fa-user"></i></span><span>Profile</span></a>
 </nav>
     <script>
-        // ============================================
-        // BULLETPROOF AUTH (FIXED)
-        // ============================================
-        const API_URL = '/api';
-        function getCachedData(key, ttl = 60000) {
-    const cached = sessionStorage.getItem(key);
-    if (!cached) return null;
-    try {
-        const { data, timestamp } = JSON.parse(cached);
-        if (Date.now() - timestamp > ttl) return null;
-        return data;
-    } catch { return null; }
-}
+    // ============================================
+    // BULLETPROOF AUTH (FIXED)
+    // ============================================
+    const API_URL = '/api';
+    let globalDeals = [];
+    let globalExpenses = [];
 
-function setCachedData(key, data) {
-    sessionStorage.setItem(key, JSON.stringify({ data, timestamp: Date.now() }));
-}
+    function getCachedData(key, ttl = 60000) {
+        const cached = sessionStorage.getItem(key);
+        if (!cached) return null;
+        try {
+            const { data, timestamp } = JSON.parse(cached);
+            if (Date.now() - timestamp > ttl) return null;
+            return data;
+        } catch { return null; }
+    }
 
-        // ----- Helper Functions -----
-        function getAuthHeaders() {
-            const token = localStorage.getItem('paypoint_session');
-            const headers = { 'Content-Type': 'application/json' };
-            if (token) headers['Authorization'] = `Bearer ${token}`;
-            return headers;
-        }
+    function setCachedData(key, data) {
+        sessionStorage.setItem(key, JSON.stringify({ data, timestamp: Date.now() }));
+    }
 
-        function formatCurrency(amount, currency) {
-    if (!amount && amount !== 0) return '₦0';
-    const userData = JSON.parse(localStorage.getItem('paypoint_user') || '{}');
-    const userCurrency = (userData?.user_metadata?.default_currency || 'NGN').toUpperCase();
-    const normalizedCurrency = (currency || userCurrency || 'NGN').toUpperCase();
-    const symbols = { USD: '$', NGN: '₦' };
-    const symbol = symbols[normalizedCurrency] || symbols[userCurrency] || '₦';
-    return symbol + Number(amount).toLocaleString();
-}
+    // ----- Helper Functions -----
+    function getAuthHeaders() {
+        const token = localStorage.getItem('paypoint_session');
+        const headers = { 'Content-Type': 'application/json' };
+        if (token) headers['Authorization'] = `Bearer ${token}`;
+        return headers;
+    }
 
-        function updateSidebarUI(userData) {
-            if (!userData) return;
-            const name = userData?.user_metadata?.name || userData?.name || 'Creator';
-            const email = userData?.email || 'creator@paypoint.com';
-            const avatarUrl = userData?.user_metadata?.avatar_url;
-            document.getElementById('sidebarName').textContent = name;
-            document.getElementById('sidebarEmail').textContent = email;
-            const sidebarAvatarImg = document.getElementById('sidebarAvatarImg');
-            if (avatarUrl) sidebarAvatarImg.src = avatarUrl;
-            else sidebarAvatarImg.src = 'user.png';
-        }
+    function formatCurrency(amount, currency) {
+        if (!amount && amount !== 0) return '₦0';
+        const userData = JSON.parse(localStorage.getItem('paypoint_user') || '{}');
+        const userCurrency = (userData?.user_metadata?.default_currency || 'NGN').toUpperCase();
+        const normalizedCurrency = (currency || userCurrency || 'NGN').toUpperCase();
+        const symbols = { USD: '$', NGN: '₦' };
+        const symbol = symbols[normalizedCurrency] || symbols[userCurrency] || '₦';
+        return symbol + Number(amount).toLocaleString();
+    }
 
-        // ----- ⭐ CHECK AUTH (robust) ⭐ -----
-        async function checkAuth() {
-            const token = localStorage.getItem('paypoint_session');
-            const cachedUser = localStorage.getItem('paypoint_user');
+    function updateSidebarUI(userData) {
+        if (!userData) return;
+        const name = userData?.user_metadata?.name || userData?.name || 'Creator';
+        const email = userData?.email || 'creator@paypoint.com';
+        const avatarUrl = userData?.user_metadata?.avatar_url;
+        document.getElementById('sidebarName').textContent = name;
+        document.getElementById('sidebarEmail').textContent = email;
+        const sidebarAvatarImg = document.getElementById('sidebarAvatarImg');
+        if (avatarUrl) sidebarAvatarImg.src = avatarUrl;
+        else sidebarAvatarImg.src = 'user.png';
+    }
 
-            // If we already have a token and user cached, use it immediately
-            if (token && cachedUser) {
-                try {
-                    const userData = JSON.parse(cachedUser);
-                    updateSidebarUI(userData);
-                    return true;
-                } catch (e) {
-                    // fallthrough to re-fetch
-                    console.warn('⚠️ Invalid cached user, will re-fetch');
-                }
-            }
+    // ----- ⭐ CHECK AUTH (robust) ⭐ -----
+    async function checkAuth() {
+        const token = localStorage.getItem('paypoint_session');
+        const cachedUser = localStorage.getItem('paypoint_user');
 
-            // Otherwise, try to fetch the user from the backend.
+        if (token && cachedUser) {
             try {
-                const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
-                const res = await fetch(`${API_URL}/auth/user`, {
-                    headers,
-                    credentials: token ? 'same-origin' : 'include'
-                });
+                const userData = JSON.parse(cachedUser);
+                updateSidebarUI(userData);
+                return true;
+            } catch (e) {
+                console.warn('⚠️ Invalid cached user, will re-fetch');
+            }
+        }
 
-                if (res.status === 401) {
-                    localStorage.removeItem('paypoint_user');
-                    localStorage.removeItem('paypoint_session');
-                    window.location.replace('login.html');
-                    return false;
-                }
+        try {
+            const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+            const res = await fetch(`${API_URL}/auth/user`, {
+                headers,
+                credentials: token ? 'same-origin' : 'include'
+            });
 
-                const data = await res.json();
-                if (data && data.success && data.user) {
-                    localStorage.setItem('paypoint_user', JSON.stringify(data.user));
-                    updateSidebarUI(data.user);
-                    return true;
-                }
-
+            if (res.status === 401) {
                 localStorage.removeItem('paypoint_user');
                 localStorage.removeItem('paypoint_session');
                 window.location.replace('login.html');
                 return false;
-            } catch (err) {
-                console.error('❌ Error checking auth:', err);
-                return false;
             }
+
+            const data = await res.json();
+            if (data && data.success && data.user) {
+                localStorage.setItem('paypoint_user', JSON.stringify(data.user));
+                updateSidebarUI(data.user);
+                return true;
+            }
+
+            localStorage.removeItem('paypoint_user');
+            localStorage.removeItem('paypoint_session');
+            window.location.replace('login.html');
+            return false;
+        } catch (err) {
+            console.error('❌ Error checking auth:', err);
+            return false;
         }
+    }
+
+    // ============================================
+    // FETCH USAGE DATA AND UPDATE RINGS
+    // ============================================
+    async function loadUsageRings() {
+        try {
+            const cached = getCachedData('usage');
+            if (cached) {
+                updateRings(cached);
+                return;
+            }
+
+            const res = await fetch(`${API_URL}/usage`, {
+                headers: getAuthHeaders(),
+                credentials: 'include'
+            });
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            const result = await res.json();
+
+            if (result.success) {
+                setCachedData('usage', result);
+                updateRings(result);
+            } else {
+                throw new Error(result.error || 'Failed to load usage');
+            }
+        } catch (err) {
+            console.error('Error loading usage rings:', err);
+            throw err;
+        }
+    }
+
+    function updateRings(data) {
+        // Deals ring
+        const dealProgress = data.deals.current / data.deals.max;
+        updateRing('deals-ring', dealProgress);
+        document.getElementById('dealsCount').textContent = data.deals.current;
+        document.getElementById('dealsMax').textContent = data.deals.max;
+
+        // Invoices ring
+        const invoiceProgress = data.invoices.current / data.invoices.max;
+        updateRing('invoices-ring', invoiceProgress);
+        document.getElementById('invoicesCount').textContent = data.invoices.current;
+        document.getElementById('invoicesMax').textContent = data.invoices.max;
+
+        // Expenses ring
+        const expenseProgress = data.expenses.current / data.expenses.max;
+        updateRing('expenses-ring', expenseProgress);
+        document.getElementById('expensesCount').textContent = data.expenses.current;
+        document.getElementById('expensesMax').textContent = data.expenses.max;
+    }
+
+    function updateRing(className, progress) {
+        const circumference = 251.2; // 2 * PI * 40
+        const ring = document.querySelector(`.${className}`);
+        if (ring) {
+            const clamped = Math.min(1, Math.max(0, progress));
+            const offset = circumference - (clamped * circumference);
+            ring.style.strokeDashoffset = offset;
+
+            // Color changes when near limit
+            const warningColor = '#FF3B30';
+            ring.style.stroke = clamped >= 0.8 ? warningColor : '';
+        }
+    }
+
+    // ============================================
+    // LOAD DASHBOARD STATS (with real percentages)
+    // ============================================
+    async function loadDashboardStats() {
+        try {
+            const userData = JSON.parse(localStorage.getItem('paypoint_user') || '{}');
+            const currency = userData?.user_metadata?.default_currency || 'USD';
+            const currencySymbol = currency === 'USD' ? '$' : '₦';
+
+            // Fetch from backend for change percentages and tax rate
+            const res = await fetch(`${API_URL}/dashboard/stats`, {
+                headers: getAuthHeaders(),
+                credentials: 'include'
+            });
+            const result = await res.json();
+
+            if (result.success) {
+                const data = result.data;
+                // Tax rate display
+                document.getElementById('taxRateDisplay').textContent = `${data.taxRate}% tax rate`;
+
+                // ----- Revenue change -----
+                const revenueChangeEl = document.getElementById('revenueChange');
+                if (data.revenueChange === 'new') {
+                    revenueChangeEl.textContent = '🆕 New this month';
+                    revenueChangeEl.style.color = '#4F7CFF';
+                } else if (data.revenueChange > 0) {
+                    revenueChangeEl.textContent = `↑ ${data.revenueChange}% this month`;
+                    revenueChangeEl.style.color = '#34C759';
+                } else if (data.revenueChange < 0) {
+                    revenueChangeEl.textContent = `↓ ${Math.abs(data.revenueChange)}% this month`;
+                    revenueChangeEl.style.color = '#FF3B30';
+                } else {
+                    revenueChangeEl.textContent = '↔ 0% this month';
+                    revenueChangeEl.style.color = '#8A9AAB';
+                }
+
+                // ----- Expenses change -----
+                const expensesChangeEl = document.getElementById('expensesChange');
+                if (data.expensesChange === 'new') {
+                    expensesChangeEl.textContent = '🆕 New from last month';
+                    expensesChangeEl.style.color = '#4F7CFF';
+                } else if (data.expensesChange > 0) {
+                    expensesChangeEl.textContent = `↑ ${data.expensesChange}% from last month`;
+                    expensesChangeEl.style.color = '#FF3B30';
+                } else if (data.expensesChange < 0) {
+                    expensesChangeEl.textContent = `↓ ${Math.abs(data.expensesChange)}% from last month`;
+                    expensesChangeEl.style.color = '#34C759';
+                } else {
+                    expensesChangeEl.textContent = '↔ 0% from last month';
+                    expensesChangeEl.style.color = '#8A9AAB';
+                }
+
+                // Store tax rate for currency calculations
+                window._taxRate = data.taxRate;
+            }
+        } catch (err) {
+            console.error('Error loading dashboard stats:', err);
+        }
+    }
+
+    // ----- COMPUTE PER-CURRENCY STATS -----
+    function updateCurrencyStats() {
+        const taxRate = window._taxRate || 30; // fallback
+
+        // Group revenue by currency
+        const revenueByCurrency = {};
+        globalDeals.forEach(d => {
+            const cur = d.currency || 'NGN';
+            revenueByCurrency[cur] = (revenueByCurrency[cur] || 0) + Number(d.amount);
+        });
+
+        // Group expenses by currency
+        const expensesByCurrency = {};
+        globalExpenses.forEach(e => {
+            const cur = e.currency || 'NGN';
+            expensesByCurrency[cur] = (expensesByCurrency[cur] || 0) + Number(e.amount);
+        });
+
+        // Combine all currencies present
+        const allCurrencies = new Set([...Object.keys(revenueByCurrency), ...Object.keys(expensesByCurrency)]);
+        if (allCurrencies.size === 0) {
+            // No data
+            document.getElementById('totalRevenue').textContent = '₦0';
+            document.getElementById('totalExpenses').textContent = '₦0';
+            document.getElementById('totalTaxes').textContent = '₦0';
+            document.getElementById('takeHome').textContent = '₦0';
+            return;
+        }
+
+        // Build display strings per currency
+        let revenueText = '';
+        let expensesText = '';
+        let taxesText = '';
+        let takeHomeText = '';
+
+        const sortedCurrencies = Array.from(allCurrencies).sort();
+        sortedCurrencies.forEach(cur => {
+            const revenue = revenueByCurrency[cur] || 0;
+            const expenses = expensesByCurrency[cur] || 0;
+            const taxes = revenue * (taxRate / 100);
+            const takeHome = revenue - taxes - expenses;
+            const symbol = cur === 'USD' ? '$' : '₦';
+
+            const revStr = symbol + revenue.toLocaleString();
+            const expStr = symbol + expenses.toLocaleString();
+            const taxStr = symbol + taxes.toLocaleString();
+            const takeStr = symbol + takeHome.toLocaleString();
+
+            if (revenueText) revenueText += ' | ';
+            revenueText += revStr;
+            if (expensesText) expensesText += ' | ';
+            expensesText += expStr;
+            if (taxesText) taxesText += ' | ';
+            taxesText += taxStr;
+            if (takeHomeText) takeHomeText += ' | ';
+            takeHomeText += takeStr;
+        });
+
+        document.getElementById('totalRevenue').textContent = revenueText || '₦0';
+        document.getElementById('totalExpenses').textContent = expensesText || '₦0';
+        document.getElementById('totalTaxes').textContent = taxesText || '₦0';
+        document.getElementById('takeHome').textContent = takeHomeText || '₦0';
+    }
+
+    // ----- LOAD DEALS -----
+    async function loadDeals() {
+        try {
+            const cached = getCachedData('deals');
+            if (cached) {
+                globalDeals = cached;
+                renderDeals(cached);
+                updateCurrencyStats();
+                return;
+            }
+
+            const res = await fetch(`${API_URL}/deals`, {
+                headers: getAuthHeaders(),
+                credentials: 'include'
+            });
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            const result = await res.json();
+
+            if (result.success && result.data) {
+                globalDeals = result.data;
+                setCachedData('deals', result.data);
+                renderDeals(result.data);
+                updateCurrencyStats();
+            } else {
+                throw new Error(result.error || 'Failed to load deals');
+            }
+        } catch (err) {
+            console.error('Error loading deals:', err);
+            throw err;
+        }
+    }
+
+    function renderDeals(deals) {
+        const list = document.getElementById('dealsList');
+        if (!list) return;
+
+        if (!deals || deals.length === 0) {
+            list.innerHTML = '<div style="color:#8A9AAB; font-size:14px; padding:12px 0;">No deals yet. Add your first one!</div>';
+            return;
+        }
+
+        list.innerHTML = '';
+        deals.slice(0, 5).forEach(deal => {
+            const div = document.createElement('div');
+            div.className = 'deal-item';
+
+            const leftDiv = document.createElement('div');
+            const brandDiv = document.createElement('div');
+            brandDiv.className = 'deal-brand';
+            brandDiv.textContent = escapeHtml(deal.brand_name || deal.brand || 'Unknown');
+            leftDiv.appendChild(brandDiv);
+
+            const rightDiv = document.createElement('div');
+            rightDiv.style.textAlign = 'right';
+            const amountDiv = document.createElement('div');
+            amountDiv.className = 'deal-amount';
+            amountDiv.textContent = formatCurrency(deal.amount || 0, deal.currency || undefined);
+            rightDiv.appendChild(amountDiv);
+
+            const statusSpan = document.createElement('span');
+            statusSpan.className = 'deal-status ' + (deal.status || 'pending');
+            statusSpan.textContent = deal.status || 'pending';
+            rightDiv.appendChild(statusSpan);
+
+            div.appendChild(leftDiv);
+            div.appendChild(rightDiv);
+            list.appendChild(div);
+        });
+    }
+
+    // ----- LOAD EXPENSES -----
+    async function loadExpenses() {
+        try {
+            const cached = getCachedData('expenses');
+            if (cached) {
+                globalExpenses = cached;
+                renderExpenses(cached);
+                updateCurrencyStats();
+                return;
+            }
+
+            const res = await fetch(`${API_URL}/expenses`, {
+                headers: getAuthHeaders(),
+                credentials: 'include'
+            });
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            const result = await res.json();
+
+            if (result.success && result.data) {
+                globalExpenses = result.data;
+                setCachedData('expenses', result.data);
+                renderExpenses(result.data);
+                updateCurrencyStats();
+            } else {
+                throw new Error(result.error || 'Failed to load expenses');
+            }
+        } catch (err) {
+            console.error('Error loading expenses:', err);
+            throw err;
+        }
+    }
+
+    function renderExpenses(expenses) {
+        const list = document.getElementById('expensesList');
+        if (!list) return;
+
+        if (!expenses || expenses.length === 0) {
+            list.innerHTML = '<div style="color:#8A9AAB; font-size:14px; padding:12px 0;">No expenses logged yet.</div>';
+            return;
+        }
+
+        list.innerHTML = '';
+        expenses.slice(0, 5).forEach(exp => {
+            const div = document.createElement('div');
+            div.className = 'expense-item';
+
+            const vendorDiv = document.createElement('div');
+            vendorDiv.className = 'expense-vendor';
+            vendorDiv.textContent = escapeHtml(exp.vendor || 'Unknown');
+
+            const rightDiv = document.createElement('div');
+            const catSpan = document.createElement('span');
+            catSpan.className = 'expense-category';
+            catSpan.textContent = exp.category || 'Uncategorized';
+            const amountSpan = document.createElement('span');
+            amountSpan.className = 'expense-amount';
+            amountSpan.textContent = '-' + formatCurrency(exp.amount || 0, exp.currency || undefined);
+
+            rightDiv.appendChild(catSpan);
+            rightDiv.appendChild(amountSpan);
+
+            div.appendChild(vendorDiv);
+            div.appendChild(rightDiv);
+            list.appendChild(div);
+        });
+    }
+
+    // ----- MODAL CONTROLS -----
+    const modal = document.getElementById('dealModal');
+    document.getElementById('openModalBtn').addEventListener('click', () => modal.classList.add('active'));
+    document.getElementById('closeModalBtn').addEventListener('click', () => modal.classList.remove('active'));
+    modal.addEventListener('click', (e) => { if (e.target === modal) modal.classList.remove('active'); });
+
+    document.getElementById('saveDealBtn').addEventListener('click', async () => {
+        const brand_name = document.getElementById('brandName').value.trim();
+        const amount = document.getElementById('dealAmount').value;
+        const deliverable = document.getElementById('dealDeliverable').value.trim();
+        const due_date = document.getElementById('dealDueDate').value;
+        const currency = document.getElementById('dealCurrency').value;
+        if (!brand_name || !amount) { alert('Brand Name and Amount are required!'); return; }
+        try {
+            const res = await fetch(`${API_URL}/deals`, {
+                method: 'POST',
+                headers: getAuthHeaders(),
+                body: JSON.stringify({
+                    brand_name,
+                    amount: parseFloat(amount),
+                    deliverable: deliverable || '',
+                    due_date: due_date || null,
+                    status: 'pending',
+                    currency
+                })
+            });
+            const result = await res.json();
+            if (result.success) {
+                alert('✅ Deal added successfully!');
+                modal.classList.remove('active');
+                document.getElementById('brandName').value = '';
+                document.getElementById('dealAmount').value = '';
+                document.getElementById('dealDeliverable').value = '';
+                document.getElementById('dealDueDate').value = '';
+                loadDeals();
+            } else {
+                alert('❌ Error: ' + (result.error || 'Unknown error'));
+            }
+        } catch (err) {
+            alert('❌ Could not connect to backend.');
+            console.error(err);
+        }
+    });
+
+    // ----- SIDEBAR TOGGLE -----
+    document.getElementById('menuToggle').addEventListener('click', () => {
+        document.getElementById('sidebar').classList.toggle('open');
+        document.getElementById('sidebarOverlay').classList.toggle('active');
+    });
+    document.getElementById('sidebarOverlay').addEventListener('click', () => {
+        document.getElementById('sidebar').classList.remove('open');
+        document.getElementById('sidebarOverlay').classList.remove('active');
+    });
+
+    // ----- LOGOUT -----
+    document.getElementById('navLogout')?.addEventListener('click', async (e) => {
+        e.preventDefault();
+        try {
+            await fetch(`${API_URL}/auth/logout`, { method: 'POST', headers: getAuthHeaders() });
+        } catch (err) {}
+        localStorage.removeItem('paypoint_user');
+        localStorage.removeItem('paypoint_session');
+        window.location.replace('login.html');
+    });
+
+    // ----- DATE -----
+    document.getElementById('currentDate').textContent = new Date().toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric'
+    });
+
+    function escapeHtml(text) {
+        if (!text) return '';
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    // ============================================
+    // ⭐ INIT
+    // ============================================
+    (async function init() {
+        try {
+            const isAuth = await checkAuth();
+            if (!isAuth) {
+                console.log('⛔ Auth failed, redirecting...');
+                return;
+            }
+
+            const dashboardShell = document.getElementById('dashboardShell');
+            const loadingEl = document.getElementById('loadingIndicator');
+
+            if (dashboardShell) dashboardShell.classList.remove('ready');
+            if (loadingEl) {
+                loadingEl.classList.add('visible');
+                loadingEl.setAttribute('aria-busy', 'true');
+            }
+
+            await Promise.all([
+                loadDashboardStats(),
+                loadDeals(),
+                loadExpenses(),
+                loadUsageRings()
+            ]);
+
+            // Re-run currency stats in case they were called before expenses loaded
+            updateCurrencyStats();
+
+            if (dashboardShell) dashboardShell.classList.add('ready');
+            if (loadingEl) {
+                loadingEl.classList.remove('visible');
+                loadingEl.setAttribute('aria-busy', 'false');
+            }
+
+            console.log('PayPoint Dashboard loaded successfully');
+            console.log('Connected to:', API_URL);
+
+        } catch (err) {
+            console.error('❌ Init error:', err);
+            const loadingEl = document.getElementById('loadingIndicator');
+            if (loadingEl) {
+                loadingEl.classList.remove('visible');
+                loadingEl.setAttribute('aria-busy', 'false');
+            }
+            // Show error state if you have it
+            const errorEl = document.getElementById('errorState');
+            if (errorEl) errorEl.style.display = 'block';
+        }
+    })();
+</script>
 
         // ============================================
 // FETCH USAGE DATA AND UPDATE RINGS
