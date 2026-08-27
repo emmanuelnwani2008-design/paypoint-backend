@@ -15,7 +15,7 @@
         gtag('config', 'G-HFJ9JM358E');
     </script>
     <style>
-        /* ===== YOUR ORIGINAL CSS – UNCHANGED ===== */
+        /* (Your existing styles — keep them exactly as they are) */
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -155,6 +155,8 @@
             min-height: 100vh;
             background: #F8FAFC;
         }
+        /* Ensure main content fills remaining viewport width on desktop
+           without affecting mobile rules (mobile overrides under 768px). */
         @media (min-width: 769px) {
             .main-content { width: calc(100vw - 240px); }
         }
@@ -373,173 +375,189 @@
             .metrics-grid { grid-template-columns: 1fr; }
             .top-bar h1 { font-size: 18px; }
         }
-        .usage-rings-container {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 40px;
-            margin: 24px 0 28px 0;
-            background: #FFFFFF;
-            border: 1px solid #E8EDF2;
-            border-radius: 14px;
-            padding: 24px 32px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.04);
-            flex-wrap: nowrap;
-        }
-        .ring-item {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            flex: 0 1 auto;
-        }
-        .ring-wrapper {
-            position: relative;
-            width: 110px;
-            height: 110px;
-        }
-        .ring-wrapper svg {
-            transform: rotate(-90deg);
-            width: 100%;
-            height: 100%;
-        }
-        .ring-wrapper .track {
-            fill: none;
-            stroke: #E8EDF2;
-            stroke-width: 10;
-        }
-        .ring-wrapper .progress-fill {
-            fill: none;
-            stroke-width: 10;
-            stroke-linecap: round;
-            transition: stroke-dashoffset 0.8s ease;
-        }
-        .ring-wrapper .deals-ring   { stroke: #4F7CFF; }
-        .ring-wrapper .invoices-ring { stroke: #34C759; }
-        .ring-wrapper .expenses-ring { stroke: #FF9500; }
-        .ring-label {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            text-align: center;
-            line-height: 1.2;
-        }
-        .ring-label .ring-count {
-            font-size: 26px;
-            font-weight: 700;
-            color: #000000;
-        }
-        .ring-label .ring-name {
-            font-size: 12px;
-            font-weight: 500;
-            color: #8A9AAB;
-        }
-        .ring-limit {
-            font-size: 12px;
-            color: #8A9AAB;
-            margin-top: 8px;
-            font-weight: 500;
-        }
-        @media (max-width: 768px) {
-            .usage-rings-container {
-                gap: 20px;
-                padding: 16px 16px;
-                flex-wrap: nowrap;
-                overflow-x: auto;
-            }
-            .ring-wrapper {
-                width: 85px;
-                height: 85px;
-            }
-            .ring-wrapper .track,
-            .ring-wrapper .progress-fill {
-                stroke-width: 8;
-            }
-            .ring-label .ring-count {
-                font-size: 20px;
-            }
-            .ring-label .ring-name {
-                font-size: 10px;
-            }
-            .ring-limit {
-                font-size: 10px;
-                margin-top: 6px;
-            }
-        }
-        @media (max-width: 480px) {
-            .usage-rings-container {
-                gap: 10px;
-                padding: 12px 10px;
-            }
-            .ring-wrapper {
-                width: 70px;
-                height: 70px;
-            }
-            .ring-wrapper .track,
-            .ring-wrapper .progress-fill {
-                stroke-width: 6;
-            }
-            .ring-label .ring-count {
-                font-size: 16px;
-            }
-            .ring-label .ring-name {
-                font-size: 8px;
-            }
-            .ring-limit {
-                font-size: 8px;
-                margin-top: 4px;
-            }
-        }
-        @media (max-width: 380px) {
-            .usage-rings-container {
-                justify-content: flex-start;
-                overflow-x: auto;
-                gap: 14px;
-                padding: 12px 16px;
-            }
-            .ring-item {
-                flex: 0 0 auto;
-            }
-        }
-        .spinner {
-            width: 40px;
-            height: 40px;
-            border: 4px solid #E8EDF2;
-            border-top: 4px solid #4F7CFF;
-            border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-            margin: 0 auto;
-        }
-        #loadingIndicator {
-            position: fixed;
-            inset: 0;
-            display: none;
-            align-items: center;
-            justify-content: center;
-            flex-direction: column;
-            background: rgba(248, 250, 252, 0.78);
-            backdrop-filter: blur(2px);
-            -webkit-backdrop-filter: blur(2px);
-            z-index: 2000;
-        }
-        #loadingIndicator.visible {
-            display: flex;
-        }
-        .dashboard-shell {
-            opacity: 0;
-            visibility: hidden;
-            pointer-events: none;
-            transition: opacity 0.25s ease, visibility 0.25s ease;
-        }
-        .dashboard-shell.ready {
-            opacity: 1;
-            visibility: visible;
-            pointer-events: auto;
-        }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
+        /* ===== USAGE RINGS – Responsive, below metric boxes ===== */
+.usage-rings-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 40px;
+    margin: 24px 0 28px 0;
+    background: #FFFFFF;
+    border: 1px solid #E8EDF2;
+    border-radius: 14px;
+    padding: 24px 32px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    flex-wrap: nowrap;
+}
+
+.ring-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex: 0 1 auto;
+}
+
+.ring-wrapper {
+    position: relative;
+    width: 110px;
+    height: 110px;
+}
+
+.ring-wrapper svg {
+    transform: rotate(-90deg);
+    width: 100%;
+    height: 100%;
+}
+
+.ring-wrapper .track {
+    fill: none;
+    stroke: #E8EDF2;
+    stroke-width: 10;
+}
+
+.ring-wrapper .progress-fill {
+    fill: none;
+    stroke-width: 10;
+    stroke-linecap: round;
+    transition: stroke-dashoffset 0.8s ease;
+}
+
+.ring-wrapper .deals-ring   { stroke: #4F7CFF; }
+.ring-wrapper .invoices-ring { stroke: #34C759; }
+.ring-wrapper .expenses-ring { stroke: #FF9500; }
+
+.ring-label {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    line-height: 1.2;
+}
+
+.ring-label .ring-count {
+    font-size: 26px;
+    font-weight: 700;
+    color: #000000;
+}
+
+.ring-label .ring-name {
+    font-size: 12px;
+    font-weight: 500;
+    color: #8A9AAB;
+}
+
+.ring-limit {
+    font-size: 12px;
+    color: #8A9AAB;
+    margin-top: 8px;
+    font-weight: 500;
+}
+
+/* ===== RESPONSIVE: smaller on mobile, larger on desktop ===== */
+@media (max-width: 768px) {
+    .usage-rings-container {
+        gap: 20px;
+        padding: 16px 16px;
+        flex-wrap: nowrap;
+        overflow-x: auto;
+    }
+    .ring-wrapper {
+        width: 85px;
+        height: 85px;
+    }
+    .ring-wrapper .track,
+    .ring-wrapper .progress-fill {
+        stroke-width: 8;
+    }
+    .ring-label .ring-count {
+        font-size: 20px;
+    }
+    .ring-label .ring-name {
+        font-size: 10px;
+    }
+    .ring-limit {
+        font-size: 10px;
+        margin-top: 6px;
+    }
+}
+
+@media (max-width: 480px) {
+    .usage-rings-container {
+        gap: 10px;
+        padding: 12px 10px;
+    }
+    .ring-wrapper {
+        width: 70px;
+        height: 70px;
+    }
+    .ring-wrapper .track,
+    .ring-wrapper .progress-fill {
+        stroke-width: 6;
+    }
+    .ring-label .ring-count {
+        font-size: 16px;
+    }
+    .ring-label .ring-name {
+        font-size: 8px;
+    }
+    .ring-limit {
+        font-size: 8px;
+        margin-top: 4px;
+    }
+}
+
+/* ===== Optional: make rings scrollable on very small screens ===== */
+@media (max-width: 380px) {
+    .usage-rings-container {
+        justify-content: flex-start;
+        overflow-x: auto;
+        gap: 14px;
+        padding: 12px 16px;
+    }
+    .ring-item {
+        flex: 0 0 auto;
+    }
+}
+.spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid #E8EDF2;
+    border-top: 4px solid #4F7CFF;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin: 0 auto;
+}
+#loadingIndicator {
+    position: fixed;
+    inset: 0;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    background: rgba(248, 250, 252, 0.78);
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+    z-index: 2000;
+}
+#loadingIndicator.visible {
+    display: flex;
+}
+.dashboard-shell {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity 0.25s ease, visibility 0.25s ease;
+}
+.dashboard-shell.ready {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+}
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
     </style>
 </head>
 <body>
@@ -555,14 +573,15 @@
         <nav class="sidebar" id="sidebar">
             <div class="sidebar-logo"><img src="logo.png" alt="PayPoint" style="height: 32px;"></div>
             <div class="sidebar-nav">
-                <a href="dashboard.html" class="active"><span class="icon"><i class="fas fa-chart-pie"></i></span> Dashboard</a>
-                <a href="deals.html"><span class="icon"><i class="fas fa-handshake"></i></span> Deals <span class="badge">New</span></a>
-                <a href="expense.html"><span class="icon"><i class="fas fa-credit-card"></i></span> Expenses</a>
-                <a href="invoice.html"><span class="icon"><i class="fas fa-file-invoice"></i></span> Invoices</a>
-                <a href="creator.html"><span class="icon"><i class="fas fa-user"></i></span> Profile</a>
-                <a href="settings.html"><span class="icon"><i class="fas fa-gear"></i></span> Settings</a>
-                <a href="#" id="navLogout" class="logout"><span class="icon"><i class="fas fa-sign-out-alt"></i></span> Logout</a>
-            </div>
+                <div class="sidebar-nav">
+    <a href="dashboard.html" class="active"><span class="icon"><i class="fas fa-chart-pie"></i></span> Dashboard</a>
+    <a href="deals.html"><span class="icon"><i class="fas fa-handshake"></i></span> Deals <span class="badge">New</span></a>
+    <a href="expense.html"><span class="icon"><i class="fas fa-credit-card"></i></span> Expenses</a>
+    <a href="invoice.html"><span class="icon"><i class="fas fa-file-invoice"></i></span> Invoices</a>
+    <a href="creator.html"><span class="icon"><i class="fas fa-user"></i></span> Profile</a>
+    <a href="settings.html"><span class="icon"><i class="fas fa-gear"></i></span> Settings</a>
+    <a href="#" id="navLogout" class="logout"><span class="icon"><i class="fas fa-sign-out-alt"></i></span> Logout</a>
+</div>
             <div class="sidebar-user">
                 <div class="avatar" id="sidebarAvatar"><img id="sidebarAvatarImg" src="user.png" alt="Profile" onerror="this.src='user.png'"></div>
                 <div class="info"><div class="name" id="sidebarName">Creator</div><div class="email" id="sidebarEmail">creator@paypoint.com</div></div>
@@ -572,7 +591,7 @@
         <div class="main-content">
             <header class="top-bar">
                 <h1>Dashboard <span>· Overview</span></h1>
-                <div class="top-bar-actions"><span class="date" id="currentDate"></span><button class="btn-primary" id="openModalBtn"><i class="fas fa-plus-circle"></i> New Deal</button></div>
+                <div class="top-bar-actions"><span class="date" id="currentDate"></span><button class="btn-primary" id="openModalBtn"><i class="fas fa-plus-circle"></i> New Deal</button>
             </header>
 
             <section class="metrics-grid" id="metricsGrid">
@@ -597,7 +616,6 @@
                     <div class="sub">What you actually keep</div>
                 </div>
             </section>
-
             <div class="usage-rings-container">
                 <div class="ring-item">
                     <div class="ring-wrapper">
@@ -643,22 +661,15 @@
             </div>
 
             <section class="split-panel">
-                <div class="panel">
-                    <div class="panel-header"><h3><i class="fas fa-clipboard-list"></i> Active Deals</h3><a href="deals.html">View all →</a></div>
-                    <div id="dealsList"><div style="color:#8A9AAB; font-size:14px; padding:12px 0;">No deals yet. Add your first one!</div></div>
-                </div>
-                <div class="panel">
-                    <div class="panel-header"><h3>🧾 Recent Expenses</h3><a href="expense.html">View all →</a></div>
-                    <div id="expensesList"><div style="color:#8A9AAB; font-size:14px; padding:12px 0;">No expenses logged yet.</div></div>
-                </div>
+                <div class="panel"><div class="panel-header"><h3><i class="fas fa-clipboard-list"></i> Active Deals</h3><a href="deals.html">View all →</a></div><div id="dealsList"><div style="color:#8A9AAB; font-size:14px; padding:12px 0;">No deals yet. Add your first one!</div></div></div>
+                <div class="panel"><div class="panel-header"><h3>🧾 Recent Expenses</h3><a href="expense.html">View all →</a></div><div id="expensesList"><div style="color:#8A9AAB; font-size:14px; padding:12px 0;">No expenses logged yet.</div></div></div>
             </section>
         </div>
     </div>
 
     <div class="modal-overlay" id="dealModal">
         <div class="modal">
-            <h2><i class="fas fa-money-bill-wave"></i> New Brand Deal</h2>
-            <p>Log a new deal to start tracking your income.</p>
+            <h2><i class="fas fa-money-bill-wave"></i> New Brand Deal</h2><p>Log a new deal to start tracking your income.</p>
             <label for="brandName">Brand Name</label><input type="text" id="brandName" placeholder="e.g. Nike, Glossier, Samsung">
             <label for="dealAmount">Amount</label><input type="number" id="dealAmount" placeholder="e.g. 5000">
             <label for="dealDeliverable">Deliverable</label><input type="text" id="dealDeliverable" placeholder="e.g. 1 TikTok video">
@@ -668,49 +679,50 @@
         </div>
     </div>
 
+    <!-- Mobile Bottom Navigation -->
     <nav class="bottom-nav">
-        <a href="dashboard.html" class="active"><span class="icon"><i class="fas fa-chart-pie"></i></span><span>Home</span></a>
-        <a href="deals.html"><span class="icon"><i class="fas fa-handshake"></i></span><span>Deals</span></a>
-        <a href="expense.html"><span class="icon"><i class="fas fa-credit-card"></i></span><span>Expenses</span></a>
-        <a href="invoice.html"><span class="icon"><i class="fas fa-file-invoice"></i></span><span>Invoices</span></a>
-        <a href="creator.html"><span class="icon"><i class="fas fa-user"></i></span><span>Profile</span></a>
-    </nav>
-
-    <!-- ===== SHARED SCRIPTS ===== -->
-    <script src="auth.js"></script>
-    <script src="toast.js"></script>
-
+    <a href="dashboard.html" class="active"><span class="icon"><i class="fas fa-chart-pie"></i></span><span>Home</span></a>
+    <a href="deals.html"><span class="icon"><i class="fas fa-handshake"></i></span><span>Deals</span></a>
+    <a href="expense.html"><span class="icon"><i class="fas fa-credit-card"></i></span><span>Expenses</span></a>
+    <a href="invoice.html"><span class="icon"><i class="fas fa-file-invoice"></i></span><span>Invoices</span></a>
+    <a href="creator.html"><span class="icon"><i class="fas fa-user"></i></span><span>Profile</span></a>
+</nav>
     <script>
         // ============================================
-        // ORIGINAL DASHBOARD JAVASCRIPT – MODIFIED ONLY TO USE SHARED HELPERS
+        // BULLETPROOF AUTH (FIXED)
         // ============================================
-        // 1. Removed local API_URL, checkAuth, getAuthHeaders, escapeHtml, logout handler.
-        // 2. Replaced alert() with window.showToast().
-        // 3. Using window.API_URL, window.getAuthHeaders(), window.escapeHtml(), window.logout().
-
+        const API_URL = '/api';
         function getCachedData(key, ttl = 60000) {
-            const cached = sessionStorage.getItem(key);
-            if (!cached) return null;
-            try {
-                const { data, timestamp } = JSON.parse(cached);
-                if (Date.now() - timestamp > ttl) return null;
-                return data;
-            } catch { return null; }
-        }
+    const cached = sessionStorage.getItem(key);
+    if (!cached) return null;
+    try {
+        const { data, timestamp } = JSON.parse(cached);
+        if (Date.now() - timestamp > ttl) return null;
+        return data;
+    } catch { return null; }
+}
 
-        function setCachedData(key, data) {
-            sessionStorage.setItem(key, JSON.stringify({ data, timestamp: Date.now() }));
+function setCachedData(key, data) {
+    sessionStorage.setItem(key, JSON.stringify({ data, timestamp: Date.now() }));
+}
+
+        // ----- Helper Functions -----
+        function getAuthHeaders() {
+            const token = localStorage.getItem('paypoint_session');
+            const headers = { 'Content-Type': 'application/json' };
+            if (token) headers['Authorization'] = `Bearer ${token}`;
+            return headers;
         }
 
         function formatCurrency(amount, currency) {
-            if (!amount && amount !== 0) return '₦0';
-            const userData = JSON.parse(localStorage.getItem('paypoint_user') || '{}');
-            const userCurrency = (userData?.user_metadata?.default_currency || 'NGN').toUpperCase();
-            const normalizedCurrency = (currency || userCurrency || 'NGN').toUpperCase();
-            const symbols = { USD: '$', NGN: '₦' };
-            const symbol = symbols[normalizedCurrency] || symbols[userCurrency] || '₦';
-            return symbol + Number(amount).toLocaleString();
-        }
+    if (!amount && amount !== 0) return '₦0';
+    const userData = JSON.parse(localStorage.getItem('paypoint_user') || '{}');
+    const userCurrency = (userData?.user_metadata?.default_currency || 'NGN').toUpperCase();
+    const normalizedCurrency = (currency || userCurrency || 'NGN').toUpperCase();
+    const symbols = { USD: '$', NGN: '₦' };
+    const symbol = symbols[normalizedCurrency] || symbols[userCurrency] || '₦';
+    return symbol + Number(amount).toLocaleString();
+}
 
         function updateSidebarUI(userData) {
             if (!userData) return;
@@ -724,212 +736,328 @@
             else sidebarAvatarImg.src = 'user.png';
         }
 
-        // ----- LOAD FUNCTIONS (unchanged logic, only references updated) -----
-        async function loadUsageRings() {
-            try {
-                const cached = getCachedData('usage');
-                if (cached) { updateRings(cached); return; }
-                const res = await fetch(`${window.API_URL}/usage`, {
-                    headers: window.getAuthHeaders(),
-                    credentials: 'include'
-                });
-                if (!res.ok) throw new Error(`HTTP ${res.status}`);
-                const result = await res.json();
-                if (result.success) {
-                    setCachedData('usage', result);
-                    updateRings(result);
-                } else {
-                    throw new Error(result.error || 'Failed to load usage');
+        // ----- ⭐ CHECK AUTH (robust) ⭐ -----
+        async function checkAuth() {
+            const token = localStorage.getItem('paypoint_session');
+            const cachedUser = localStorage.getItem('paypoint_user');
+
+            // If we already have a token and user cached, use it immediately
+            if (token && cachedUser) {
+                try {
+                    const userData = JSON.parse(cachedUser);
+                    updateSidebarUI(userData);
+                    return true;
+                } catch (e) {
+                    // fallthrough to re-fetch
+                    console.warn('⚠️ Invalid cached user, will re-fetch');
                 }
-            } catch (err) {
-                console.error('Error loading usage rings:', err);
-                throw err;
             }
-        }
 
-        function updateRings(data) {
-            const dealProgress = data.deals.current / data.deals.max;
-            updateRing('deals-ring', dealProgress);
-            document.getElementById('dealsCount').textContent = data.deals.current;
-            document.getElementById('dealsMax').textContent = data.deals.max;
-            const invoiceProgress = data.invoices.current / data.invoices.max;
-            updateRing('invoices-ring', invoiceProgress);
-            document.getElementById('invoicesCount').textContent = data.invoices.current;
-            document.getElementById('invoicesMax').textContent = data.invoices.max;
-            const expenseProgress = data.expenses.current / data.expenses.max;
-            updateRing('expenses-ring', expenseProgress);
-            document.getElementById('expensesCount').textContent = data.expenses.current;
-            document.getElementById('expensesMax').textContent = data.expenses.max;
-        }
-
-        function updateRing(className, progress) {
-            const circumference = 251.2;
-            const ring = document.querySelector(`.${className}`);
-            if (ring) {
-                const clamped = Math.min(1, Math.max(0, progress));
-                const offset = circumference - (clamped * circumference);
-                ring.style.strokeDashoffset = offset;
-                ring.style.stroke = clamped >= 0.8 ? '#FF3B30' : '';
-            }
-        }
-
-        async function loadDashboardStats() {
+            // Otherwise, try to fetch the user from the backend.
             try {
-                const userData = JSON.parse(localStorage.getItem('paypoint_user') || '{}');
-                const currency = userData?.user_metadata?.default_currency || 'USD';
-                const currencySymbol = currency === 'USD' ? '$' : '₦';
-                const res = await fetch(`${window.API_URL}/dashboard/stats`, {
-                    headers: window.getAuthHeaders(),
-                    credentials: 'include'
+                const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+                const res = await fetch(`${API_URL}/auth/user`, {
+                    headers,
+                    credentials: token ? 'same-origin' : 'include'
                 });
-                const result = await res.json();
-                if (result.success) {
-                    const data = result.data;
-                    document.getElementById('totalRevenue').textContent = currencySymbol + data.totalRevenue.toLocaleString();
-                    document.getElementById('totalExpenses').textContent = currencySymbol + data.totalExpenses.toLocaleString();
-                    document.getElementById('totalTaxes').textContent = currencySymbol + data.taxes.toLocaleString();
-                    document.getElementById('takeHome').textContent = currencySymbol + data.takeHome.toLocaleString();
-                    document.getElementById('taxRateDisplay').textContent = `${data.taxRate}% tax rate`;
-                    const revenueChangeEl = document.getElementById('revenueChange');
-                    if (data.revenueChange === 'new') {
-                        revenueChangeEl.textContent = '🆕 New this month';
-                        revenueChangeEl.style.color = '#4F7CFF';
-                    } else if (data.revenueChange > 0) {
-                        revenueChangeEl.textContent = `↑ ${data.revenueChange}% this month`;
-                        revenueChangeEl.style.color = '#34C759';
-                    } else if (data.revenueChange < 0) {
-                        revenueChangeEl.textContent = `↓ ${Math.abs(data.revenueChange)}% this month`;
-                        revenueChangeEl.style.color = '#FF3B30';
-                    } else {
-                        revenueChangeEl.textContent = '↔ 0% this month';
-                        revenueChangeEl.style.color = '#8A9AAB';
-                    }
-                    const expensesChangeEl = document.getElementById('expensesChange');
-                    if (data.expensesChange === 'new') {
-                        expensesChangeEl.textContent = '🆕 New from last month';
-                        expensesChangeEl.style.color = '#4F7CFF';
-                    } else if (data.expensesChange > 0) {
-                        expensesChangeEl.textContent = `↑ ${data.expensesChange}% from last month`;
-                        expensesChangeEl.style.color = '#FF3B30';
-                    } else if (data.expensesChange < 0) {
-                        expensesChangeEl.textContent = `↓ ${Math.abs(data.expensesChange)}% from last month`;
-                        expensesChangeEl.style.color = '#34C759';
-                    } else {
-                        expensesChangeEl.textContent = '↔ 0% from last month';
-                        expensesChangeEl.style.color = '#8A9AAB';
-                    }
+
+                if (res.status === 401) {
+                    localStorage.removeItem('paypoint_user');
+                    localStorage.removeItem('paypoint_session');
+                    window.location.replace('login.html');
+                    return false;
                 }
+
+                const data = await res.json();
+                if (data && data.success && data.user) {
+                    localStorage.setItem('paypoint_user', JSON.stringify(data.user));
+                    updateSidebarUI(data.user);
+                    return true;
+                }
+
+                localStorage.removeItem('paypoint_user');
+                localStorage.removeItem('paypoint_session');
+                window.location.replace('login.html');
+                return false;
             } catch (err) {
-                console.error('Error loading dashboard stats:', err);
+                console.error('❌ Error checking auth:', err);
+                return false;
             }
         }
 
+        // ============================================
+// FETCH USAGE DATA AND UPDATE RINGS
+// ============================================
+async function loadUsageRings() {
+    try {
+        const cached = getCachedData('usage');
+        if (cached) {
+            updateRings(cached);
+            return;
+        }
+
+        const res = await fetch(`${API_URL}/usage`, {
+            headers: getAuthHeaders(),
+            credentials: 'include'
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const result = await res.json();
+
+        if (result.success) {
+            setCachedData('usage', result);
+            updateRings(result);
+        } else {
+            throw new Error(result.error || 'Failed to load usage');
+        }
+    } catch (err) {
+        console.error('Error loading usage rings:', err);
+        throw err;
+    }
+}
+
+function updateRings(data) {
+    // Deals ring
+    const dealProgress = data.deals.current / data.deals.max;
+    updateRing('deals-ring', dealProgress);
+    document.getElementById('dealsCount').textContent = data.deals.current;
+    document.getElementById('dealsMax').textContent = data.deals.max;
+
+    // Invoices ring
+    const invoiceProgress = data.invoices.current / data.invoices.max;
+    updateRing('invoices-ring', invoiceProgress);
+    document.getElementById('invoicesCount').textContent = data.invoices.current;
+    document.getElementById('invoicesMax').textContent = data.invoices.max;
+
+    // Expenses ring
+    const expenseProgress = data.expenses.current / data.expenses.max;
+    updateRing('expenses-ring', expenseProgress);
+    document.getElementById('expensesCount').textContent = data.expenses.current;
+    document.getElementById('expensesMax').textContent = data.expenses.max;
+}
+
+function updateRing(className, progress) {
+    const circumference = 251.2;
+    const ring = document.querySelector(`.${className}`);
+    if (ring) {
+        const clamped = Math.min(1, Math.max(0, progress));
+        const offset = circumference - (clamped * circumference);
+        ring.style.strokeDashoffset = offset;
+    }
+}
+
+function updateRing(className, progress) {
+    const circumference = 251.2; // 2 * PI * 40
+    const ring = document.querySelector(`.${className}`);
+    if (ring) {
+        const clamped = Math.min(1, Math.max(0, progress));
+        const offset = circumference - (clamped * circumference);
+        ring.style.strokeDashoffset = offset;
+
+        // Color changes when near limit
+        const color = ring.classList.contains('deals-ring') ? '#4F7CFF' :
+                     ring.classList.contains('invoices-ring') ? '#34C759' :
+                     '#FF9500';
+        const warningColor = ring.classList.contains('deals-ring') ? '#FF3B30' :
+                            ring.classList.contains('invoices-ring') ? '#FF3B30' :
+                            '#FF3B30';
+        ring.style.stroke = clamped >= 0.8 ? warningColor : color;
+    }
+}
+
+        // ============================================
+        // LOAD DASHBOARD STATS (with real percentages)
+        // ============================================
+        
+async function loadDashboardStats() {
+    try {
+        const userData = JSON.parse(localStorage.getItem('paypoint_user') || '{}');
+        const currency = userData?.user_metadata?.default_currency || 'USD';
+        const currencySymbol = currency === 'USD' ? '$' : '₦';
+
+        // ✅ Fetch from backend (now using await)
+        const res = await fetch(`${API_URL}/dashboard/stats`, {
+            headers: getAuthHeaders(),
+            credentials: 'include'
+        });
+        const result = await res.json();
+
+        if (result.success) {
+            const data = result.data;
+            // ✅ Display stats (using currencySymbol)
+            document.getElementById('totalRevenue').textContent = currencySymbol + data.totalRevenue.toLocaleString();
+            document.getElementById('totalExpenses').textContent = currencySymbol + data.totalExpenses.toLocaleString();
+            document.getElementById('totalTaxes').textContent = currencySymbol + data.taxes.toLocaleString();
+            document.getElementById('takeHome').textContent = currencySymbol + data.takeHome.toLocaleString();
+
+            // Tax rate display
+            document.getElementById('taxRateDisplay').textContent = `${data.taxRate}% tax rate`;
+
+            // ----- Revenue change -----
+            const revenueChangeEl = document.getElementById('revenueChange');
+            if (data.revenueChange === 'new') {
+                revenueChangeEl.textContent = '🆕 New this month';
+                revenueChangeEl.style.color = '#4F7CFF';
+            } else if (data.revenueChange > 0) {
+                revenueChangeEl.textContent = `↑ ${data.revenueChange}% this month`;
+                revenueChangeEl.style.color = '#34C759';
+            } else if (data.revenueChange < 0) {
+                revenueChangeEl.textContent = `↓ ${Math.abs(data.revenueChange)}% this month`;
+                revenueChangeEl.style.color = '#FF3B30';
+            } else {
+                revenueChangeEl.textContent = '↔ 0% this month';
+                revenueChangeEl.style.color = '#8A9AAB';
+            }
+
+            // ----- Expenses change -----
+            const expensesChangeEl = document.getElementById('expensesChange');
+            if (data.expensesChange === 'new') {
+                expensesChangeEl.textContent = '🆕 New from last month';
+                expensesChangeEl.style.color = '#4F7CFF';
+            } else if (data.expensesChange > 0) {
+                expensesChangeEl.textContent = `↑ ${data.expensesChange}% from last month`;
+                expensesChangeEl.style.color = '#FF3B30'; // increase in expenses is bad
+            } else if (data.expensesChange < 0) {
+                expensesChangeEl.textContent = `↓ ${Math.abs(data.expensesChange)}% from last month`;
+                expensesChangeEl.style.color = '#34C759'; // decrease in expenses is good
+            } else {
+                expensesChangeEl.textContent = '↔ 0% from last month';
+                expensesChangeEl.style.color = '#8A9AAB';
+            }
+        }
+    } catch (err) {
+        console.error('Error loading dashboard stats:', err);
+    }
+}
+
+        // ----- LOAD DEALS -----
         async function loadDeals() {
-            try {
-                const cached = getCachedData('deals');
-                if (cached) { renderDeals(cached); return; }
-                const res = await fetch(`${window.API_URL}/deals`, {
-                    headers: window.getAuthHeaders(),
-                    credentials: 'include'
-                });
-                if (!res.ok) throw new Error(`HTTP ${res.status}`);
-                const result = await res.json();
-                if (result.success && result.data) {
-                    setCachedData('deals', result.data);
-                    renderDeals(result.data);
-                } else {
-                    throw new Error(result.error || 'Failed to load deals');
-                }
-            } catch (err) {
-                console.error('Error loading deals:', err);
-                throw err;
-            }
+    try {
+        const cached = getCachedData('deals');
+        if (cached) {
+            renderDeals(cached);
+            return;
         }
 
-        function renderDeals(deals) {
-            const list = document.getElementById('dealsList');
-            if (!list) return;
-            if (!deals || deals.length === 0) {
-                list.innerHTML = '<div style="color:#8A9AAB; font-size:14px; padding:12px 0;">No deals yet. Add your first one!</div>';
-                return;
-            }
-            list.innerHTML = '';
-            deals.slice(0, 5).forEach(deal => {
-                const div = document.createElement('div');
-                div.className = 'deal-item';
-                const leftDiv = document.createElement('div');
-                const brandDiv = document.createElement('div');
-                brandDiv.className = 'deal-brand';
-                brandDiv.textContent = window.escapeHtml(deal.brand_name || deal.brand || 'Unknown');
-                leftDiv.appendChild(brandDiv);
-                const rightDiv = document.createElement('div');
-                rightDiv.style.textAlign = 'right';
-                const amountDiv = document.createElement('div');
-                amountDiv.className = 'deal-amount';
-                amountDiv.textContent = formatCurrency(deal.amount || 0, deal.currency || undefined);
-                rightDiv.appendChild(amountDiv);
-                const statusSpan = document.createElement('span');
-                statusSpan.className = 'deal-status ' + (deal.status || 'pending');
-                statusSpan.textContent = deal.status || 'pending';
-                rightDiv.appendChild(statusSpan);
-                div.appendChild(leftDiv);
-                div.appendChild(rightDiv);
-                list.appendChild(div);
-            });
+        const res = await fetch(`${API_URL}/deals`, {
+            headers: getAuthHeaders(),
+            credentials: 'include'
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const result = await res.json();
+
+        if (result.success && result.data) {
+            setCachedData('deals', result.data);
+            renderDeals(result.data);
+        } else {
+            throw new Error(result.error || 'Failed to load deals');
         }
+    } catch (err) {
+        console.error('Error loading deals:', err);
+        throw err;
+    }
+}
+
+function renderDeals(deals) {
+    const list = document.getElementById('dealsList');
+    if (!list) return;
+
+    if (!deals || deals.length === 0) {
+        list.innerHTML = '<div style="color:#8A9AAB; font-size:14px; padding:12px 0;">No deals yet. Add your first one!</div>';
+        return;
+    }
+
+    list.innerHTML = '';
+    deals.slice(0, 5).forEach(deal => {
+        const div = document.createElement('div');
+        div.className = 'deal-item';
+
+        const leftDiv = document.createElement('div');
+        const brandDiv = document.createElement('div');
+        brandDiv.className = 'deal-brand';
+        brandDiv.textContent = escapeHtml(deal.brand_name || deal.brand || 'Unknown');
+        leftDiv.appendChild(brandDiv);
+
+        const rightDiv = document.createElement('div');
+        rightDiv.style.textAlign = 'right';
+        const amountDiv = document.createElement('div');
+        amountDiv.className = 'deal-amount';
+        amountDiv.textContent = formatCurrency(deal.amount || 0, deal.currency || undefined);
+        rightDiv.appendChild(amountDiv);
+
+        const statusSpan = document.createElement('span');
+        statusSpan.className = 'deal-status ' + (deal.status || 'pending');
+        statusSpan.textContent = deal.status || 'pending';
+        rightDiv.appendChild(statusSpan);
+
+        div.appendChild(leftDiv);
+        div.appendChild(rightDiv);
+        list.appendChild(div);
+    });
+}
 
         async function loadExpenses() {
-            try {
-                const cached = getCachedData('expenses');
-                if (cached) { renderExpenses(cached); return; }
-                const res = await fetch(`${window.API_URL}/expenses`, {
-                    headers: window.getAuthHeaders(),
-                    credentials: 'include'
-                });
-                if (!res.ok) throw new Error(`HTTP ${res.status}`);
-                const result = await res.json();
-                if (result.success && result.data) {
-                    setCachedData('expenses', result.data);
-                    renderExpenses(result.data);
-                } else {
-                    throw new Error(result.error || 'Failed to load expenses');
-                }
-            } catch (err) {
-                console.error('Error loading expenses:', err);
-                throw err;
-            }
+    try {
+        const cached = getCachedData('expenses');
+        if (cached) {
+            renderExpenses(cached);
+            return;
         }
 
-        function renderExpenses(expenses) {
-            const list = document.getElementById('expensesList');
-            if (!list) return;
-            if (!expenses || expenses.length === 0) {
-                list.innerHTML = '<div style="color:#8A9AAB; font-size:14px; padding:12px 0;">No expenses logged yet.</div>';
-                return;
-            }
-            list.innerHTML = '';
-            expenses.slice(0, 5).forEach(exp => {
-                const div = document.createElement('div');
-                div.className = 'expense-item';
-                const vendorDiv = document.createElement('div');
-                vendorDiv.className = 'expense-vendor';
-                vendorDiv.textContent = window.escapeHtml(exp.vendor || 'Unknown');
-                const rightDiv = document.createElement('div');
-                const catSpan = document.createElement('span');
-                catSpan.className = 'expense-category';
-                catSpan.textContent = exp.category || 'Uncategorized';
-                const amountSpan = document.createElement('span');
-                amountSpan.className = 'expense-amount';
-                amountSpan.textContent = '-' + formatCurrency(exp.amount || 0, exp.currency || undefined);
-                rightDiv.appendChild(catSpan);
-                rightDiv.appendChild(amountSpan);
-                div.appendChild(vendorDiv);
-                div.appendChild(rightDiv);
-                list.appendChild(div);
-            });
-        }
+        const res = await fetch(`${API_URL}/expenses`, {
+            headers: getAuthHeaders(),
+            credentials: 'include'
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const result = await res.json();
 
-        // ----- MODAL CONTROLS (alert → showToast) -----
+        if (result.success && result.data) {
+            setCachedData('expenses', result.data);
+            renderExpenses(result.data);
+        } else {
+            throw new Error(result.error || 'Failed to load expenses');
+        }
+    } catch (err) {
+        console.error('Error loading expenses:', err);
+        throw err;
+    }
+}
+
+function renderExpenses(expenses) {
+    const list = document.getElementById('expensesList');
+    if (!list) return;
+
+    if (!expenses || expenses.length === 0) {
+        list.innerHTML = '<div style="color:#8A9AAB; font-size:14px; padding:12px 0;">No expenses logged yet.</div>';
+        return;
+    }
+
+    list.innerHTML = '';
+    expenses.slice(0, 5).forEach(exp => {
+        const div = document.createElement('div');
+        div.className = 'expense-item';
+
+        const vendorDiv = document.createElement('div');
+        vendorDiv.className = 'expense-vendor';
+        vendorDiv.textContent = escapeHtml(exp.vendor || 'Unknown');
+
+        const rightDiv = document.createElement('div');
+        const catSpan = document.createElement('span');
+        catSpan.className = 'expense-category';
+        catSpan.textContent = exp.category || 'Uncategorized';
+        const amountSpan = document.createElement('span');
+        amountSpan.className = 'expense-amount';
+        amountSpan.textContent = '-' + formatCurrency(exp.amount || 0, exp.currency || undefined);
+
+        rightDiv.appendChild(catSpan);
+        rightDiv.appendChild(amountSpan);
+
+        div.appendChild(vendorDiv);
+        div.appendChild(rightDiv);
+        list.appendChild(div);
+    });
+}
+
+        // ----- MODAL CONTROLS -----
         const modal = document.getElementById('dealModal');
         document.getElementById('openModalBtn').addEventListener('click', () => modal.classList.add('active'));
         document.getElementById('closeModalBtn').addEventListener('click', () => modal.classList.remove('active'));
@@ -941,14 +1069,11 @@
             const deliverable = document.getElementById('dealDeliverable').value.trim();
             const due_date = document.getElementById('dealDueDate').value;
             const currency = document.getElementById('dealCurrency').value;
-            if (!brand_name || !amount) {
-                window.showToast('Brand Name and Amount are required!', 'error');
-                return;
-            }
+            if (!brand_name || !amount) { alert('Brand Name and Amount are required!'); return; }
             try {
-                const res = await fetch(`${window.API_URL}/deals`, {
+                const res = await fetch(`${API_URL}/deals`, {
                     method: 'POST',
-                    headers: window.getAuthHeaders(),
+                    headers: getAuthHeaders(),
                     body: JSON.stringify({
                         brand_name,
                         amount: parseFloat(amount),
@@ -960,18 +1085,18 @@
                 });
                 const result = await res.json();
                 if (result.success) {
-                    window.showToast('✅ Deal added successfully!', 'success');
+                    alert('✅ Deal added successfully!');
                     modal.classList.remove('active');
                     document.getElementById('brandName').value = '';
                     document.getElementById('dealAmount').value = '';
                     document.getElementById('dealDeliverable').value = '';
                     document.getElementById('dealDueDate').value = '';
-                    await loadDeals();
+                    loadDeals();
                 } else {
-                    window.showToast('❌ Error: ' + (result.error || 'Unknown error'), 'error');
+                    alert('❌ Error: ' + (result.error || 'Unknown error'));
                 }
             } catch (err) {
-                window.showToast('❌ Could not connect to backend.', 'error');
+                alert('❌ Could not connect to backend.');
                 console.error(err);
             }
         });
@@ -986,10 +1111,15 @@
             document.getElementById('sidebarOverlay').classList.remove('active');
         });
 
-        // ----- LOGOUT (uses window.logout) -----
+        // ----- LOGOUT -----
         document.getElementById('navLogout')?.addEventListener('click', async (e) => {
             e.preventDefault();
-            await window.logout();
+            try {
+                await fetch(`${API_URL}/auth/logout`, { method: 'POST', headers: getAuthHeaders() });
+            } catch (err) {}
+            localStorage.removeItem('paypoint_user');
+            localStorage.removeItem('paypoint_session');
+            window.location.replace('login.html');
         });
 
         // ----- DATE -----
@@ -998,52 +1128,61 @@
             day: 'numeric',
             year: 'numeric'
         });
+        function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
 
         // ============================================
-        // ⭐ INIT (uses window.checkAuth)
-        // ============================================
-        (async function init() {
-            try {
-                const isAuth = await window.checkAuth();
-                if (!isAuth) {
-                    console.log('⛔ Auth failed, redirecting...');
-                    return;
-                }
-                updateSidebarUI(JSON.parse(localStorage.getItem('paypoint_user') || '{}'));
+// ⭐ INIT
+// ============================================
+(async function init() {
+    try {
+        const isAuth = await checkAuth();
+        if (!isAuth) {
+            console.log('⛔ Auth failed, redirecting...');
+            return;
+        }
 
-                const dashboardShell = document.getElementById('dashboardShell');
-                const loadingEl = document.getElementById('loadingIndicator');
-                if (dashboardShell) dashboardShell.classList.remove('ready');
-                if (loadingEl) {
-                    loadingEl.classList.add('visible');
-                    loadingEl.setAttribute('aria-busy', 'true');
-                }
+        const dashboardShell = document.getElementById('dashboardShell');
+        const loadingEl = document.getElementById('loadingIndicator');
 
-                await Promise.all([
-                    loadDashboardStats(),
-                    loadDeals(),
-                    loadExpenses(),
-                    loadUsageRings()
-                ]);
+        if (dashboardShell) dashboardShell.classList.remove('ready');
+        if (loadingEl) {
+            loadingEl.classList.add('visible');
+            loadingEl.setAttribute('aria-busy', 'true');
+        }
 
-                if (dashboardShell) dashboardShell.classList.add('ready');
-                if (loadingEl) {
-                    loadingEl.classList.remove('visible');
-                    loadingEl.setAttribute('aria-busy', 'false');
-                }
+        await Promise.all([
+            loadDashboardStats(),
+            loadDeals(),
+            loadExpenses(),
+            loadUsageRings()
+        ]);
 
-                console.log('PayPoint Dashboard loaded successfully');
-                console.log('Connected to:', window.API_URL);
-            } catch (err) {
-                console.error('❌ Init error:', err);
-                const loadingEl = document.getElementById('loadingIndicator');
-                if (loadingEl) {
-                    loadingEl.classList.remove('visible');
-                    loadingEl.setAttribute('aria-busy', 'false');
-                }
-                window.showToast('Failed to load dashboard. Please refresh.', 'error');
-            }
-        })();
+        if (dashboardShell) dashboardShell.classList.add('ready');
+        if (loadingEl) {
+            loadingEl.classList.remove('visible');
+            loadingEl.setAttribute('aria-busy', 'false');
+        }
+
+        console.log('PayPoint Dashboard loaded successfully');
+        console.log('Connected to:', API_URL);
+
+    } catch (err) {
+        console.error('❌ Init error:', err);
+        const loadingEl = document.getElementById('loadingIndicator');
+        if (loadingEl) {
+            loadingEl.classList.remove('visible');
+            loadingEl.setAttribute('aria-busy', 'false');
+        }
+        // Show error state if you have it
+        const errorEl = document.getElementById('errorState');
+        if (errorEl) errorEl.style.display = 'block';
+    }
+})();
     </script>
 </body>
 </html>
