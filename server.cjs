@@ -1689,6 +1689,55 @@ app.get('/api/payments/verify/:reference', authenticate, async (req, res) => {
 // ============================================
 
 // ---- extracted handler for invoice creation ----
+function buildInvoiceEmail({ invoice, deal, profile, items, subtotal, vatAmount, total, portalLink }) {
+    const date = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+    const dueDate = invoice.due_date ? new Date(invoice.due_date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : 'Not set';
+    const currencySymbol = invoice.currency || 'NGN' === 'USD' ? '$' : '₦';
+    
+    let lineItemsHtml = '';
+    if (items && items.length > 0) {
+        lineItemsHtml = '<ul style="list-style: none; padding: 0;">';
+        items.forEach(item => {
+            lineItemsHtml += `<li style="display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid #eee;">
+                <span>${item.description || 'Item'}</span>
+                <span>${currencySymbol}${(item.price * (item.quantity || 1)).toFixed(2)}</span>
+            </li>`;
+        });
+        lineItemsHtml += '</ul>';
+    }
+
+    const bankDetails = profile || {};
+    const bankHtml = `
+        <div style="margin: 16px 0; padding: 16px; background: #F8FAFC; border-radius: 8px; border: 1px solid #E8EDF2;">
+            <h4 style="margin-bottom: 8px;">💳 Payment Instructions (Bank Transfer)</h4>
+            <p><strong>Account Name:</strong> ${bankDetails.bank_account_name || 'Not provided'}</p>
+            <p><strong>Bank:</strong> ${bankDetails.bank_name || 'Not provided'}</p>
+            <p><strong>Account Number:</strong> ${bankDetails.bank_account_number || 'Not provided'}</p>
+            <p style="font-size: 12px; color: #8A9AAB; margin-top: 8px;">${bankDetails.payment_instructions || 'Please use the invoice number as reference.'}</p>
+        </div>
+    `;
+
+    return `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #E8EDF2; border-radius: 12px;">
+            <h1 style="color: #4F7CFF; text-align: center;">PayPoint</h1>
+            <hr>
+            <h2 style="text-align: center;">Invoice #${invoice.invoice_number}</h2>
+            <p><strong>Brand:</strong> ${invoice.brand_name || deal.brand_name}</p>
+            <p><strong>Date:</strong> ${date}</p>
+            <p><strong>Due Date:</strong> ${dueDate}</p>
+            <p><strong>Total:</strong> <span style="font-size: 20px; font-weight: bold; color: #4F7CFF;">${currencySymbol}${Number(total || invoice.total || deal.amount).toFixed(2)}</span></p>
+            ${lineItemsHtml}
+            ${invoice.notes ? `<p><strong>Notes:</strong> ${invoice.notes}</p>` : ''}
+            ${bankHtml}
+            <div style="text-align: center; margin: 24px 0;">
+                <a href="${portalLink}" style="background: #4F7CFF; color: white; padding: 12px 32px; border-radius: 8px; text-decoration: none; font-weight: 600;">View & Pay Invoice</a>
+            </div>
+            <p style="font-size: 12px; color: #8A9AAB;">If you have any questions, please reply to this email.</p>
+            <hr>
+            <p style="text-align: center; color: #8A9AAB; font-size: 12px;">PayPoint · Finance OS for Creators</p>
+        </div>
+    `;
+}
 async function handleInvoiceCreate(req, res) {
     try {
         const userId = req.userId;
@@ -1780,6 +1829,7 @@ async function handleInvoiceCreate(req, res) {
             .eq('id', newInvoice.id);
 
         const portalLink = `${FRONTEND_URL}/portal/${portalToken}`;
+const html = buildInvoiceEmail({ invoice: newInvoice, deal, profile, items, subtotal, vatAmount, total, portalLink });
 
         // ✅ Build the email HTML with full invoice
         const html = buildInvoiceEmail({
