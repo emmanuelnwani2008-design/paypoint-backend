@@ -558,6 +558,153 @@
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
 }
+
+
+        /* =========================================================
+           RESPONSIVE DASHBOARD — desktop, tablet and mobile
+           ========================================================= */
+        html, body { width: 100%; max-width: 100%; overflow-x: hidden; }
+        .dashboard-shell { width: 100%; min-width: 0; }
+        .main-content { min-width: 0; overflow-x: hidden; }
+        .metrics-grid, .split-panel { min-width: 0; }
+        .metric-card, .panel { min-width: 0; overflow: hidden; }
+        .deal-item, .expense-item { min-width: 0; gap: 12px; }
+        .deal-item > div, .expense-item > div { min-width: 0; }
+        .deal-brand, .expense-vendor { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+        @media (max-width: 1100px) and (min-width: 769px) {
+            .sidebar { width: 220px; }
+            .main-content { margin-left: 220px; width: calc(100vw - 220px); padding: 22px; }
+            .metrics-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            .split-panel { grid-template-columns: 1fr; }
+            .usage-rings-container { gap: 28px; }
+        }
+
+        @media (max-width: 768px) {
+            body { display: block; }
+            .dashboard-shell { width: 100%; }
+            .main-content {
+                width: 100%;
+                max-width: 100%;
+                margin-left: 0;
+                padding: 64px 14px 92px;
+                overflow-x: hidden;
+            }
+            .menu-toggle {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                width: 44px;
+                height: 44px;
+                padding: 0;
+            }
+            .top-bar {
+                width: 100%;
+                flex-direction: column;
+                align-items: stretch;
+                gap: 12px;
+                padding-bottom: 16px;
+                margin-bottom: 18px;
+            }
+            .top-bar h1 { font-size: 21px; }
+            .top-bar-actions {
+                width: 100%;
+                justify-content: space-between;
+                gap: 10px;
+            }
+            .top-bar-actions .date {
+                min-width: 0;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
+            .btn-primary { flex-shrink: 0; padding: 10px 14px; }
+            .metrics-grid {
+                width: 100%;
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                gap: 10px;
+                margin-bottom: 16px;
+            }
+            .metric-card { padding: 15px 13px; border-radius: 12px; }
+            .metric-card .label { font-size: 10px; }
+            .metric-card .value { font-size: clamp(18px, 6vw, 24px); overflow-wrap: anywhere; }
+            .metric-card .sub { font-size: 11px; }
+            .usage-rings-container {
+                width: 100%;
+                max-width: 100%;
+                justify-content: space-around;
+                gap: 8px;
+                padding: 14px 8px;
+                margin: 16px 0 18px;
+                overflow-x: auto;
+            }
+            .ring-item { flex: 0 0 auto; }
+            .split-panel { grid-template-columns: 1fr; gap: 14px; margin-bottom: 18px; }
+            .panel { width: 100%; padding: 15px; }
+            .panel-header { gap: 10px; }
+            .panel-header h3 { min-width: 0; font-size: 14px; }
+            .panel-header a { flex-shrink: 0; }
+            .deal-item, .expense-item { padding: 11px 0; }
+            .expense-category { display: inline-block; max-width: 90px; overflow: hidden; text-overflow: ellipsis; vertical-align: middle; white-space: nowrap; }
+            .modal-overlay { padding: 12px; }
+            .modal { width: 100%; max-width: 440px; margin: 0; max-height: calc(100vh - 24px); overflow-y: auto; }
+
+            /* Keep the bottom navigation inside the viewport on phones. */
+            .bottom-nav {
+                display: flex;
+                position: fixed;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                z-index: 1100;
+                height: 68px;
+                padding: 6px 8px calc(6px + env(safe-area-inset-bottom));
+                background: rgba(255,255,255,.97);
+                border-top: 1px solid #E8EDF2;
+                box-shadow: 0 -4px 18px rgba(0,0,0,.06);
+                align-items: stretch;
+                justify-content: space-around;
+                backdrop-filter: blur(12px);
+                -webkit-backdrop-filter: blur(12px);
+            }
+            .bottom-nav a {
+                flex: 1 1 0;
+                min-width: 0;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                gap: 3px;
+                color: #8A9AAB;
+                text-decoration: none;
+                font-size: 10px;
+                font-weight: 600;
+                border-radius: 10px;
+            }
+            .bottom-nav a .icon { font-size: 18px; line-height: 1; }
+            .bottom-nav a.active { color: #4F7CFF; }
+            .sidebar-overlay { z-index: 1050; }
+            .sidebar { z-index: 1101; }
+        }
+
+        @media (max-width: 480px) {
+            .main-content { padding-left: 10px; padding-right: 10px; }
+            .metrics-grid { gap: 8px; }
+            .metric-card { padding: 13px 11px; }
+            .metric-card .value { font-size: 19px; }
+            .top-bar h1 { font-size: 19px; }
+            .top-bar-actions .date { font-size: 11px; }
+            .btn-primary { font-size: 12px; padding: 9px 11px; }
+            .usage-rings-container { gap: 6px; padding-left: 5px; padding-right: 5px; }
+        }
+
+        @media (max-width: 360px) {
+            .metrics-grid { grid-template-columns: 1fr; }
+            .top-bar-actions { align-items: center; }
+            .top-bar-actions .date { max-width: 45%; }
+            .bottom-nav a { font-size: 9px; }
+            .bottom-nav a .icon { font-size: 16px; }
+        }
     </style>
 </head>
 <body>
@@ -573,7 +720,6 @@
         <nav class="sidebar" id="sidebar">
             <div class="sidebar-logo"><img src="logo.png" alt="PayPoint" style="height: 32px;"></div>
             <div class="sidebar-nav">
-                <div class="sidebar-nav">
     <a href="dashboard.html" class="active"><span class="icon"><i class="fas fa-chart-pie"></i></span> Dashboard</a>
     <a href="deals.html"><span class="icon"><i class="fas fa-handshake"></i></span> Deals <span class="badge">New</span></a>
     <a href="expense.html"><span class="icon"><i class="fas fa-credit-card"></i></span> Expenses</a>
@@ -591,7 +737,7 @@
         <div class="main-content">
             <header class="top-bar">
                 <h1>Dashboard <span>· Overview</span></h1>
-                <div class="top-bar-actions"><span class="date" id="currentDate"></span><button class="btn-primary" id="openModalBtn"><i class="fas fa-plus-circle"></i> New Deal</button>
+                <div class="top-bar-actions"><span class="date" id="currentDate"></span><button class="btn-primary" id="openModalBtn"><i class="fas fa-plus-circle"></i> New Deal</button></div>
             </header>
 
             <section class="metrics-grid" id="metricsGrid">
@@ -1243,404 +1389,5 @@
     })();
 </script>
 
-        // ============================================
-// FETCH USAGE DATA AND UPDATE RINGS
-// ============================================
-async function loadUsageRings() {
-    try {
-        const cached = getCachedData('usage');
-        if (cached) {
-            updateRings(cached);
-            return;
-        }
-
-        const res = await fetch(`${API_URL}/usage`, {
-            headers: getAuthHeaders(),
-            credentials: 'include'
-        });
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const result = await res.json();
-
-        if (result.success) {
-            setCachedData('usage', result);
-            updateRings(result);
-        } else {
-            throw new Error(result.error || 'Failed to load usage');
-        }
-    } catch (err) {
-        console.error('Error loading usage rings:', err);
-        throw err;
-    }
-}
-
-function updateRings(data) {
-    // Deals ring
-    const dealProgress = data.deals.current / data.deals.max;
-    updateRing('deals-ring', dealProgress);
-    document.getElementById('dealsCount').textContent = data.deals.current;
-    document.getElementById('dealsMax').textContent = data.deals.max;
-
-    // Invoices ring
-    const invoiceProgress = data.invoices.current / data.invoices.max;
-    updateRing('invoices-ring', invoiceProgress);
-    document.getElementById('invoicesCount').textContent = data.invoices.current;
-    document.getElementById('invoicesMax').textContent = data.invoices.max;
-
-    // Expenses ring
-    const expenseProgress = data.expenses.current / data.expenses.max;
-    updateRing('expenses-ring', expenseProgress);
-    document.getElementById('expensesCount').textContent = data.expenses.current;
-    document.getElementById('expensesMax').textContent = data.expenses.max;
-}
-
-function updateRing(className, progress) {
-    const circumference = 251.2;
-    const ring = document.querySelector(`.${className}`);
-    if (ring) {
-        const clamped = Math.min(1, Math.max(0, progress));
-        const offset = circumference - (clamped * circumference);
-        ring.style.strokeDashoffset = offset;
-    }
-}
-
-function updateRing(className, progress) {
-    const circumference = 251.2; // 2 * PI * 40
-    const ring = document.querySelector(`.${className}`);
-    if (ring) {
-        const clamped = Math.min(1, Math.max(0, progress));
-        const offset = circumference - (clamped * circumference);
-        ring.style.strokeDashoffset = offset;
-
-        // Color changes when near limit
-        const color = ring.classList.contains('deals-ring') ? '#4F7CFF' :
-                     ring.classList.contains('invoices-ring') ? '#34C759' :
-                     '#FF9500';
-        const warningColor = ring.classList.contains('deals-ring') ? '#FF3B30' :
-                            ring.classList.contains('invoices-ring') ? '#FF3B30' :
-                            '#FF3B30';
-        ring.style.stroke = clamped >= 0.8 ? warningColor : color;
-    }
-}
-
-        // ============================================
-        // LOAD DASHBOARD STATS (with real percentages)
-        // ============================================
-        
-async function loadDashboardStats() {
-    try {
-        const userData = JSON.parse(localStorage.getItem('paypoint_user') || '{}');
-        const currency = userData?.user_metadata?.default_currency || 'USD';
-        const currencySymbol = currency === 'USD' ? '$' : '₦';
-
-        // ✅ Fetch from backend (now using await)
-        const res = await fetch(`${API_URL}/dashboard/stats`, {
-            headers: getAuthHeaders(),
-            credentials: 'include'
-        });
-        const result = await res.json();
-
-        if (result.success) {
-            const data = result.data;
-            // ✅ Display stats (using currencySymbol)
-            document.getElementById('totalRevenue').textContent = currencySymbol + data.totalRevenue.toLocaleString();
-            document.getElementById('totalExpenses').textContent = currencySymbol + data.totalExpenses.toLocaleString();
-            document.getElementById('totalTaxes').textContent = currencySymbol + data.taxes.toLocaleString();
-            document.getElementById('takeHome').textContent = currencySymbol + data.takeHome.toLocaleString();
-
-            // Tax rate display
-            document.getElementById('taxRateDisplay').textContent = `${data.taxRate}% tax rate`;
-
-            // ----- Revenue change -----
-            const revenueChangeEl = document.getElementById('revenueChange');
-            if (data.revenueChange === 'new') {
-                revenueChangeEl.textContent = '🆕 New this month';
-                revenueChangeEl.style.color = '#4F7CFF';
-            } else if (data.revenueChange > 0) {
-                revenueChangeEl.textContent = `↑ ${data.revenueChange}% this month`;
-                revenueChangeEl.style.color = '#34C759';
-            } else if (data.revenueChange < 0) {
-                revenueChangeEl.textContent = `↓ ${Math.abs(data.revenueChange)}% this month`;
-                revenueChangeEl.style.color = '#FF3B30';
-            } else {
-                revenueChangeEl.textContent = '↔ 0% this month';
-                revenueChangeEl.style.color = '#8A9AAB';
-            }
-
-            // ----- Expenses change -----
-            const expensesChangeEl = document.getElementById('expensesChange');
-            if (data.expensesChange === 'new') {
-                expensesChangeEl.textContent = '🆕 New from last month';
-                expensesChangeEl.style.color = '#4F7CFF';
-            } else if (data.expensesChange > 0) {
-                expensesChangeEl.textContent = `↑ ${data.expensesChange}% from last month`;
-                expensesChangeEl.style.color = '#FF3B30'; // increase in expenses is bad
-            } else if (data.expensesChange < 0) {
-                expensesChangeEl.textContent = `↓ ${Math.abs(data.expensesChange)}% from last month`;
-                expensesChangeEl.style.color = '#34C759'; // decrease in expenses is good
-            } else {
-                expensesChangeEl.textContent = '↔ 0% from last month';
-                expensesChangeEl.style.color = '#8A9AAB';
-            }
-        }
-    } catch (err) {
-        console.error('Error loading dashboard stats:', err);
-    }
-}
-
-        // ----- LOAD DEALS -----
-        async function loadDeals() {
-    try {
-        const cached = getCachedData('deals');
-        if (cached) {
-            renderDeals(cached);
-            return;
-        }
-
-        const res = await fetch(`${API_URL}/deals`, {
-            headers: getAuthHeaders(),
-            credentials: 'include'
-        });
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const result = await res.json();
-
-        if (result.success && result.data) {
-            setCachedData('deals', result.data);
-            renderDeals(result.data);
-        } else {
-            throw new Error(result.error || 'Failed to load deals');
-        }
-    } catch (err) {
-        console.error('Error loading deals:', err);
-        throw err;
-    }
-}
-
-function renderDeals(deals) {
-    const list = document.getElementById('dealsList');
-    if (!list) return;
-
-    if (!deals || deals.length === 0) {
-        list.innerHTML = '<div style="color:#8A9AAB; font-size:14px; padding:12px 0;">No deals yet. Add your first one!</div>';
-        return;
-    }
-
-    list.innerHTML = '';
-    deals.slice(0, 5).forEach(deal => {
-        const div = document.createElement('div');
-        div.className = 'deal-item';
-
-        const leftDiv = document.createElement('div');
-        const brandDiv = document.createElement('div');
-        brandDiv.className = 'deal-brand';
-        brandDiv.textContent = escapeHtml(deal.brand_name || deal.brand || 'Unknown');
-        leftDiv.appendChild(brandDiv);
-
-        const rightDiv = document.createElement('div');
-        rightDiv.style.textAlign = 'right';
-        const amountDiv = document.createElement('div');
-        amountDiv.className = 'deal-amount';
-        amountDiv.textContent = formatCurrency(deal.amount || 0, deal.currency || undefined);
-        rightDiv.appendChild(amountDiv);
-
-        const statusSpan = document.createElement('span');
-        statusSpan.className = 'deal-status ' + (deal.status || 'pending');
-        statusSpan.textContent = deal.status || 'pending';
-        rightDiv.appendChild(statusSpan);
-
-        div.appendChild(leftDiv);
-        div.appendChild(rightDiv);
-        list.appendChild(div);
-    });
-}
-
-        async function loadExpenses() {
-    try {
-        const cached = getCachedData('expenses');
-        if (cached) {
-            renderExpenses(cached);
-            return;
-        }
-
-        const res = await fetch(`${API_URL}/expenses`, {
-            headers: getAuthHeaders(),
-            credentials: 'include'
-        });
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const result = await res.json();
-
-        if (result.success && result.data) {
-            setCachedData('expenses', result.data);
-            renderExpenses(result.data);
-        } else {
-            throw new Error(result.error || 'Failed to load expenses');
-        }
-    } catch (err) {
-        console.error('Error loading expenses:', err);
-        throw err;
-    }
-}
-
-function renderExpenses(expenses) {
-    const list = document.getElementById('expensesList');
-    if (!list) return;
-
-    if (!expenses || expenses.length === 0) {
-        list.innerHTML = '<div style="color:#8A9AAB; font-size:14px; padding:12px 0;">No expenses logged yet.</div>';
-        return;
-    }
-
-    list.innerHTML = '';
-    expenses.slice(0, 5).forEach(exp => {
-        const div = document.createElement('div');
-        div.className = 'expense-item';
-
-        const vendorDiv = document.createElement('div');
-        vendorDiv.className = 'expense-vendor';
-        vendorDiv.textContent = escapeHtml(exp.vendor || 'Unknown');
-
-        const rightDiv = document.createElement('div');
-        const catSpan = document.createElement('span');
-        catSpan.className = 'expense-category';
-        catSpan.textContent = exp.category || 'Uncategorized';
-        const amountSpan = document.createElement('span');
-        amountSpan.className = 'expense-amount';
-        amountSpan.textContent = '-' + formatCurrency(exp.amount || 0, exp.currency || undefined);
-
-        rightDiv.appendChild(catSpan);
-        rightDiv.appendChild(amountSpan);
-
-        div.appendChild(vendorDiv);
-        div.appendChild(rightDiv);
-        list.appendChild(div);
-    });
-}
-
-        // ----- MODAL CONTROLS -----
-        const modal = document.getElementById('dealModal');
-        document.getElementById('openModalBtn').addEventListener('click', () => modal.classList.add('active'));
-        document.getElementById('closeModalBtn').addEventListener('click', () => modal.classList.remove('active'));
-        modal.addEventListener('click', (e) => { if (e.target === modal) modal.classList.remove('active'); });
-
-        document.getElementById('saveDealBtn').addEventListener('click', async () => {
-            const brand_name = document.getElementById('brandName').value.trim();
-            const amount = document.getElementById('dealAmount').value;
-            const deliverable = document.getElementById('dealDeliverable').value.trim();
-            const due_date = document.getElementById('dealDueDate').value;
-            const currency = document.getElementById('dealCurrency').value;
-            if (!brand_name || !amount) { alert('Brand Name and Amount are required!'); return; }
-            try {
-                const res = await fetch(`${API_URL}/deals`, {
-                    method: 'POST',
-                    headers: getAuthHeaders(),
-                    body: JSON.stringify({
-                        brand_name,
-                        amount: parseFloat(amount),
-                        deliverable: deliverable || '',
-                        due_date: due_date || null,
-                        status: 'pending',
-                        currency
-                    })
-                });
-                const result = await res.json();
-                if (result.success) {
-                    alert('✅ Deal added successfully!');
-                    modal.classList.remove('active');
-                    document.getElementById('brandName').value = '';
-                    document.getElementById('dealAmount').value = '';
-                    document.getElementById('dealDeliverable').value = '';
-                    document.getElementById('dealDueDate').value = '';
-                    loadDeals();
-                } else {
-                    alert('❌ Error: ' + (result.error || 'Unknown error'));
-                }
-            } catch (err) {
-                alert('❌ Could not connect to backend.');
-                console.error(err);
-            }
-        });
-
-        // ----- SIDEBAR TOGGLE -----
-        document.getElementById('menuToggle').addEventListener('click', () => {
-            document.getElementById('sidebar').classList.toggle('open');
-            document.getElementById('sidebarOverlay').classList.toggle('active');
-        });
-        document.getElementById('sidebarOverlay').addEventListener('click', () => {
-            document.getElementById('sidebar').classList.remove('open');
-            document.getElementById('sidebarOverlay').classList.remove('active');
-        });
-
-        // ----- LOGOUT -----
-        document.getElementById('navLogout')?.addEventListener('click', async (e) => {
-            e.preventDefault();
-            try {
-                await fetch(`${API_URL}/auth/logout`, { method: 'POST', headers: getAuthHeaders() });
-            } catch (err) {}
-            localStorage.removeItem('paypoint_user');
-            localStorage.removeItem('paypoint_session');
-            window.location.replace('login.html');
-        });
-
-        // ----- DATE -----
-        document.getElementById('currentDate').textContent = new Date().toLocaleDateString('en-US', {
-            month: 'short',
-            day: 'numeric',
-            year: 'numeric'
-        });
-        function escapeHtml(text) {
-    if (!text) return '';
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
-}
-
-        // ============================================
-// ⭐ INIT
-// ============================================
-(async function init() {
-    try {
-        const isAuth = await checkAuth();
-        if (!isAuth) {
-            console.log('⛔ Auth failed, redirecting...');
-            return;
-        }
-
-        const dashboardShell = document.getElementById('dashboardShell');
-        const loadingEl = document.getElementById('loadingIndicator');
-
-        if (dashboardShell) dashboardShell.classList.remove('ready');
-        if (loadingEl) {
-            loadingEl.classList.add('visible');
-            loadingEl.setAttribute('aria-busy', 'true');
-        }
-
-        await Promise.all([
-            loadDashboardStats(),
-            loadDeals(),
-            loadExpenses(),
-            loadUsageRings()
-        ]);
-
-        if (dashboardShell) dashboardShell.classList.add('ready');
-        if (loadingEl) {
-            loadingEl.classList.remove('visible');
-            loadingEl.setAttribute('aria-busy', 'false');
-        }
-
-        console.log('PayPoint Dashboard loaded successfully');
-        console.log('Connected to:', API_URL);
-
-    } catch (err) {
-        console.error('❌ Init error:', err);
-        const loadingEl = document.getElementById('loadingIndicator');
-        if (loadingEl) {
-            loadingEl.classList.remove('visible');
-            loadingEl.setAttribute('aria-busy', 'false');
-        }
-        // Show error state if you have it
-        const errorEl = document.getElementById('errorState');
-        if (errorEl) errorEl.style.display = 'block';
-    }
-})();
-    </script>
 </body>
 </html>
