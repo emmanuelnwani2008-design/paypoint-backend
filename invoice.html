@@ -638,15 +638,14 @@
         }
 
         // ============================================
-        // RESEND INVOICE (NEW endpoint)
+        // RESEND INVOICE – FIXED ENDPOINT
         // ============================================
         async function resendInvoice(invoiceId) {
             if (!confirm('Resend this invoice to the brand via email?')) return;
             try {
-                const res = await fetch(`${API_URL}/invoices/resend`, {
+                const res = await fetch(`${API_URL}/invoices/${invoiceId}/resend`, {
                     method: 'POST',
-                    headers: getAuthHeaders(),
-                    body: JSON.stringify({ invoiceId })
+                    headers: getAuthHeaders()
                 });
                 const result = await res.json();
                 if (result.success) {
@@ -897,7 +896,7 @@
                 if (loading) loading.style.display = 'block';
                 await loadInvoices();
                 if (loading) loading.style.display = 'none';
-                console.log('📄 PayPoint Invoices Page loaded (updated)');
+                console.log('📄 PayPoint Invoices Page loaded (fully fixed)');
                 console.log('📡 Connected to:', API_URL);
             }
         })();
