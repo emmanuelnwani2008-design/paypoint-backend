@@ -555,19 +555,23 @@ function setCachedData(key, data) {
         // POPULATE DROPDOWN
         // ============================================
         function populateDealDropdown(deals) {
-            modalDeal.innerHTML = '';
-            if (deals.length === 0) {
-                modalDeal.innerHTML = '<option value="">No deals available</option>';
-                return;
-            }
-
-            deals.forEach(deal => {
-                const option = document.createElement('option');
-                option.value = deal.id;
-                option.textContent = `${deal.brand_name} - $${Number(deal.amount).toLocaleString()}`;
-                modalDeal.appendChild(option);
-            });
-        }
+    const modalDeal = document.getElementById('modalDeal');
+    if (!modalDeal) {
+        console.warn('modalDeal element not found – skipping dropdown population.');
+        return;
+    }
+    modalDeal.innerHTML = '';
+    if (deals.length === 0) {
+        modalDeal.innerHTML = '<option value="">No deals available</option>';
+        return;
+    }
+    deals.forEach(deal => {
+        const option = document.createElement('option');
+        option.value = deal.id;
+        option.textContent = `${deal.brand_name} - $${Number(deal.amount).toLocaleString()}`;
+        modalDeal.appendChild(option);
+    });
+}
 
         // ============================================
         // PREVIEW INVOICE
