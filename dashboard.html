@@ -682,11 +682,11 @@
 
     <script>
         // ============================================
-        // ORIGINAL DASHBOARD JAVASCRIPT – MINIMAL CHANGES
+        // ORIGINAL DASHBOARD JAVASCRIPT – MODIFIED ONLY TO USE SHARED HELPERS
         // ============================================
-        // Removed local checkAuth, getAuthHeaders, escapeHtml, logout.
-        // Using window.API_URL, window.getAuthHeaders(), window.escapeHtml(), window.logout()
-        // Replaced alert() with window.showToast() in modal flow.
+        // 1. Removed local API_URL, checkAuth, getAuthHeaders, escapeHtml, logout handler.
+        // 2. Replaced alert() with window.showToast().
+        // 3. Using window.API_URL, window.getAuthHeaders(), window.escapeHtml(), window.logout().
 
         function getCachedData(key, ttl = 60000) {
             const cached = sessionStorage.getItem(key);
@@ -724,7 +724,7 @@
             else sidebarAvatarImg.src = 'user.png';
         }
 
-        // ----- LOAD FUNCTIONS -----
+        // ----- LOAD FUNCTIONS (unchanged logic, only references updated) -----
         async function loadUsageRings() {
             try {
                 const cached = getCachedData('usage');
@@ -929,7 +929,7 @@
             });
         }
 
-        // ----- MODAL CONTROLS -----
+        // ----- MODAL CONTROLS (alert → showToast) -----
         const modal = document.getElementById('dealModal');
         document.getElementById('openModalBtn').addEventListener('click', () => modal.classList.add('active'));
         document.getElementById('closeModalBtn').addEventListener('click', () => modal.classList.remove('active'));
@@ -986,7 +986,7 @@
             document.getElementById('sidebarOverlay').classList.remove('active');
         });
 
-        // ----- LOGOUT -----
+        // ----- LOGOUT (uses window.logout) -----
         document.getElementById('navLogout')?.addEventListener('click', async (e) => {
             e.preventDefault();
             await window.logout();
@@ -1000,7 +1000,7 @@
         });
 
         // ============================================
-        // ⭐ INIT
+        // ⭐ INIT (uses window.checkAuth)
         // ============================================
         (async function init() {
             try {
