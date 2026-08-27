@@ -100,16 +100,10 @@
         align-items: center;
         justify-content: center;
         color: #8A9AAB;
-    }
-
-    /* ----- Label (gray inactive) ----- */
-    .bottom-nav a span:last-child {
-        font-size: 10px;
-        color: #8A9AAB;
         transition: all 0.2s ease;
     }
 
-    /* ----- ACTIVE STATE – Blue icon and label (no pill/background) ----- */
+    /* ====== ACTIVE STATE – Blue icon and label (no pill/background) ====== */
     .bottom-nav a.active .icon {
         color: #4F7CFF;
     }
