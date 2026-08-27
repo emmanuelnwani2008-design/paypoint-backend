@@ -128,7 +128,6 @@
             font-weight: 500;
         }
         .invoice-card .status.sent { background: rgba(79, 124, 255, 0.12); color: #4F7CFF; }
-        .invoice-card .status.draft { background: rgba(255, 149, 0, 0.12); color: #FF9500; }
         .invoice-card .status.paid { background: rgba(52, 199, 89, 0.12); color: #34C759; }
         .invoice-actions {
             display: flex;
@@ -152,6 +151,8 @@
         .btn-invoice.green:hover { background: rgba(52, 199, 89, 0.2); }
         .btn-invoice.blue { background: rgba(79, 124, 255, 0.12); color: #4F7CFF; }
         .btn-invoice.blue:hover { background: rgba(79, 124, 255, 0.2); }
+        .btn-invoice.purple { background: rgba(139, 92, 246, 0.12); color: #8B5CF6; }
+        .btn-invoice.purple:hover { background: rgba(139, 92, 246, 0.2); }
         .empty-state {
             text-align: center;
             padding: 60px 20px;
@@ -191,7 +192,7 @@
             color: #5E6F82;
             margin-bottom: 4px;
         }
-        .modal select, .modal input {
+        .modal select, .modal input, .modal textarea {
             width: 100%;
             padding: 12px 16px;
             background: #F8FAFC;
@@ -203,7 +204,7 @@
             transition: border 0.2s ease;
             font-family: 'Inter', sans-serif;
         }
-        .modal select:focus, .modal input:focus { outline: none; border-color: #4F7CFF; }
+        .modal select:focus, .modal input:focus, .modal textarea:focus { outline: none; border-color: #4F7CFF; }
         .modal select option { background: #FFFFFF; }
         .modal-actions {
             display: flex;
@@ -246,27 +247,28 @@
             .modal { margin: 16px; padding: 24px 20px; }
         }
         .spinner {
-    width: 40px;
-    height: 40px;
-    border: 4px solid #E8EDF2;
-    border-top: 4px solid #4F7CFF;
-    border-radius: 50%;
-    animation: spin 0.8s linear infinite;
-    margin: 0 auto;
-}
-@keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-}
+            width: 40px;
+            height: 40px;
+            border: 4px solid #E8EDF2;
+            border-top: 4px solid #4F7CFF;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
     </style>
     <link rel="stylesheet" href="mobile.css">
 </head>
 <body>
     <!-- Loading Indicator -->
-<div id="loadingIndicator" style="display: none; text-align: center; padding: 40px;">
-    <div class="spinner"></div>
-    <p style="color: #8A9AAB; margin-top: 12px;">Loading your data...</p>
-</div>
+    <div id="loadingIndicator" style="display: none; text-align: center; padding: 40px;">
+        <div class="spinner"></div>
+        <p style="color: #8A9AAB; margin-top: 12px;">Loading your data...</p>
+    </div>
+
     <!-- Pro Feature: Auto-Chasing Toggle -->
     <div id="autoChaseContainer" style="margin-bottom: 20px;">
         <div style="background: #FFFFFF; border: 1px solid #E8EDF2; border-radius: 12px; padding: 20px;">
@@ -277,7 +279,7 @@
                     <input type="checkbox" id="autoChaseToggle" style="width: 20px; height: 20px; accent-color: #4F7CFF;">
                     <span id="autoChaseLabel" style="font-weight: 500;">Enable Auto-Chasing</span>
                 </label>
-                autoChaseStatus.innerHTML = '<i class="fas fa-check-circle" style="color: #34C759;"></i> Pro feature – active';
+                <span id="autoChaseStatus" style="font-size: 12px; color: #8A9AAB; margin-left: 30px;"></span>
             </div>
         </div>
     </div>
@@ -315,64 +317,64 @@
 
     <!-- Modal -->
     <div class="modal-overlay" id="invoiceModal">
-    <div class="modal">
-        <h2><i class="fas fa-file-invoice"></i> Create Invoice</h2>
-        <p>Select a deal and add invoice details.</p>
+        <div class="modal">
+            <h2><i class="fas fa-file-invoice"></i> Create Invoice</h2>
+            <p>Select a deal and add invoice details.</p>
 
-        <label for="modalDeal">Select Deal</label>
-        <select id="modalDeal"><option value="">Loading deals...</option></select>
+            <label for="modalDeal">Select Deal</label>
+            <select id="modalDeal"><option value="">Loading deals...</option></select>
 
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-            <div>
-                <label for="modalServiceDate">Service Date</label>
-                <input type="date" id="modalServiceDate">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                <div>
+                    <label for="modalServiceDate">Service Date</label>
+                    <input type="date" id="modalServiceDate">
+                </div>
+                <div>
+                    <label for="modalDueDate">Due Date</label>
+                    <input type="date" id="modalDueDate">
+                </div>
             </div>
-            <div>
-                <label for="modalDueDate">Due Date</label>
-                <input type="date" id="modalDueDate">
+
+            <label for="modalBrandName">Brand Name</label>
+            <input type="text" id="modalBrandName" placeholder="e.g. Nike, Inc.">
+
+            <label for="modalBrandEmail">Brand Email</label>
+            <input type="email" id="modalBrandEmail" placeholder="finance@brand.com">
+
+            <label for="modalBrandAddress">Brand Address (Optional)</label>
+            <input type="text" id="modalBrandAddress" placeholder="Street, city, postcode, country">
+
+            <label>Line Items</label>
+            <div id="lineItemsContainer">
+                <div class="line-item" style="display: flex; gap: 8px; margin-bottom: 8px;">
+                    <input type="text" class="item-description" placeholder="Description" style="flex: 2;">
+                    <input type="number" class="item-quantity" placeholder="Qty" style="width: 60px;" value="1">
+                    <input type="number" class="item-price" placeholder="Price" style="flex: 1;">
+                    <button class="btn-remove-item" style="background: none; border: none; color: #FF3B30; cursor: pointer;">✕</button>
+                </div>
             </div>
-        </div>
+            <button type="button" id="addLineItemBtn" style="background: #4F7CFF; color: white; border: none; padding: 4px 12px; border-radius: 6px; cursor: pointer; font-size: 13px;">+ Add Item</button>
 
-        <label for="modalBrandName">Brand Name</label>
-        <input type="text" id="modalBrandName" placeholder="e.g. Nike, Inc.">
-
-        <label for="modalBrandEmail">Brand Email</label>
-        <input type="email" id="modalBrandEmail" placeholder="finance@brand.com">
-
-        <label for="modalBrandAddress">Brand Address (Optional)</label>
-        <input type="text" id="modalBrandAddress" placeholder="Street, city, postcode, country">
-
-        <label>Line Items</label>
-        <div id="lineItemsContainer">
-            <div class="line-item" style="display: flex; gap: 8px; margin-bottom: 8px;">
-                <input type="text" class="item-description" placeholder="Description" style="flex: 2;">
-                <input type="number" class="item-quantity" placeholder="Qty" style="width: 60px;" value="1">
-                <input type="number" class="item-price" placeholder="Price" style="flex: 1;">
-                <button class="btn-remove-item" style="background: none; border: none; color: #FF3B30; cursor: pointer;">✕</button>
+            <div style="margin-top: 12px;">
+                <label for="modalVatRate">VAT Rate (%)</label>
+                <input type="number" id="modalVatRate" placeholder="e.g. 20" value="0" min="0" max="100">
             </div>
-        </div>
-        <button type="button" id="addLineItemBtn" style="background: #4F7CFF; color: white; border: none; padding: 4px 12px; border-radius: 6px; cursor: pointer; font-size: 13px;">+ Add Item</button>
 
-        <div style="margin-top: 12px;">
-            <label for="modalVatRate">VAT Rate (%)</label>
-            <input type="number" id="modalVatRate" placeholder="e.g. 20" value="0" min="0" max="100">
-        </div>
+            <label for="modalNotes">Notes (Optional)</label>
+            <textarea id="modalNotes" placeholder="Additional notes for the brand..." rows="2"></textarea>
 
-        <label for="modalNotes">Notes (Optional)</label>
-        <textarea id="modalNotes" placeholder="Additional notes for the brand..." rows="2"></textarea>
+            <div style="background: #F8FAFC; padding: 12px; border-radius: 8px; margin: 12px 0;">
+                <p><strong>Subtotal:</strong> <span id="modalSubtotal">₦0.00</span></p>
+                <p><strong>VAT:</strong> <span id="modalVat">₦0.00</span></p>
+                <p><strong>Total:</strong> <span id="modalTotal">₦0.00</span></p>
+            </div>
 
-        <div style="background: #F8FAFC; padding: 12px; border-radius: 8px; margin: 12px 0;">
-            <p><strong>Subtotal:</strong> <span id="modalSubtotal">₦0.00</span></p>
-            <p><strong>VAT:</strong> <span id="modalVat">₦0.00</span></p>
-            <p><strong>Total:</strong> <span id="modalTotal">₦0.00</span></p>
-        </div>
-
-        <div class="modal-actions">
-            <button class="btn-cancel" id="closeModalBtn">Cancel</button>
-            <button class="btn-save" id="createInvoiceBtn">Create Invoice</button>
+            <div class="modal-actions">
+                <button class="btn-cancel" id="closeModalBtn">Cancel</button>
+                <button class="btn-save" id="createInvoiceBtn">Create Invoice</button>
+            </div>
         </div>
     </div>
-</div>
 
     <!-- Mobile Bottom Navigation -->
     <nav class="bottom-nav">
@@ -399,45 +401,32 @@
     </nav>
 
     <script>
-        function getCachedData(key, ttl = 60000) {
-    const cached = sessionStorage.getItem(key);
-    if (!cached) return null;
-    try {
-        const { data, timestamp } = JSON.parse(cached);
-        if (Date.now() - timestamp > ttl) return null;
-        return data;
-    } catch { return null; }
-}
-
-function setCachedData(key, data) {
-    sessionStorage.setItem(key, JSON.stringify({ data, timestamp: Date.now() }));
-}
         // ============================================
-        // CONFIGURATION – Hybrid auth
+        // CONFIGURATION
         // ============================================
         const API_URL = window.__API_URL__ || (
             window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
                 ? '/api'
                 : 'https://paypoint-7dmc.onrender.com/api'
         );
-        let allDeals = [];
+        let allInvoices = [];
 
         // ============================================
-        // AUTH HELPERS (Authorization header – for this page only)
+        // AUTH HELPERS
         // ============================================
         function getAuthHeaders() {
-    const token = sessionStorage.getItem('paypoint_session');  // ✅ sessionStorage
-    return {
-        'Content-Type': 'application/json',
-        ...(token ? { Authorization: `Bearer ${token}` } : {})
-    };
-}
+            const token = sessionStorage.getItem('paypoint_session');
+            return {
+                'Content-Type': 'application/json',
+                ...(token ? { Authorization: `Bearer ${token}` } : {})
+            };
+        }
 
         // ============================================
         // FORMAT CURRENCY
         // ============================================
         function formatCurrency(amount, currency) {
-            if (!amount) return '₦0';
+            if (!amount && amount !== 0) return '₦0';
             const userData = JSON.parse(localStorage.getItem('paypoint_user') || '{}');
             const userCurrency = userData?.user_metadata?.default_currency || 'NGN';
             const symbols = { USD: '$', NGN: '₦' };
@@ -456,30 +445,30 @@ function setCachedData(key, data) {
         }
 
         // ============================================
-        // CHECK AUTHENTICATION (localStorage – for this page only)
+        // CHECK AUTH
         // ============================================
         function checkAuth() {
-    const token = sessionStorage.getItem('paypoint_session');
-    const user = sessionStorage.getItem('paypoint_user');
-    if (!token || !user) {
-        console.log('Not authenticated, redirecting to login');
-        sessionStorage.removeItem('paypoint_user');
-        sessionStorage.removeItem('paypoint_session');
-        window.location.replace('login.html');
-        return false;
-    }
-    try {
-        const userData = JSON.parse(user);
-        const name = userData?.user_metadata?.name || userData?.name || 'Creator';
-        document.getElementById('userBadge').innerHTML = '<i class="fas fa-user"></i> ' + escapeHtml(name);
-        return true;
-    } catch (e) {
-        sessionStorage.removeItem('paypoint_user');
-        sessionStorage.removeItem('paypoint_session');
-        window.location.replace('login.html');
-        return false;
-    }
-}
+            const token = sessionStorage.getItem('paypoint_session');
+            const user = sessionStorage.getItem('paypoint_user');
+            if (!token || !user) {
+                console.log('Not authenticated, redirecting to login');
+                sessionStorage.removeItem('paypoint_user');
+                sessionStorage.removeItem('paypoint_session');
+                window.location.replace('login.html');
+                return false;
+            }
+            try {
+                const userData = JSON.parse(user);
+                const name = userData?.user_metadata?.name || userData?.name || 'Creator';
+                document.getElementById('userBadge').innerHTML = '<i class="fas fa-user"></i> ' + escapeHtml(name);
+                return true;
+            } catch (e) {
+                sessionStorage.removeItem('paypoint_user');
+                sessionStorage.removeItem('paypoint_session');
+                window.location.replace('login.html');
+                return false;
+            }
+        }
 
         // ============================================
         // DOM REFERENCES
@@ -491,32 +480,47 @@ function setCachedData(key, data) {
         const modal = document.getElementById('invoiceModal');
         const modalDeal = document.getElementById('modalDeal');
         const modalBrandEmail = document.getElementById('modalBrandEmail');
+        const modalBrandName = document.getElementById('modalBrandName');
+        const modalBrandAddress = document.getElementById('modalBrandAddress');
+        const modalServiceDate = document.getElementById('modalServiceDate');
+        const modalDueDate = document.getElementById('modalDueDate');
+        const modalVatRate = document.getElementById('modalVatRate');
+        const modalNotes = document.getElementById('modalNotes');
+        const lineItemsContainer = document.getElementById('lineItemsContainer');
 
         // ============================================
-        // LOAD DEALS
+        // LOAD INVOICES (NEW endpoint)
         // ============================================
-        async function loadDealsForInvoices() {
+        async function loadInvoices() {
             try {
-                const res = await fetch(`${API_URL}/deals`, {
+                const res = await fetch(`${API_URL}/invoices`, {
                     headers: getAuthHeaders()
                 });
                 const result = await res.json();
 
                 if (result.success) {
-                    allDeals = result.data || [];
-                    renderInvoices(allDeals);
-                    populateDealDropdown(allDeals);
+                    allInvoices = result.data || [];
+                    renderInvoices(allInvoices);
+                    // Also populate the deal dropdown for creating new invoices
+                    await populateDealDropdown();
                 }
             } catch (err) {
-                console.error('Error loading deals:', err);
+                console.error('Error loading invoices:', err);
+                invoiceGrid.innerHTML = `
+                    <div class="empty-state">
+                        <div class="icon"><i class="fas fa-exclamation-triangle"></i></div>
+                        <h3>Connection Error</h3>
+                        <p>Could not load invoices. Please try again.</p>
+                    </div>
+                `;
             }
         }
 
         // ============================================
-        // RENDER INVOICES (with XSS protection)
+        // RENDER INVOICES (real invoices)
         // ============================================
-        function renderInvoices(deals) {
-            if (deals.length === 0) {
+        function renderInvoices(invoices) {
+            if (!invoices || invoices.length === 0) {
                 invoiceGrid.innerHTML = `
                     <div class="empty-state">
                         <div class="icon"><i class="fas fa-file-invoice"></i></div>
@@ -528,22 +532,25 @@ function setCachedData(key, data) {
             }
 
             invoiceGrid.innerHTML = '';
-            deals.forEach(deal => {
+            invoices.forEach(inv => {
                 const card = document.createElement('div');
                 card.className = 'invoice-card';
-                const statuses = ['draft', 'sent', 'paid'];
-                const status = statuses[Math.floor(Math.random() * statuses.length)];
+                const brandName = inv.brand_name || inv.deals?.brand_name || 'Unknown Brand';
+                const amount = inv.total || inv.deals?.amount || 0;
+                const currency = inv.currency || inv.deals?.currency || 'NGN';
+                const dueDate = inv.due_date || inv.deals?.due_date || null;
+                const status = inv.status || 'sent';
 
                 card.innerHTML = `
-                    <div class="brand">${escapeHtml(deal.brand_name)}</div>
-                    <div class="amount">${formatCurrency(deal.amount, deal.currency)}</div>
-                    <div class="details"><i class="fas fa-calendar-alt"></i> Due: ${deal.due_date ? new Date(deal.due_date).toLocaleDateString() : 'Not set'}</div>
-                    <div class="details"><i class="fas fa-clipboard-list"></i> ${escapeHtml(deal.deliverable || 'No deliverable')}</div>
+                    <div class="brand">${escapeHtml(brandName)}</div>
+                    <div class="amount">${formatCurrency(amount, currency)}</div>
+                    <div class="details"><i class="fas fa-calendar-alt"></i> Due: ${dueDate ? new Date(dueDate).toLocaleDateString() : 'Not set'}</div>
+                    <div class="details"><i class="fas fa-hashtag"></i> #${escapeHtml(inv.invoice_number || 'N/A')}</div>
                     <span class="status ${status}">${status.toUpperCase()}</span>
                     <div class="invoice-actions">
-                        <button class="btn-invoice gold" onclick="previewInvoice('${deal.id}')"><i class="fas fa-eye"></i> Preview</button>
-                        <button class="btn-invoice blue" onclick="downloadInvoice('${deal.id}')"><i class="fas fa-download"></i> Download</button>
-                        <button class="btn-invoice green" onclick="sendInvoice('${deal.id}')"><i class="fas fa-money-bill-wave"></i> Pay Now</button>
+                        <button class="btn-invoice gold" onclick="previewInvoice('${inv.deal_id}')"><i class="fas fa-eye"></i> Preview</button>
+                        <button class="btn-invoice blue" onclick="downloadInvoice('${inv.deal_id}')"><i class="fas fa-download"></i> Download</button>
+                        <button class="btn-invoice green" onclick="resendInvoice('${inv.id}')"><i class="fas fa-envelope"></i> Send Invoice</button>
                     </div>
                 `;
                 invoiceGrid.appendChild(card);
@@ -551,41 +558,41 @@ function setCachedData(key, data) {
         }
 
         // ============================================
-        // POPULATE DROPDOWN
+        // POPULATE DEAL DROPDOWN (for creating new invoices)
         // ============================================
-        function populateDealDropdown(deals) {
-    const modalDeal = document.getElementById('modalDeal');
-    if (!modalDeal) {
-        console.warn('modalDeal element not found – skipping dropdown population.');
-        return;
-    }
-    modalDeal.innerHTML = '';
-    if (deals.length === 0) {
-        modalDeal.innerHTML = '<option value="">No deals available</option>';
-        return;
-    }
-    deals.forEach(deal => {
-        const option = document.createElement('option');
-        option.value = deal.id;
-        option.textContent = `${deal.brand_name} - $${Number(deal.amount).toLocaleString()}`;
-        modalDeal.appendChild(option);
-    });
-}
+        async function populateDealDropdown() {
+            try {
+                const res = await fetch(`${API_URL}/deals`, { headers: getAuthHeaders() });
+                const result = await res.json();
+                if (!result.success) return;
+                const deals = result.data || [];
+                modalDeal.innerHTML = '';
+                if (deals.length === 0) {
+                    modalDeal.innerHTML = '<option value="">No deals available</option>';
+                    return;
+                }
+                deals.forEach(deal => {
+                    const option = document.createElement('option');
+                    option.value = deal.id;
+                    option.textContent = `${deal.brand_name} - ${formatCurrency(deal.amount, deal.currency)}`;
+                    modalDeal.appendChild(option);
+                });
+            } catch (err) {
+                console.error('Error loading deals for dropdown:', err);
+            }
+        }
 
         // ============================================
-        // PREVIEW INVOICE
+        // PREVIEW INVOICE (PDF)
         // ============================================
-        async function previewInvoice(id) {
-            const deal = allDeals.find(d => String(d.id) === String(id));
-            if (!deal) return;
-
+        async function previewInvoice(dealId) {
+            if (!dealId) return alert('No deal associated with this invoice.');
             try {
                 const res = await fetch(`${API_URL}/invoices/generate`, {
                     method: 'POST',
                     headers: getAuthHeaders(),
-                    body: JSON.stringify({ dealId: id })
+                    body: JSON.stringify({ dealId })
                 });
-
                 if (res.ok) {
                     const blob = await res.blob();
                     const url = URL.createObjectURL(blob);
@@ -601,25 +608,22 @@ function setCachedData(key, data) {
         }
 
         // ============================================
-        // DOWNLOAD INVOICE
+        // DOWNLOAD INVOICE (PDF)
         // ============================================
-        async function downloadInvoice(id) {
-            const deal = allDeals.find(d => String(d.id) === String(id));
-            if (!deal) return;
-
+        async function downloadInvoice(dealId) {
+            if (!dealId) return alert('No deal associated with this invoice.');
             try {
                 const res = await fetch(`${API_URL}/invoices/generate`, {
                     method: 'POST',
                     headers: getAuthHeaders(),
-                    body: JSON.stringify({ dealId: id })
+                    body: JSON.stringify({ dealId })
                 });
-
                 if (res.ok) {
                     const blob = await res.blob();
                     const url = URL.createObjectURL(blob);
                     const a = document.createElement('a');
                     a.href = url;
-                    a.download = `invoice-${deal.brand_name}-${Date.now()}.pdf`;
+                    a.download = `invoice-${Date.now()}.pdf`;
                     document.body.appendChild(a);
                     a.click();
                     a.remove();
@@ -634,35 +638,28 @@ function setCachedData(key, data) {
         }
 
         // ============================================
-        // SEND INVOICE (Payment)
+        // RESEND INVOICE (NEW endpoint)
         // ============================================
-        async function sendInvoice(id) {
-            const deal = allDeals.find(d => String(d.id) === String(id));
-            if (!deal) return;
-
-            const brandEmail = prompt(`Enter email to send invoice to ${deal.brand_name}:`, 'finance@brand.com');
-            if (!brandEmail || !brandEmail.includes('@')) {
-                alert('A valid email is required to send the invoice.');
-                return;
-            }
-
+        async function resendInvoice(invoiceId) {
+            if (!confirm('Resend this invoice to the brand via email?')) return;
             try {
-                const payRes = await fetch(`${API_URL}/payments/initialize`, {
+                const res = await fetch(`${API_URL}/invoices/resend`, {
                     method: 'POST',
                     headers: getAuthHeaders(),
-                    body: JSON.stringify({ dealId: id, email: brandEmail })
+                    body: JSON.stringify({ invoiceId })
                 });
-
-                const payResult = await payRes.json();
-
-                if (payResult && payResult.authorization_url) {
-                    window.open(payResult.authorization_url, '_blank');
-                    alert(`Payment link opened for ${brandEmail}!`);
+                const result = await res.json();
+                if (result.success) {
+                    alert('✅ Invoice resent successfully!');
+                    // Optionally auto-open the portal link
+                    if (result.portal_link) {
+                        window.open(result.portal_link, '_blank');
+                    }
                 } else {
-                    alert('Payment initialization failed: ' + (payResult.error || ''));
+                    alert('❌ ' + (result.error || 'Failed to resend'));
                 }
             } catch (err) {
-                alert('Could not initialize payment');
+                alert('Could not connect to server.');
                 console.error(err);
             }
         }
@@ -673,6 +670,22 @@ function setCachedData(key, data) {
         openModalBtn.addEventListener('click', () => {
             modalDeal.value = '';
             modalBrandEmail.value = '';
+            modalBrandName.value = '';
+            modalBrandAddress.value = '';
+            modalServiceDate.value = '';
+            modalDueDate.value = '';
+            modalVatRate.value = '0';
+            modalNotes.value = '';
+            // Reset line items to one empty row
+            lineItemsContainer.innerHTML = `
+                <div class="line-item" style="display: flex; gap: 8px; margin-bottom: 8px;">
+                    <input type="text" class="item-description" placeholder="Description" style="flex: 2;">
+                    <input type="number" class="item-quantity" placeholder="Qty" style="width: 60px;" value="1">
+                    <input type="number" class="item-price" placeholder="Price" style="flex: 1;">
+                    <button class="btn-remove-item" style="background: none; border: none; color: #FF3B30; cursor: pointer;">✕</button>
+                </div>
+            `;
+            updateTotals();
             modal.classList.add('active');
         });
 
@@ -686,19 +699,95 @@ function setCachedData(key, data) {
         });
 
         // ============================================
-        // CREATE INVOICE
+        // LINE ITEMS – ADD / REMOVE / TOTALS
+        // ============================================
+        document.getElementById('addLineItemBtn').addEventListener('click', () => {
+            const div = document.createElement('div');
+            div.className = 'line-item';
+            div.style.cssText = 'display: flex; gap: 8px; margin-bottom: 8px;';
+            div.innerHTML = `
+                <input type="text" class="item-description" placeholder="Description" style="flex: 2;">
+                <input type="number" class="item-quantity" placeholder="Qty" style="width: 60px;" value="1">
+                <input type="number" class="item-price" placeholder="Price" style="flex: 1;">
+                <button class="btn-remove-item" style="background: none; border: none; color: #FF3B30; cursor: pointer;">✕</button>
+            `;
+            lineItemsContainer.appendChild(div);
+            // Re‑attach remove handlers
+            document.querySelectorAll('.btn-remove-item').forEach(btn => {
+                btn.removeEventListener('click', removeLineItem);
+                btn.addEventListener('click', removeLineItem);
+            });
+        });
+
+        function removeLineItem(e) {
+            const item = e.target.closest('.line-item');
+            if (item && document.querySelectorAll('.line-item').length > 1) {
+                item.remove();
+                updateTotals();
+            } else {
+                alert('You must have at least one line item.');
+            }
+        }
+
+        // Attach remove handlers to existing items
+        document.querySelectorAll('.btn-remove-item').forEach(btn => {
+            btn.addEventListener('click', removeLineItem);
+        });
+
+        // Recalculate totals on input change
+        document.addEventListener('input', updateTotals);
+
+        function updateTotals() {
+            const items = document.querySelectorAll('.line-item');
+            let subtotal = 0;
+            items.forEach(item => {
+                const qty = parseFloat(item.querySelector('.item-quantity')?.value) || 0;
+                const price = parseFloat(item.querySelector('.item-price')?.value) || 0;
+                subtotal += qty * price;
+            });
+            const vatRate = parseFloat(document.getElementById('modalVatRate').value) || 0;
+            const vat = subtotal * (vatRate / 100);
+            const total = subtotal + vat;
+            const currency = '₦'; // we'll keep it simple
+            document.getElementById('modalSubtotal').textContent = currency + subtotal.toFixed(2);
+            document.getElementById('modalVat').textContent = currency + vat.toFixed(2);
+            document.getElementById('modalTotal').textContent = currency + total.toFixed(2);
+        }
+
+        // ============================================
+        // CREATE INVOICE (sends all fields)
         // ============================================
         createInvoiceBtn.addEventListener('click', async () => {
             const dealId = modalDeal.value;
             const brandEmail = modalBrandEmail.value.trim();
+            const brandName = modalBrandName.value.trim();
+            const brandAddress = modalBrandAddress.value.trim();
+            const serviceDate = modalServiceDate.value;
+            const dueDate = modalDueDate.value;
+            const vatRate = parseFloat(modalVatRate.value) || 0;
+            const notes = modalNotes.value.trim();
+
+            // Collect line items
+            const items = [];
+            document.querySelectorAll('.line-item').forEach(item => {
+                const description = item.querySelector('.item-description')?.value?.trim() || '';
+                const quantity = parseFloat(item.querySelector('.item-quantity')?.value) || 0;
+                const price = parseFloat(item.querySelector('.item-price')?.value) || 0;
+                if (description && price > 0) {
+                    items.push({ description, quantity, price });
+                }
+            });
 
             if (!dealId) {
                 alert('Please select a deal');
                 return;
             }
-
             if (!brandEmail) {
                 alert('Please enter the brand email');
+                return;
+            }
+            if (items.length === 0) {
+                alert('Please add at least one valid line item.');
                 return;
             }
 
@@ -708,35 +797,44 @@ function setCachedData(key, data) {
                     headers: getAuthHeaders(),
                     body: JSON.stringify({
                         dealId,
-                        brandEmail
+                        brandEmail,
+                        brandName: brandName || undefined,
+                        brandAddress: brandAddress || undefined,
+                        serviceDate: serviceDate || undefined,
+                        dueDate: dueDate || undefined,
+                        lineItems: items,
+                        vatRate,
+                        notes: notes || undefined
                     })
                 });
 
                 const result = await res.json();
 
                 if (result.success) {
-    const paymentLink = result.portal_link || 'No link generated';
-    console.log('🔗 Payment Link:', paymentLink);
-    prompt(
-        '✅ Invoice created!\n\n' +
-        '📋 COPY THIS LINK AND SEND IT TO THE BRAND:\n' +
-        '(Select the link below, press Ctrl+C to copy, then close this box.)\n\n' +
-        '💡 We are still setting up automatic email delivery. For now, manually send this link to the brand via WhatsApp, Slack, or email.',
-        paymentLink
-    );
-    closeModal();
-    loadDealsForInvoices();
-} else if (result.limit_reached) {
-    // ⚠️ FREE LIMIT REACHED – show upgrade prompt
-    const confirmUpgrade = confirm(
-        `${result.error}\n\nYou've used ${result.current} out of ${result.max} free invoices.\nUpgrade to Pro for unlimited invoices!`
-    );
-    if (confirmUpgrade) {
-        window.location.href = 'pricing.html';
-    }
-} else {
-    alert('❌ Error: ' + (result.error || 'Failed to create invoice'));
-}
+                    const paymentLink = result.portal_link || 'No link generated';
+                    // Auto‑open portal in new tab
+                    if (result.portal_link) {
+                        window.open(result.portal_link, '_blank');
+                    }
+                    prompt(
+                        '✅ Invoice created! The portal link has been opened in a new tab.\n\n' +
+                        '📋 COPY THIS LINK AND SEND IT TO THE BRAND:\n' +
+                        '(Select the link below, press Ctrl+C to copy, then close this box.)\n\n' +
+                        '💡 We are still setting up automatic email delivery. For now, manually send this link to the brand via WhatsApp, Slack, or email.',
+                        paymentLink
+                    );
+                    closeModal();
+                    loadInvoices(); // refresh list
+                } else if (result.limit_reached) {
+                    const confirmUpgrade = confirm(
+                        `${result.error}\n\nYou've used ${result.current} out of ${result.max} free invoices.\nUpgrade to Pro for unlimited invoices!`
+                    );
+                    if (confirmUpgrade) {
+                        window.location.href = 'pricing.html';
+                    }
+                } else {
+                    alert('❌ Error: ' + (result.error || 'Failed to create invoice'));
+                }
             } catch (err) {
                 alert('❌ Could not connect to server');
                 console.error(err);
@@ -744,53 +842,50 @@ function setCachedData(key, data) {
         });
 
         // ============================================
-        // LOGOUT – clears localStorage
+        // LOGOUT
         // ============================================
         document.getElementById('navLogout')?.addEventListener('click', async (e) => {
-    e.preventDefault();
-    try {
-        await fetch(`${API_URL}/auth/logout`, {
-            method: 'POST',
-            headers: getAuthHeaders()
+            e.preventDefault();
+            try {
+                await fetch(`${API_URL}/auth/logout`, {
+                    method: 'POST',
+                    headers: getAuthHeaders()
+                });
+            } catch (err) {}
+            sessionStorage.removeItem('paypoint_user');
+            sessionStorage.removeItem('paypoint_session');
+            window.location.replace('login.html');
         });
-    } catch (err) {}
-    sessionStorage.removeItem('paypoint_user');
-    sessionStorage.removeItem('paypoint_session');
-    window.location.replace('login.html');
-});
 
         // ============================================
-// AUTO-CHASING TOGGLE
-// ============================================
-const tier = localStorage.getItem('user_subscription_tier') || 'free';
-const autoChaseToggle = document.getElementById('autoChaseToggle');
-const autoChaseLabel = document.getElementById('autoChaseLabel');
-const autoChaseStatus = document.getElementById('autoChaseStatus');
+        // AUTO-CHASING TOGGLE (Pro)
+        // ============================================
+        const tier = localStorage.getItem('user_subscription_tier') || 'free';
+        const autoChaseToggle = document.getElementById('autoChaseToggle');
+        const autoChaseLabel = document.getElementById('autoChaseLabel');
+        const autoChaseStatus = document.getElementById('autoChaseStatus');
 
-// Guard: if any element is missing, skip the feature
-if (!autoChaseToggle || !autoChaseLabel || !autoChaseStatus) {
-    console.warn('Auto‑chasing elements not found – skipping toggle setup.');
-} else {
-    if (tier === 'pro') {
-        autoChaseToggle.disabled = false;
-        autoChaseLabel.textContent = 'Enable Auto-Chasing';
-        autoChaseStatus.innerHTML = '<i class="fas fa-check-circle" style="color: #34C759;"></i> Pro feature – active';
+        if (autoChaseToggle && autoChaseLabel && autoChaseStatus) {
+            if (tier === 'pro') {
+                autoChaseToggle.disabled = false;
+                autoChaseLabel.textContent = 'Enable Auto-Chasing';
+                autoChaseStatus.innerHTML = '<i class="fas fa-check-circle" style="color: #34C759;"></i> Pro feature – active';
 
-        const enabled = localStorage.getItem('auto_chase_enabled') === 'true';
-        autoChaseToggle.checked = enabled;
+                const enabled = localStorage.getItem('auto_chase_enabled') === 'true';
+                autoChaseToggle.checked = enabled;
 
-        autoChaseToggle.addEventListener('change', function() {
-            localStorage.setItem('auto_chase_enabled', this.checked);
-            autoChaseStatus.innerHTML = this.checked
-                ? '<i class="fas fa-check-circle" style="color: #34C759;"></i> Auto-chasing enabled'
-                : '<i class="fas fa-pause-circle" style="color: #FF9500;"></i> Auto-chasing paused';
-        });
-    } else {
-        autoChaseToggle.disabled = true;
-        autoChaseLabel.innerHTML = '<i class="fas fa-lock" style="color: #FF9500;"></i> Pro Feature – Upgrade to Enable';
-        autoChaseStatus.innerHTML = '<i class="fas fa-exclamation-triangle" style="color: #FF9500;"></i> Upgrade to Pro to unlock auto-chasing';
-    }
-}
+                autoChaseToggle.addEventListener('change', function() {
+                    localStorage.setItem('auto_chase_enabled', this.checked);
+                    autoChaseStatus.innerHTML = this.checked
+                        ? '<i class="fas fa-check-circle" style="color: #34C759;"></i> Auto-chasing enabled'
+                        : '<i class="fas fa-pause-circle" style="color: #FF9500;"></i> Auto-chasing paused';
+                });
+            } else {
+                autoChaseToggle.disabled = true;
+                autoChaseLabel.innerHTML = '<i class="fas fa-lock" style="color: #FF9500;"></i> Pro Feature – Upgrade to Enable';
+                autoChaseStatus.innerHTML = '<i class="fas fa-exclamation-triangle" style="color: #FF9500;"></i> Upgrade to Pro to unlock auto-chasing';
+            }
+        }
 
         // ============================================
         // INIT
@@ -798,11 +893,11 @@ if (!autoChaseToggle || !autoChaseLabel || !autoChaseStatus) {
         (async function init() {
             const authed = checkAuth();
             if (authed) {
-                await loadDealsForInvoices();
-                document.getElementById('loadingIndicator').style.display = 'block';
-// ... fetch data ...
-document.getElementById('loadingIndicator').style.display = 'none';
-                console.log('📄 PayPoint Invoices Page loaded (hybrid auth)');
+                const loading = document.getElementById('loadingIndicator');
+                if (loading) loading.style.display = 'block';
+                await loadInvoices();
+                if (loading) loading.style.display = 'none';
+                console.log('📄 PayPoint Invoices Page loaded (updated)');
                 console.log('📡 Connected to:', API_URL);
             }
         })();

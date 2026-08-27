@@ -1685,6 +1685,32 @@ app.get('/api/payments/verify/:reference', authenticate, async (req, res) => {
 });
 
 // ============================================
+// GET USER INVOICES (with deal details)
+// ============================================
+app.get('/api/invoices', authenticate, async (req, res) => {
+    try {
+        const userId = req.userId;
+        const { data, error } = await supabaseAdmin
+            .from('invoices')
+            .select(`
+                *,
+                deals ( brand_name, amount, currency, status )
+            `)
+            .eq('user_id', userId)
+            .order('created_at', { ascending: false });
+
+        if (error) {
+            console.error('Invoices fetch error:', error);
+            return res.status(500).json({ error: error.message });
+        }
+        res.json({ success: true, data: data || [] });
+    } catch (err) {
+        console.error('Invoices GET error:', err);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// ============================================
 // INVOICE ROUTES
 // ============================================
 
@@ -1692,7 +1718,8 @@ app.get('/api/payments/verify/:reference', authenticate, async (req, res) => {
 function buildInvoiceEmail({ invoice, deal, profile, items, subtotal, vatAmount, total, portalLink }) {
     const date = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
     const dueDate = invoice.due_date ? new Date(invoice.due_date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : 'Not set';
-    const currencySymbol = invoice.currency || 'NGN' === 'USD' ? '$' : '₦';
+    const currency = invoice.currency || deal.currency || 'NGN';
+const currencySymbol = currency === 'USD' ? '$' : '₦';
     
     let lineItemsHtml = '';
     if (items && items.length > 0) {
@@ -1829,7 +1856,6 @@ async function handleInvoiceCreate(req, res) {
             .eq('id', newInvoice.id);
 
         const portalLink = `${FRONTEND_URL}/portal/${portalToken}`;
-const html = buildInvoiceEmail({ invoice: newInvoice, deal, profile, items, subtotal, vatAmount, total, portalLink });
 
         // ✅ Build the email HTML with full invoice
         const html = buildInvoiceEmail({
@@ -1862,6 +1888,67 @@ const html = buildInvoiceEmail({ invoice: newInvoice, deal, profile, items, subt
 
 // ---- explicit routes to avoid 404s ----
 app.post(['/api/invoices/create', '/api/invoices/create/'], authenticate, handleInvoiceCreate);
+
+// ============================================
+// RESEND INVOICE EMAIL
+// ============================================
+app.post('/api/invoices/resend', authenticate, async (req, res) => {
+    try {
+        const { invoiceId } = req.body;
+        const userId = req.userId;
+
+        // Fetch invoice with deal and profile
+        const { data: invoice, error: invErr } = await supabaseAdmin
+            .from('invoices')
+            .select('*, deals(*)')
+            .eq('id', invoiceId)
+            .eq('user_id', userId)
+            .single();
+
+        if (invErr || !invoice) {
+            return res.status(404).json({ error: 'Invoice not found' });
+        }
+
+        const deal = invoice.deals;
+        if (!deal) return res.status(404).json({ error: 'Deal not found' });
+
+        // Fetch creator profile (bank details etc.)
+        const { data: profile, error: profErr } = await supabaseAdmin
+            .from('profiles')
+            .select('bank_account_name, bank_name, bank_account_number, payment_instructions')
+            .eq('id', userId)
+            .single();
+
+        // Build email HTML (reuse the same function)
+        const portalToken = invoice.portal_token;
+        const portalLink = `${process.env.FRONTEND_URL || 'https://paypoint-app.netlify.app'}/portal/${portalToken}`;
+
+        const html = buildInvoiceEmail({
+            invoice,
+            deal,
+            profile: profile || {},
+            items: invoice.line_items || [],
+            subtotal: invoice.subtotal || 0,
+            vatAmount: invoice.vat_amount || 0,
+            total: invoice.total || deal.amount,
+            portalLink
+        });
+
+        const subject = `📄 Invoice #${invoice.invoice_number} from ${deal.brand_name}`;
+
+        // Send email (currently logs only)
+        const sent = await sendEmailWithRetry(invoice.brand_email, subject, html);
+
+        res.json({
+            success: true,
+            email_sent: sent,
+            portal_link: portalLink
+        });
+    } catch (err) {
+        console.error('Resend error:', err);
+        res.status(500).json({ error: 'Failed to resend' });
+    }
+});
 
 // ============================================
 // GENERATE INVOICE PDF
