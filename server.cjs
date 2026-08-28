@@ -1883,7 +1883,10 @@ async function handleInvoiceCreate(req, res) {
             .eq('id', userId)
             .single();
 
-        // ✅ Create invoice
+        // ✅ Generate portal token BEFORE inserting
+        const portalToken = crypto.randomBytes(32).toString('hex');
+
+        // ✅ Create invoice WITH portal_token
         const { data, error } = await supabaseAdmin
             .from('invoices')
             .insert([{
@@ -1901,10 +1904,10 @@ async function handleInvoiceCreate(req, res) {
                 vat_amount: vatAmount,
                 total: total,
                 notes: notes || null,
-                 status: 'sent',
-        portal_token: portalToken    // <-- ADD THIS
-    }])
-    .select();
+                status: 'sent',
+                portal_token: portalToken   // ✅ Include token here
+            }])
+            .select();
 
         if (error) {
             console.error('Invoice create error:', error);
@@ -1913,16 +1916,10 @@ async function handleInvoiceCreate(req, res) {
 
         const newInvoice = data[0];
 
-        // ✅ Generate portal token
-        const portalToken = crypto.randomBytes(32).toString('hex');
-        await supabaseAdmin
-            .from('invoices')
-            .update({ portal_token: portalToken })
-            .eq('id', newInvoice.id);
-
+        // ✅ Build portal link using the token
         const portalLink = `${FRONTEND_URL}/portal/${portalToken}`;
 
-        // ✅ Build the email HTML with full invoice
+        // ✅ Build email HTML
         const html = buildInvoiceEmail({
             invoice: newInvoice,
             deal,
