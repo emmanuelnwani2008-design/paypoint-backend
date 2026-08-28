@@ -1901,9 +1901,10 @@ async function handleInvoiceCreate(req, res) {
                 vat_amount: vatAmount,
                 total: total,
                 notes: notes || null,
-                status: 'sent'
-            }])
-            .select();
+                 status: 'sent',
+        portal_token: portalToken    // <-- ADD THIS
+    }])
+    .select();
 
         if (error) {
             console.error('Invoice create error:', error);
