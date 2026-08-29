@@ -810,20 +810,22 @@
                 const result = await res.json();
 
                 if (result.success) {
-                    const paymentLink = result.portal_link || 'No link generated';
-                    // Auto‑open portal in new tab
-                    if (result.portal_link) {
-                        window.open(result.portal_link, '_blank');
-                    }
-                    prompt(
-                        '✅ Invoice created! The portal link has been opened in a new tab.\n\n' +
-                        '📋 COPY THIS LINK AND SEND IT TO THE BRAND:\n' +
-                        '(Select the link below, press Ctrl+C to copy, then close this box.)\n\n' +
-                        '💡 We are still setting up automatic email delivery. For now, manually send this link to the brand via WhatsApp, Slack, or email.',
-                        paymentLink
-                    );
-                    closeModal();
-                    loadInvoices(); // refresh list
+    const paymentLink = result.portal_link || 'No link generated';
+    if (result.portal_link) {
+        window.open(result.portal_link, '_blank');
+    }
+    // ✅ Add a small delay to avoid the warning
+    setTimeout(() => {
+        prompt(
+            '✅ Invoice created! The portal link has been opened in a new tab.\n\n' +
+            '📋 COPY THIS LINK AND SEND IT TO THE BRAND:\n' +
+            '(Select the link below, press Ctrl+C to copy, then close this box.)\n\n' +
+            '💡 We are still setting up automatic email delivery. For now, manually send this link to the brand via WhatsApp, Slack, or email.',
+            paymentLink
+        );
+    }, 100);
+    closeModal();
+    loadInvoices(); // refresh list
                 } else if (result.limit_reached) {
                     const confirmUpgrade = confirm(
                         `${result.error}\n\nYou've used ${result.current} out of ${result.max} free invoices.\nUpgrade to Pro for unlimited invoices!`
