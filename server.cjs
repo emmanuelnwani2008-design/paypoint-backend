@@ -1743,9 +1743,10 @@ app.post('/api/invoices/:id/resend', authenticate, async (req, res) => {
             .eq('id', userId)
             .single();
 
-        // Build email HTML
-        const portalToken = invoice.portal_token;
-        const portalLink = `${process.env.FRONTEND_URL || 'https://paypoint-app.netlify.app'}/portal/${portalToken}`;
+        const newInvoice = data[0];
+
+// Build portal link using the BACKEND URL
+const BACKEND_URL = process.env.BACKEND_URL || 'https://paypoint-7dmc.onrender.com';
 
         const html = buildInvoiceEmail({
             invoice,
@@ -1917,7 +1918,9 @@ async function handleInvoiceCreate(req, res) {
         const newInvoice = data[0];
 
         // ✅ Build portal link using the token
-        const portalLink = `${FRONTEND_URL}/portal/${portalToken}`;
+        const BACKEND_URL = process.env.BACKEND_URL || 'https://paypoint-7dmc.onrender.com';
+
+const portalLink = `${BACKEND_URL}/portal/${portalToken}`;
 
         // ✅ Build email HTML
         const html = buildInvoiceEmail({
