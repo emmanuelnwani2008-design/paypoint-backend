@@ -426,11 +426,11 @@
         // FORMAT CURRENCY
         // ============================================
         function formatCurrency(amount, currency) {
-            if (!amount && amount !== 0) return '₦0';
+            if (!amount && amount !== 0) return '$0';
             const userData = JSON.parse(localStorage.getItem('paypoint_user') || '{}');
-            const userCurrency = userData?.user_metadata?.default_currency || 'NGN';
+            const userCurrency = userData?.user_metadata?.default_currency || 'USD';
             const symbols = { USD: '$', NGN: '₦' };
-            const symbol = symbols[currency] || symbols[userCurrency] || '₦';
+            const symbol = symbols[currency] || symbols[userCurrency] || '$';
             return symbol + Number(amount).toLocaleString();
         }
 

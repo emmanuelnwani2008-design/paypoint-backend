@@ -687,7 +687,7 @@ app.get('/api/settings', authenticate, async (req, res) => {
         res.json({
             success: true,
             data: {
-                currency: profile?.default_currency || 'NGN',
+                currency: profile?.default_currency || 'USD',
                 taxRate: profile?.tax_rate || 30
             }
         });
@@ -1265,7 +1265,7 @@ app.post('/api/deals', authenticate, async (req, res) => {
                 due_date: due_date || null,
                 deliverable: sanitizedDeliverable || '',
                 status: status || 'pending',
-                currency: currency || 'NGN'
+                currency: currency || 'USD'
             }])
             .select();
         if (error) {
@@ -1317,7 +1317,7 @@ app.put('/api/deals/:id', authenticate, async (req, res) => {
                 due_date: due_date || null,
                 deliverable: sanitizedDeliverable || '',
                 status: status || 'pending',
-                currency: currency || 'NGN',
+                currency: currency || 'USD',
                 notes: req.body.notes || null
             })
             .eq('id', dealId)
@@ -1453,7 +1453,7 @@ app.post('/api/expenses', authenticate, async (req, res) => {
                 amount: parseFloat(amount),
                 category: sanitizedCategory,
                 receipt_url: receipt_url || '',
-                currency: currency || 'NGN',
+                currency: currency || 'USD',
                 deal_id: req.body.deal_id || null 
             }])
             .select();
@@ -2566,7 +2566,7 @@ app.get('/api/public/invoice/:token', async (req, res) => {
                 invoice_number: invoice.invoice_number,
                 brand_name: invoice.brand_name || deal.brand_name,
                 amount: invoice.total || deal.amount,
-                currency: invoice.currency || 'NGN',
+                currency: invoice.currency || 'USD',
                 due_date: invoice.due_date,
                 line_items: invoice.line_items || [],
                 notes: invoice.notes || '',

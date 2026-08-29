@@ -787,22 +787,22 @@
             <section class="metrics-grid" id="metricsGrid">
                 <div class="metric-card">
                     <div class="label">Total Revenue</div>
-                    <div class="value blue" id="totalRevenue">₦0</div>
+                    <div class="value blue" id="totalRevenue">$0</div>
                     <div class="sub" id="revenueChange">↑ 0% this month</div>
                 </div>
                 <div class="metric-card">
                     <div class="label">Total Expenses</div>
-                    <div class="value white" id="totalExpenses">₦0</div>
+                    <div class="value white" id="totalExpenses">$0</div>
                     <div class="sub" id="expensesChange">↓ 0% from last month</div>
                 </div>
                 <div class="metric-card">
                     <div class="label">Taxes Set Aside</div>
-                    <div class="value gold" id="totalTaxes">₦0</div>
+                    <div class="value gold" id="totalTaxes">$0</div>
                     <div class="sub" id="taxRateDisplay">30% tax rate</div>
                 </div>
                 <div class="metric-card">
                     <div class="label">Real Take-Home</div>
-                    <div class="value green" id="takeHome">₦0</div>
+                    <div class="value green" id="takeHome">$0</div>
                     <div class="sub">What you actually keep</div>
                 </div>
             </section>
@@ -908,12 +908,12 @@
     }
 
     function formatCurrency(amount, currency) {
-        if (!amount && amount !== 0) return '₦0';
+        if (!amount && amount !== 0) return '$0';
         const userData = JSON.parse(localStorage.getItem('paypoint_user') || '{}');
-        const userCurrency = (userData?.user_metadata?.default_currency || 'NGN').toUpperCase();
-        const normalizedCurrency = (currency || userCurrency || 'NGN').toUpperCase();
+        const userCurrency = (userData?.user_metadata?.default_currency || 'USD').toUpperCase();
+        const normalizedCurrency = (currency || userCurrency || 'USD').toUpperCase();
         const symbols = { USD: '$', NGN: '₦' };
-        const symbol = symbols[normalizedCurrency] || symbols[userCurrency] || '₦';
+        const symbol = symbols[normalizedCurrency] || symbols[userCurrency] || '$';
         return symbol + Number(amount).toLocaleString();
     }
 

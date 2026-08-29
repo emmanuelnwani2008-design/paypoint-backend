@@ -750,12 +750,12 @@ function setCachedData(key, data) {
         // CURRENCY HELPER
         // ============================================
         function formatCurrency(amount, currency) {
-    if (!amount && amount !== 0) return '₦0';
+    if (!amount && amount !== 0) return '$0';
     const userData = JSON.parse(localStorage.getItem('paypoint_user') || '{}');
-    const userCurrency = (userData?.user_metadata?.default_currency || 'NGN').toUpperCase();
-    const normalizedCurrency = (currency || userCurrency || 'NGN').toUpperCase();
+    const userCurrency = (userData?.user_metadata?.default_currency || 'USD').toUpperCase();
+    const normalizedCurrency = (currency || userCurrency || 'USD').toUpperCase();
     const symbols = { USD: '$', NGN: '₦' };
-    const symbol = symbols[normalizedCurrency] || symbols[userCurrency] || '₦';
+    const symbol = symbols[normalizedCurrency] || symbols[userCurrency] || '$';
     return symbol + Number(amount).toLocaleString();
 }
 
