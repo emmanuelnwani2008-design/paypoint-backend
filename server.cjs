@@ -1365,24 +1365,29 @@ app.delete('/api/deals/:id', authenticate, async (req, res) => {
         
 
 // ============================================
-// GET SINGLE DEAL WITH PROFIT
+// GET SINGLE DEAL WITH PROFIT (FIXED)
 // ============================================
 app.get('/api/deals/:id', authenticate, async (req, res) => {
     try {
         const dealId = req.params.id;
         const userId = req.userId;
+        const fallbackUserId = req.reconciledUserId || null;
+        const ids = [userId, fallbackUserId].filter(Boolean);
 
+        // 1. Fetch the deal
         const { data: deal, error: dealError } = await supabaseAdmin
             .from('deals')
             .select('*')
             .eq('id', dealId)
-            .in('user_id', ids)
+            .in('user_id', ids)   // ✅ Now 'ids' is defined
             .single();
 
         if (dealError || !deal) {
+            console.error('Deal fetch error:', dealError);
             return res.status(404).json({ error: 'Deal not found' });
         }
 
+        // 2. Fetch linked expenses
         const { data: expenses, error: expensesError } = await supabaseAdmin
             .from('expenses')
             .select('amount, vendor, category, created_at')
@@ -1391,6 +1396,7 @@ app.get('/api/deals/:id', authenticate, async (req, res) => {
 
         if (expensesError) {
             console.error('Error fetching expenses for deal:', expensesError);
+            // Continue without expenses – don't fail the whole request
         }
 
         const totalExpenses = (expenses || []).reduce((sum, exp) => sum + Number(exp.amount), 0);
