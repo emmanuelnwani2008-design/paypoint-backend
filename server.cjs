@@ -246,6 +246,20 @@ cron.schedule('0 9 * * *', async () => {
                 console.error(`❌ Failed to log reminder for invoice ${invoice.invoice_number}`);
             }
         }
+        // Inside the cron job loop, after fetching profile:
+const { data: profile, error: profileError } = await supabase
+    .from('profiles')
+    .select('email, subscription_tier, user_metadata, auto_chase_enabled')
+    .eq('id', deal.user_id)
+    .single();
+
+if (profileError || !profile) continue;
+
+// Skip if auto-chase is disabled
+if (!profile.auto_chase_enabled) {
+    console.log(`⏸️ Auto-chase disabled for user ${deal.user_id}`);
+    continue;
+}
 
     } catch (err) {
         console.error('Cron job error:', err);
@@ -2392,6 +2406,51 @@ app.get('/api/profile/invoice-customization', authenticate, async (req, res) => 
         });
     } catch (err) {
         console.error('Invoice customization fetch error:', err);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+// ============================================
+// AUTO-CHASE PREFERENCE
+// ============================================
+app.put('/api/profile/auto-chase', authenticate, async (req, res) => {
+    try {
+        const userId = req.userId;
+        const { enabled } = req.body;
+
+        const { error } = await supabaseAdmin
+            .from('profiles')
+            .update({ auto_chase_enabled: enabled })
+            .eq('id', userId);
+
+        if (error) {
+            console.error('Auto-chase update error:', error);
+            return res.status(500).json({ error: 'Failed to update preference' });
+        }
+
+        res.json({ success: true, enabled });
+    } catch (err) {
+        console.error('Auto-chase error:', err);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+app.get('/api/profile/auto-chase', authenticate, async (req, res) => {
+    try {
+        const userId = req.userId;
+        const { data: profile, error } = await supabaseAdmin
+            .from('profiles')
+            .select('auto_chase_enabled')
+            .eq('id', userId)
+            .single();
+
+        if (error) {
+            console.error('Auto-chase fetch error:', error);
+            return res.status(500).json({ error: 'Failed to fetch preference' });
+        }
+
+        res.json({ success: true, enabled: profile?.auto_chase_enabled || false });
+    } catch (err) {
+        console.error('Auto-chase fetch error:', err);
         res.status(500).json({ error: 'Server error' });
     }
 });

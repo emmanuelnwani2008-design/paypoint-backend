@@ -859,34 +859,69 @@
         });
 
         // ============================================
-        // AUTO-CHASING TOGGLE (Pro)
-        // ============================================
-        const tier = localStorage.getItem('user_subscription_tier') || 'free';
-        const autoChaseToggle = document.getElementById('autoChaseToggle');
-        const autoChaseLabel = document.getElementById('autoChaseLabel');
-        const autoChaseStatus = document.getElementById('autoChaseStatus');
+// AUTO-CHASING TOGGLE (Pro Feature)
+// ============================================
+const tier = localStorage.getItem('user_subscription_tier') || 'free';
+const autoChaseToggle = document.getElementById('autoChaseToggle');
+const autoChaseLabel = document.getElementById('autoChaseLabel');
+const autoChaseStatus = document.getElementById('autoChaseStatus');
 
-        if (autoChaseToggle && autoChaseLabel && autoChaseStatus) {
-            if (tier === 'pro') {
-                autoChaseToggle.disabled = false;
-                autoChaseLabel.textContent = 'Enable Auto-Chasing';
-                autoChaseStatus.innerHTML = '<i class="fas fa-check-circle" style="color: #34C759;"></i> Pro feature – active';
-
-                const enabled = localStorage.getItem('auto_chase_enabled') === 'true';
-                autoChaseToggle.checked = enabled;
-
-                autoChaseToggle.addEventListener('change', function() {
-                    localStorage.setItem('auto_chase_enabled', this.checked);
-                    autoChaseStatus.innerHTML = this.checked
-                        ? '<i class="fas fa-check-circle" style="color: #34C759;"></i> Auto-chasing enabled'
-                        : '<i class="fas fa-pause-circle" style="color: #FF9500;"></i> Auto-chasing paused';
-                });
-            } else {
-                autoChaseToggle.disabled = true;
-                autoChaseLabel.innerHTML = '<i class="fas fa-lock" style="color: #FF9500;"></i> Pro Feature – Upgrade to Enable';
-                autoChaseStatus.innerHTML = '<i class="fas fa-exclamation-triangle" style="color: #FF9500;"></i> Upgrade to Pro to unlock auto-chasing';
-            }
+async function loadAutoChasePreference() {
+    try {
+        const res = await fetch(`${API_URL}/profile/auto-chase`, {
+            headers: getAuthHeaders()
+        });
+        const result = await res.json();
+        if (result.success && autoChaseToggle) {
+            autoChaseToggle.checked = result.enabled;
+            updateAutoChaseStatus(result.enabled);
         }
+    } catch (err) {
+        console.error('Error loading auto-chase preference:', err);
+    }
+}
+
+function updateAutoChaseStatus(enabled) {
+    if (!autoChaseStatus) return;
+    if (enabled) {
+        autoChaseStatus.innerHTML = '<i class="fas fa-check-circle" style="color: #34C759;"></i> Auto-chasing enabled';
+    } else {
+        autoChaseStatus.innerHTML = '<i class="fas fa-pause-circle" style="color: #FF9500;"></i> Auto-chasing paused';
+    }
+}
+
+if (autoChaseToggle && autoChaseLabel && autoChaseStatus) {
+    if (tier === 'pro') {
+        autoChaseToggle.disabled = false;
+        autoChaseLabel.textContent = 'Enable Auto-Chasing';
+        loadAutoChasePreference();
+
+        autoChaseToggle.addEventListener('change', async function() {
+            const enabled = this.checked;
+            try {
+                const res = await fetch(`${API_URL}/profile/auto-chase`, {
+                    method: 'PUT',
+                    headers: getAuthHeaders(),
+                    body: JSON.stringify({ enabled })
+                });
+                const result = await res.json();
+                if (result.success) {
+                    updateAutoChaseStatus(enabled);
+                } else {
+                    alert('Failed to save preference');
+                    this.checked = !enabled;
+                }
+            } catch (err) {
+                alert('Could not connect to server.');
+                this.checked = !enabled;
+            }
+        });
+    } else {
+        autoChaseToggle.disabled = true;
+        autoChaseLabel.innerHTML = '<i class="fas fa-lock" style="color: #FF9500;"></i> Pro Feature – Upgrade to Enable';
+        autoChaseStatus.innerHTML = '<i class="fas fa-exclamation-triangle" style="color: #FF9500;"></i> Upgrade to Pro to unlock auto-chasing';
+    }
+}
 
         // ============================================
         // INIT
