@@ -246,25 +246,6 @@ cron.schedule('0 9 * * *', async () => {
                 console.error(`❌ Failed to log reminder for invoice ${invoice.invoice_number}`);
             }
         }
-        // Inside the cron job loop, after fetching profile:
-const { data: profile, error: profileError } = await supabase
-    .from('profiles')
-    .select('email, subscription_tier, user_metadata, auto_chase_enabled')
-    .eq('id', deal.user_id)
-    .single();
-
-if (profileError || !profile) continue;
-
-// Skip if auto-chase is disabled
-if (!profile.auto_chase_enabled) {
-    console.log(`⏸️ Auto-chase disabled for user ${deal.user_id}`);
-    continue;
-}
-
-    } catch (err) {
-        console.error('Cron job error:', err);
-    }
-});
 
 // ============================================
 // HELPERS
