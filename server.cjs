@@ -146,7 +146,7 @@ async function sendEmailWithRetry(to, subject, html, retries = 2) {
 }
 
 // ============================================
-// CRON JOB – Automated Invoice Chasing
+// CRON JOB – Automated Invoice Chasing (Safe Version)
 // ============================================
 cron.schedule('0 9 * * *', async () => {
     console.log('🔔 Running overdue invoice check...');
@@ -181,6 +181,7 @@ cron.schedule('0 9 * * *', async () => {
             const dueDate = deal.due_date;
             if (!dueDate) continue;
 
+            // ✅ Only fetch columns that definitely exist
             const { data: profile, error: profileError } = await supabase
                 .from('profiles')
                 .select('email, subscription_tier, user_metadata')
@@ -192,6 +193,7 @@ cron.schedule('0 9 * * *', async () => {
                 continue;
             }
 
+            // ✅ Only chase invoices for Pro users
             if (profile.subscription_tier !== 'pro') continue;
 
             const daysOverdue = Math.floor((Date.now() - new Date(dueDate).getTime()) / (1000 * 60 * 60 * 24));
@@ -233,6 +235,7 @@ cron.schedule('0 9 * * *', async () => {
             `;
 
             const sent = await sendEmailWithRetry(brandEmail, subject, html);
+
             if (sent) {
                 await supabase
                     .from('invoices')
@@ -246,6 +249,10 @@ cron.schedule('0 9 * * *', async () => {
                 console.error(`❌ Failed to log reminder for invoice ${invoice.invoice_number}`);
             }
         }
+    } catch (err) {
+        console.error('Cron job error:', err);
+    }
+});
 
 // ============================================
 // HELPERS
