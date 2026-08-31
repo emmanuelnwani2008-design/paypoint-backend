@@ -1363,6 +1363,46 @@ app.delete('/api/deals/:id', authenticate, async (req, res) => {
     }
 });
         
+// ============================================
+// EXPORT DEALS TO CSV
+// ============================================
+app.get('/api/deals/export', authenticate, async (req, res) => {
+    try {
+        const userId = req.userId;
+        const fallbackUserId = req.reconciledUserId || null;
+        const ids = [userId, fallbackUserId].filter(Boolean);
+
+        const { data: deals, error } = await supabaseAdmin
+            .from('deals')
+            .select('brand_name, amount, currency, status, due_date, deliverable, notes, created_at')
+            .in('user_id', ids)
+            .order('created_at', { ascending: false });
+
+        if (error) throw error;
+
+        const headers = ['Brand', 'Amount', 'Currency', 'Status', 'Due Date', 'Deliverable', 'Notes', 'Created At'];
+        const rows = deals.map(d => [
+            d.brand_name || '',
+            d.amount || 0,
+            d.currency || 'USD',
+            d.status || 'pending',
+            d.due_date ? new Date(d.due_date).toLocaleDateString() : '',
+            d.deliverable || '',
+            d.notes || '',
+            d.created_at ? new Date(d.created_at).toLocaleDateString() : ''
+        ]);
+
+        let csv = headers.join(',') + '\n';
+        rows.forEach(row => { csv += row.join(',') + '\n'; });
+
+        res.setHeader('Content-Type', 'text/csv');
+        res.setHeader('Content-Disposition', `attachment; filename=deals-${Date.now()}.csv`);
+        res.send(csv);
+    } catch (err) {
+        console.error('Export deals error:', err);
+        res.status(500).json({ error: 'Failed to export deals' });
+    }
+});
 
 // ============================================
 // GET SINGLE DEAL WITH PROFIT (FIXED)
@@ -1533,6 +1573,43 @@ app.get('/api/expenses', authenticate, async (req, res) => {
     } catch (err) {
         console.error('Expenses GET error:', err);
         res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// ============================================
+// EXPORT EXPENSES TO CSV
+// ============================================
+app.get('/api/expenses/export', authenticate, async (req, res) => {
+    try {
+        const userId = req.userId;
+
+        const { data: expenses, error } = await supabaseAdmin
+            .from('expenses')
+            .select('vendor, amount, currency, category, receipt_url, created_at')
+            .eq('user_id', userId)
+            .order('created_at', { ascending: false });
+
+        if (error) throw error;
+
+        const headers = ['Vendor', 'Amount', 'Currency', 'Category', 'Receipt URL', 'Date'];
+        const rows = expenses.map(e => [
+            e.vendor || '',
+            e.amount || 0,
+            e.currency || 'USD',
+            e.category || '',
+            e.receipt_url || '',
+            e.created_at ? new Date(e.created_at).toLocaleDateString() : ''
+        ]);
+
+        let csv = headers.join(',') + '\n';
+        rows.forEach(row => { csv += row.join(',') + '\n'; });
+
+        res.setHeader('Content-Type', 'text/csv');
+        res.setHeader('Content-Disposition', `attachment; filename=expenses-${Date.now()}.csv`);
+        res.send(csv);
+    } catch (err) {
+        console.error('Export expenses error:', err);
+        res.status(500).json({ error: 'Failed to export expenses' });
     }
 });
 
@@ -1984,6 +2061,44 @@ app.get('/api/invoices', authenticate, async (req, res) => {
     } catch (err) {
         console.error('Invoices GET error:', err);
         res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// ============================================
+// EXPORT INVOICES TO CSV
+// ============================================
+app.get('/api/invoices/export', authenticate, async (req, res) => {
+    try {
+        const userId = req.userId;
+
+        const { data: invoices, error } = await supabaseAdmin
+            .from('invoices')
+            .select('invoice_number, brand_name, total, currency, status, due_date, created_at')
+            .eq('user_id', userId)
+            .order('created_at', { ascending: false });
+
+        if (error) throw error;
+
+        const headers = ['Invoice #', 'Brand', 'Total', 'Currency', 'Status', 'Due Date', 'Created At'];
+        const rows = invoices.map(inv => [
+            inv.invoice_number || '',
+            inv.brand_name || '',
+            inv.total || 0,
+            inv.currency || 'USD',
+            inv.status || 'sent',
+            inv.due_date ? new Date(inv.due_date).toLocaleDateString() : '',
+            inv.created_at ? new Date(inv.created_at).toLocaleDateString() : ''
+        ]);
+
+        let csv = headers.join(',') + '\n';
+        rows.forEach(row => { csv += row.join(',') + '\n'; });
+
+        res.setHeader('Content-Type', 'text/csv');
+        res.setHeader('Content-Disposition', `attachment; filename=invoices-${Date.now()}.csv`);
+        res.send(csv);
+    } catch (err) {
+        console.error('Export invoices error:', err);
+        res.status(500).json({ error: 'Failed to export invoices' });
     }
 });
 

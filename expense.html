@@ -580,6 +580,7 @@
             <h1>Expenses <span>· Track what you spend</span></h1>
             <div class="header-actions">
                 <button class="btn-primary" id="openModalBtn">+ Add Expense</button>
+                <button class="btn-secondary" id="exportExpensesBtn"><i class="fas fa-file-export"></i> Export CSV</button>
             </div>
         </div>
 
@@ -1152,6 +1153,27 @@ if (result.success) {
             localStorage.removeItem('paypoint_session');
             window.location.href = 'login.html';
         });
+
+        // Export Expenses
+document.getElementById('exportExpensesBtn').addEventListener('click', async () => {
+    try {
+        const res = await fetch(`${API_URL}/expenses/export`, {
+            headers: getAuthHeaders()
+        });
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `expenses-${Date.now()}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+    } catch (err) {
+        alert('Failed to export expenses.');
+        console.error(err);
+    }
+});
 
         checkAuth();
         loadExpenses();

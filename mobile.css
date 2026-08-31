@@ -126,6 +126,21 @@
         color: #4F7CFF;
         font-weight: 600;
     }
+    .btn-secondary {
+    background: #F8FAFC;
+    border: 1px solid #E8EDF2;
+    padding: 10px 20px;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 14px;
+    color: #5E6F82;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: 'Inter', sans-serif;
+}
+.btn-secondary:hover {
+    background: #EEF2F7;
+}
 
     /* ====== PADDING SO CONTENT ISN'T HIDDEN ====== */
     .app-container,

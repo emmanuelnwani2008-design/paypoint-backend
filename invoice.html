@@ -304,6 +304,7 @@
         <div class="page-header">
             <h1>Invoices <span>· Send professional invoices to brands</span></h1>
             <button class="btn-primary" id="openModalBtn">+ Create Invoice</button>
+             <button class="btn-secondary" id="exportInvoicesBtn"><i class="fas fa-file-export"></i> Export CSV</button>
         </div>
 
         <div class="invoice-grid" id="invoiceGrid">
@@ -887,6 +888,27 @@
                 autoChaseStatus.innerHTML = '<i class="fas fa-exclamation-triangle" style="color: #FF9500;"></i> Upgrade to Pro to unlock auto-chasing';
             }
         }
+
+        // Export Invoices
+document.getElementById('exportInvoicesBtn').addEventListener('click', async () => {
+    try {
+        const res = await fetch(`${API_URL}/invoices/export`, {
+            headers: getAuthHeaders()
+        });
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `invoices-${Date.now()}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+    } catch (err) {
+        alert('Failed to export invoices.');
+        console.error(err);
+    }
+});
 
         // ============================================
         // INIT
