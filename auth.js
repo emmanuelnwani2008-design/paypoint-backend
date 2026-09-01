@@ -28,7 +28,7 @@
             const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
             const res = await fetch(window.getApiUrl() + '/auth/user', {
                 headers,
-                credentials: token ? 'same-origin' : 'include'
+                credentials: 'include'
             });
 
             if (res.status === 401) {

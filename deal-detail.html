@@ -343,7 +343,7 @@ function setCachedData(key, data) {
             }
 
             try {
-                const res = await fetch(`${window.API_URL}/deals/${dealId}`, { headers: getAuthHeaders() });
+                const res = await fetch(`${window.API_URL}/deals/${dealId}`, { headers: getAuthHeaders(), credentials: 'include' });
                 const result = await res.json();
 
                 if (!result.success) {

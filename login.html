@@ -388,7 +388,8 @@ async function saveSessionAndRedirect(session) {
         const res = await fetch(`${API_URL}/auth/oauth`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ access_token: session.access_token })
+            body: JSON.stringify({ access_token: session.access_token }),
+            credentials: 'include'
         });
 
         const data = await res.json();
@@ -565,7 +566,8 @@ window.location.replace('dashboard.html');
                     const res = await fetch(`${API_URL}/auth/signup`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ name, email, password })
+                        body: JSON.stringify({ name, email, password }),
+                        credentials: 'include'
                     });
                     const data = await res.json();
                     if (data.success) {
@@ -601,7 +603,8 @@ window.location.replace('dashboard.html');
                     const res = await fetch(`${API_URL}/auth/login`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ email, password })
+                        body: JSON.stringify({ email, password }),
+                        credentials: 'include'
                     });
                     const data = await res.json();
                     if (data.success && data.user) {
@@ -636,7 +639,8 @@ window.location.replace('dashboard.html');
                     let res = await fetch(`${API_URL}/auth/login`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ email: DEMO_EMAIL, password: DEMO_PASSWORD })
+                        body: JSON.stringify({ email: DEMO_EMAIL, password: DEMO_PASSWORD }),
+                        credentials: 'include'
                     });
                     let data = await res.json();
                     if (!data.success) {
@@ -653,7 +657,8 @@ window.location.replace('dashboard.html');
                         res = await fetch(`${API_URL}/auth/login`, {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ email: DEMO_EMAIL, password: DEMO_PASSWORD })
+                            body: JSON.stringify({ email: DEMO_EMAIL, password: DEMO_PASSWORD }),
+                            credentials: 'include'
                         });
                         data = await res.json();
                     }
