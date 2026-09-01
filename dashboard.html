@@ -1329,7 +1329,7 @@
             });
             const result = await res.json();
             if (result.success) {
-                alert('✅ Deal added successfully!');
+                alert('<i class="fas fa-check-circle"></i> Deal added successfully!');
                 modal.classList.remove('active');
                 document.getElementById('brandName').value = '';
                 document.getElementById('dealAmount').value = '';

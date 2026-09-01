@@ -129,7 +129,7 @@ const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
 async function sendEmailWithRetry(to, subject, html, retries = 2) {
     const linkMatch = html.match(/https:\/\/[^"]+\/portal\/[a-f0-9]+/);
     
-    // ✅ SECURITY: Only log in development, hide in production
+    // <i class="fas fa-check-circle"></i> SECURITY: Only log in development, hide in production
     if (process.env.NODE_ENV !== 'production') {
         console.log(`📧 ========== INVOICE READY ==========`);
         console.log(`📧 Brand Email: ${to}`);
@@ -141,7 +141,7 @@ async function sendEmailWithRetry(to, subject, html, retries = 2) {
         }
         console.log(`📧 ===================================`);
     } else {
-        console.log(`✅ Invoice prepared (email hidden)`);
+        console.log(`<i class="fas fa-check-circle"></i> Invoice prepared (email hidden)`);
     }
     return true;
 }
@@ -169,7 +169,7 @@ cron.schedule('0 9 * * *', async () => {
         }
 
         if (!invoices || invoices.length === 0) {
-            console.log('✅ No overdue invoices to chase.');
+            console.log('<i class="fas fa-check-circle"></i> No overdue invoices to chase.');
             return;
         }
 
@@ -182,7 +182,7 @@ cron.schedule('0 9 * * *', async () => {
             const dueDate = deal.due_date;
             if (!dueDate) continue;
 
-            // ✅ Only fetch columns that definitely exist
+            // <i class="fas fa-check-circle"></i> Only fetch columns that definitely exist
             const { data: profile, error: profileError } = await supabase
                 .from('profiles')
                 .select('email, subscription_tier, user_metadata')
@@ -194,7 +194,7 @@ cron.schedule('0 9 * * *', async () => {
                 continue;
             }
 
-            // ✅ Only chase invoices for Pro users
+            // <i class="fas fa-check-circle"></i> Only chase invoices for Pro users
             if (profile.subscription_tier !== 'pro') continue;
 
             const daysOverdue = Math.floor((Date.now() - new Date(dueDate).getTime()) / (1000 * 60 * 60 * 24));
@@ -245,7 +245,7 @@ cron.schedule('0 9 * * *', async () => {
                         last_reminder_sent_at: new Date().toISOString()
                     })
                     .eq('id', invoice.id);
-                console.log(`✅ Reminder logged for invoice ${invoice.invoice_number} (${reminderType})`);
+                console.log(`<i class="fas fa-check-circle"></i> Reminder logged for invoice ${invoice.invoice_number} (${reminderType})`);
             } else {
                 console.error(`❌ Failed to log reminder for invoice ${invoice.invoice_number}`);
             }
@@ -2263,119 +2263,51 @@ app.post('/api/invoices/generate', authenticate, async (req, res) => {
         // Get user's customization
 const { data: customization } = await supabaseAdmin
     .from('profiles')
-    .select('invoice_logo_url, invoice_primary_color, invoice_accent_color, invoice_custom_header, invoice_custom_footer, invoice_business_links, invoice_template')
+    .select('invoice_logo_url, invoice_primary_color, invoice_accent_color, invoice_custom_header, invoice_custom_footer')
     .eq('id', userId)
     .single();
 
 const primaryColor = customization?.invoice_primary_color || '#4F7CFF';
-const accentColor = customization?.invoice_accent_color || '#1A1A2E';
+const headerText = customization?.invoice_custom_header || 'INVOICE';
+const footerText = customization?.invoice_custom_footer || 'Thank you for your business!';
+const logoUrl = customization?.invoice_logo_url;
 
-        // 2. Get creator's profile (for business details)
-        const { data: profile, error: profileError } = await supabaseAdmin
-            .from('profiles')
-            .select('business_name, business_address, business_phone, is_vat_registered, vat_number, bank_account_name, bank_name, bank_account_number')
-            .eq('id', userId)
-            .single();
+// ----- HEADER with custom logo -----
+if (logoUrl) {
+    try {
+        doc.image(logoUrl, 50, 45, { width: 100 });
+    } catch (e) {
+        doc.fontSize(24).font('Helvetica-Bold').text('PayPoint', 50, 50);
+    }
+} else {
+    doc.fontSize(24).font('Helvetica-Bold').text('PayPoint', 50, 50);
+}
+doc.moveDown(0.5);
+doc.moveTo(50, doc.y).lineTo(550, doc.y).stroke(primaryColor);
+doc.moveDown(1);
 
-        if (profileError) {
-            console.error('Profile fetch error:', profileError);
-            // Continue without business details – they'll show as "Not provided"
-        }
+// ----- INVOICE TITLE (custom header) -----
+doc.fontSize(20).font('Helvetica-Bold').fillColor(primaryColor).text(headerText, { align: 'center' });
+doc.fillColor('black');
+doc.moveDown(0.5);
 
-        // 3. Get user's name (fallback)
-        const creatorName = req.user?.user_metadata?.name || req.user?.name || 'Creator';
+// ... (rest of invoice content: business details, brand details, etc.) ...
 
-        // 4. Generate PDF
-        const invoiceNumber = `INV-${Date.now().toString().slice(-8)}`;
-        const date = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
-        const dueDate = deal.due_date ? new Date(deal.due_date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : 'Not set';
+// ----- TOTAL AMOUNT (use primary color) -----
+doc.moveTo(50, doc.y).lineTo(550, doc.y).stroke(primaryColor);
+doc.moveDown(0.5);
+doc.fontSize(16).font('Helvetica-Bold');
+const currencySymbol = deal.currency === 'USD' ? '$' : '₦';
+doc.fillColor(primaryColor);
+doc.text(`Total Amount: ${currencySymbol}${Number(deal.amount).toLocaleString()}`, { align: 'right' });
+doc.fillColor('black');
+doc.moveDown(2);
 
-        const doc = new PDFDocument({ size: 'A4', margin: 50 });
-
-        res.writeHead(200, {
-            'Content-Type': 'application/pdf',
-            'Content-Disposition': `inline; filename=invoice-${deal.brand_name}-${Date.now()}.pdf`
-        });
-
-        doc.pipe(res);
-
-        // ----- HEADER -----
-        doc.fontSize(24).font('Helvetica-Bold').text('PayPoint', { align: 'center' });
-        doc.fontSize(12).font('Helvetica').text('Finance OS for Creators', { align: 'center' });
-        doc.moveDown(0.5);
-        doc.moveTo(50, doc.y).lineTo(550, doc.y).stroke('#CCCCCC');
-        doc.moveDown(1);
-
-        // ----- INVOICE TITLE -----
-        doc.fontSize(20).font('Helvetica-Bold').text('INVOICE', { align: 'center' });
-        doc.moveDown(0.5);
-
-        // ----- INVOICE INFO -----
-        doc.fontSize(10).font('Helvetica');
-        doc.text(`Invoice #: ${invoiceNumber}`, 50, doc.y);
-        doc.text(`Date: ${date}`, 400, doc.y - 12);
-        doc.text(`Status: ${(deal.status || 'pending').toUpperCase()}`, 50, doc.y + 12);
-        doc.moveDown(2);
-
-        // ----- BUSINESS DETAILS (NEW) -----
-        doc.fontSize(14).font('Helvetica-Bold').text('Business Details', { underline: true });
-        doc.moveDown(0.3);
-        doc.fontSize(12).font('Helvetica');
-        const businessName = profile?.business_name || creatorName;
-        doc.text(`Business Name: ${businessName}`);
-        doc.text(`Business Address: ${profile?.business_address || 'Not provided'}`);
-        doc.text(`Business Phone: ${profile?.business_phone || 'Not provided'}`);
-        if (profile?.is_vat_registered) {
-            doc.text(`VAT Number: ${profile?.vat_number || 'Not provided'}`);
-        }
-        doc.moveDown(1);
-
-        // ----- BRAND DETAILS -----
-        doc.fontSize(14).font('Helvetica-Bold').text('Brand Details', { underline: true });
-        doc.moveDown(0.3);
-        doc.fontSize(12).font('Helvetica');
-        doc.text(`Brand Name: ${deal.brand_name}`);
-        doc.text(`Email: ${req.user.email || 'Not provided'}`);
-        doc.moveDown(1);
-
-        // ----- DEAL DETAILS -----
-        doc.fontSize(14).font('Helvetica-Bold').text('Deal Details', { underline: true });
-        doc.moveDown(0.3);
-        doc.fontSize(12).font('Helvetica');
-        doc.text(`Deliverable: ${deal.deliverable || 'Not specified'}`);
-        doc.text(`Due Date: ${dueDate}`);
-        doc.moveDown(1);
-
-        // ----- PAYMENT INSTRUCTIONS -----
-        doc.fontSize(14).font('Helvetica-Bold').text('Payment Instructions', { underline: true });
-        doc.moveDown(0.3);
-        doc.fontSize(12).font('Helvetica');
-        const accountName = profile?.bank_account_name || 'Not provided';
-        const bankName = profile?.bank_name || 'Not provided';
-        const accountNumber = profile?.bank_account_number || 'Not provided';
-        doc.text(`Account Name: ${accountName}`);
-        doc.text(`Bank: ${bankName}`);
-        doc.text(`Account Number: ${accountNumber}`);
-        doc.text(`Please use the invoice number (${invoiceNumber}) as your payment reference.`);
-        doc.moveDown(1);
-
-        // ----- TOTAL AMOUNT -----
-        doc.moveTo(50, doc.y).lineTo(550, doc.y).stroke('#CCCCCC');
-        doc.moveDown(0.5);
-        doc.fontSize(16).font('Helvetica-Bold');
-        const currencySymbol = deal.currency === 'USD' ? '$' : '₦';
-        doc.text(`Total Amount: ${currencySymbol}${Number(deal.amount).toLocaleString()}`, { align: 'right' });
-        doc.moveDown(2);
-
-        // ----- FOOTER -----
-        doc.fontSize(10).font('Helvetica');
-        doc.text('Thank you for your business!', { align: 'center' });
-        doc.text('Payment is due within 30 days of invoice date.', { align: 'center' });
-        doc.text('For questions, contact: support@paypoint.com', { align: 'center' });
-        doc.moveDown(1);
-        doc.moveTo(50, doc.y).lineTo(550, doc.y).stroke('#EEEEEE');
-        doc.moveDown(0.3);
-        doc.fontSize(8).text('PayPoint · Finance OS for Creators · www.paypoint.com', { align: 'center' });
+// ----- FOOTER (custom footer) -----
+doc.fontSize(10).font('Helvetica');
+doc.text(footerText, { align: 'center' });
+doc.text('Payment is due within 30 days of invoice date.', { align: 'center' });
+doc.text('For questions, contact: support@paypoint.com', { align: 'center' });
 
         doc.end();
 

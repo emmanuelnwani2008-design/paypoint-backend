@@ -202,19 +202,19 @@
                 </select>
                 <button class="btn-primary" id="saveCurrencyBtn">Save Currency</button>
             </div>
-            <div class="message success" id="currencyMessage">✅ Currency updated!</div>
+            <div class="message success" id="currencyMessage"><i class="fas fa-check-circle"></i> Currency updated!</div>
         </div>
 
         <!-- Tax Settings -->
         <div class="settings-card">
-            <h3>🧾 Tax Rate</h3>
+            <h3><i class="fas fa-receipt"></i> Tax Rate</h3>
             <p class="description">Set your country's tax rate. This affects the "Taxes Set Aside" calculation on your dashboard.</p>
             <div class="form-group">
                 <label for="taxRateInput">Tax Rate (%)</label>
                 <input type="number" id="taxRateInput" placeholder="30" min="0" max="100">
                 <button class="btn-primary" id="saveTaxBtn">Save Tax Rate</button>
             </div>
-            <div class="message success" id="taxMessage">✅ Tax rate updated!</div>
+            <div class="message success" id="taxMessage"><i class="fas fa-check-circle"></i> Tax rate updated!</div>
         </div>
 
         <!-- Invoice Customization -->
@@ -269,7 +269,7 @@
             try {
                 const userData = JSON.parse(user);
                 const name = userData?.user_metadata?.name || userData?.name || 'Creator';
-                document.getElementById('userBadge').textContent = `👤 ${name}`;
+                document.getElementById('userBadge').innerHTML = `<i class="fas fa-user"></i> ${escapeHtml(name)}`;
                 return true;
             } catch (e) {
                 window.location.replace('login.html');
@@ -292,7 +292,7 @@
 
         function showMessage(id, text, type) {
             const el = document.getElementById(id);
-            el.textContent = text;
+            el.innerHTML = text;
             el.className = `message ${type}`;
             setTimeout(() => { el.className = 'message'; }, 3000);
         }
@@ -308,7 +308,7 @@
                 });
                 const result = await res.json();
                 if (result.success) {
-                    showMessage('currencyMessage', '✅ Currency updated to ' + currency + '!', 'success');
+                    showMessage('currencyMessage', '<i class="fas fa-check-circle"></i> Currency updated to ' + escapeHtml(currency) + '!', 'success');
                     const user = JSON.parse(localStorage.getItem('paypoint_user'));
                     if (user) {
                         user.user_metadata = user.user_metadata || {};
@@ -338,7 +338,7 @@
                 });
                 const result = await res.json();
                 if (result.success) {
-                    showMessage('taxMessage', '✅ Tax rate updated to ' + taxRate + '%!', 'success');
+                    showMessage('taxMessage', '<i class="fas fa-check-circle"></i> Tax rate updated to ' + escapeHtml(String(taxRate)) + '%!', 'success');
                     // Refresh settings from server and update local user copy so other pages show the change
                     try {
                         // Update local cached user metadata if present
@@ -372,7 +372,7 @@
 
         // Delete Account
         document.getElementById('deleteAccountBtn').addEventListener('click', async () => {
-            if (!confirm('⚠️ Are you sure you want to delete your account? This cannot be undone!')) return;
+            if (!confirm('<i class="fas fa-exclamation-triangle"></i> Are you sure you want to delete your account? This cannot be undone!')) return;
             if (!confirm('Type "yes" to confirm deletion')) return;
 
             try {

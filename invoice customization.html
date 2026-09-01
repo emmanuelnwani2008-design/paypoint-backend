@@ -311,6 +311,7 @@ async function checkAuth() {
                     document.getElementById('customFooter').value = d.custom_footer || '';
                     document.getElementById('businessLinks').value = (d.business_links || []).join(', ');
                     document.getElementById('template').value = d.template || 'modern';
+                    updatePreview();
 
                     if (!d.is_pro) {
     // ✅ SHOW UPGRADE PROMPT

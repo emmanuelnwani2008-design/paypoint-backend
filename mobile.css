@@ -149,7 +149,7 @@
         padding-bottom: 76px !important;
     }
 
-    /* ====== ✅ KEEP 2×2 GRID FOR METRIC CARDS ====== */
+    /* ====== <i class="fas fa-check-circle"></i> KEEP 2×2 GRID FOR METRIC CARDS ====== */
     .metrics-grid {
         display: grid !important;
         grid-template-columns: 1fr 1fr !important;

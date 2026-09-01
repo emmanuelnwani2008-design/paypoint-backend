@@ -2,7 +2,7 @@
 
 ---
 
-## STEP 1: PUSH CODE TO GITHUB ✅
+## STEP 1: PUSH CODE TO GITHUB <i class="fas fa-check-circle"></i>
 
 **Copy-paste these commands ONE BY ONE in VS Code terminal:**
 
@@ -24,7 +24,7 @@ git push -u origin main
 
 ---
 
-## STEP 2: DEPLOY BACKEND TO RENDER ✅
+## STEP 2: DEPLOY BACKEND TO RENDER <i class="fas fa-check-circle"></i>
 
 ### On Render.com:
 
@@ -57,7 +57,7 @@ PORT = 3000
 
 ---
 
-## STEP 3: DEPLOY FRONTEND TO NETLIFY ✅
+## STEP 3: DEPLOY FRONTEND TO NETLIFY <i class="fas fa-check-circle"></i>
 
 ### On Netlify.com:
 
@@ -81,7 +81,7 @@ PORT = 3000
 
 ---
 
-## STEP 4: UPDATE ENVIRONMENT VARIABLES ✅
+## STEP 4: UPDATE ENVIRONMENT VARIABLES <i class="fas fa-check-circle"></i>
 
 ### What's already fixed in your code:
 ✅ `config.js` - Automatically uses Render URL in production
@@ -104,8 +104,8 @@ PORT = 3000
    https://paypoint-7dmc.onrender.com/api/payments/webhook
    ```
 5. Select **"Events"**: Check these boxes:
-   - ✅ charge.success
-   - ✅ charge.failed
+   - <i class="fas fa-check-circle"></i> charge.success
+   - <i class="fas fa-check-circle"></i> charge.failed
 6. Click **"Save"**
 
 ---

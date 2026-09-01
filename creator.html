@@ -529,7 +529,7 @@
             const avatarUrl = userData?.user_metadata?.avatar_url;
             const joinedAt = userData?.created_at ? new Date(userData.created_at).toLocaleDateString() : 'Today';
 
-            document.getElementById('userBadge').textContent = `👤 ${name}`;
+            document.getElementById('userBadge').innerHTML = `<i class="fas fa-user"></i> ${escapeHtml(name)}`;
             document.getElementById('profileName').textContent = name;
             document.getElementById('profileEmail').textContent = email;
             document.getElementById('profileJoined').textContent = `Joined: ${joinedAt}`;
@@ -766,7 +766,7 @@
         // DELETE ACCOUNT
         // ============================================
         document.getElementById('deleteAccountBtn').addEventListener('click', async () => {
-            if (!confirm('⚠️ Are you sure you want to delete your account? This cannot be undone!')) return;
+            if (!confirm('<i class="fas fa-exclamation-triangle"></i> Are you sure you want to delete your account? This cannot be undone!')) return;
             if (!confirm('Type "yes" to confirm deletion')) return;
 
             try {
@@ -823,7 +823,7 @@
                     bankMessage.style.display = 'block';
                     bankMessage.style.background = 'rgba(52, 199, 89, 0.1)';
                     bankMessage.style.color = '#34C759';
-                    bankMessage.textContent = '✅ Payment instructions saved successfully!';
+                    bankMessage.innerHTML = '<i class="fas fa-check-circle"></i> Payment instructions saved successfully!';
                     setTimeout(() => { bankMessage.style.display = 'none'; }, 3000);
 
                     document.getElementById('bankStatus').innerHTML = '<i class="fas fa-check-circle" style="color: #34C759;"></i> Active';
@@ -899,7 +899,7 @@
                     msg.style.display = 'block';
                     msg.style.background = 'rgba(52, 199, 89, 0.1)';
                     msg.style.color = '#34C759';
-                    msg.textContent = '✅ Business details saved!';
+                    msg.innerHTML = '<i class="fas fa-check-circle"></i> Business details saved!';
                     setTimeout(() => { msg.style.display = 'none'; }, 3000);
                 } else {
                     msg.style.display = 'block';

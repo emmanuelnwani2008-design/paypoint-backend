@@ -542,7 +542,7 @@
                 card.className = 'invoice-card';
                 const brandName = inv.brand_name || inv.deals?.brand_name || 'Unknown Brand';
                 const amount = inv.total || inv.deals?.amount || 0;
-                const currency = inv.currency || inv.deals?.currency || 'NGN';
+                const currency = inv.currency || inv.deals?.currency || 'USD';
                 const dueDate = inv.due_date || inv.deals?.due_date || null;
                 const status = inv.status || 'sent';
 
@@ -654,7 +654,7 @@
                 });
                 const result = await res.json();
                 if (result.success) {
-                    alert('✅ Invoice resent successfully!');
+                    alert('<i class="fas fa-check-circle"></i> Invoice resent successfully!');
                     // Optionally auto-open the portal link
                     if (result.portal_link) {
                         window.open(result.portal_link, '_blank');
@@ -742,21 +742,27 @@
         document.addEventListener('input', updateTotals);
 
         function updateTotals() {
-            const items = document.querySelectorAll('.line-item');
-            let subtotal = 0;
-            items.forEach(item => {
-                const qty = parseFloat(item.querySelector('.item-quantity')?.value) || 0;
-                const price = parseFloat(item.querySelector('.item-price')?.value) || 0;
-                subtotal += qty * price;
-            });
-            const vatRate = parseFloat(document.getElementById('modalVatRate').value) || 0;
-            const vat = subtotal * (vatRate / 100);
-            const total = subtotal + vat;
-            const currency = '₦'; // we'll keep it simple
-            document.getElementById('modalSubtotal').textContent = currency + subtotal.toFixed(2);
-            document.getElementById('modalVat').textContent = currency + vat.toFixed(2);
-            document.getElementById('modalTotal').textContent = currency + total.toFixed(2);
-        }
+    const items = document.querySelectorAll('.line-item');
+    let subtotal = 0;
+    items.forEach(item => {
+        const qty = parseFloat(item.querySelector('.item-quantity')?.value) || 0;
+        const price = parseFloat(item.querySelector('.item-price')?.value) || 0;
+        subtotal += qty * price;
+    });
+    const vatRate = parseFloat(document.getElementById('modalVatRate').value) || 0;
+    const vat = subtotal * (vatRate / 100);
+    const total = subtotal + vat;
+
+    // ✅ Get user's default currency
+    const userData = JSON.parse(localStorage.getItem('paypoint_user') || '{}');
+    const userCurrency = userData?.user_metadata?.default_currency || 'USD';
+    const symbols = { USD: '$', NGN: '₦' };
+    const symbol = symbols[userCurrency] || '$';
+
+    document.getElementById('modalSubtotal').textContent = symbol + subtotal.toFixed(2);
+    document.getElementById('modalVat').textContent = symbol + vat.toFixed(2);
+    document.getElementById('modalTotal').textContent = symbol + total.toFixed(2);
+}
 
         // ============================================
         // CREATE INVOICE (sends all fields)
@@ -819,13 +825,13 @@
     if (result.portal_link) {
         window.open(result.portal_link, '_blank');
     }
-    // ✅ Add a small delay to avoid the warning
+    // <i class="fas fa-check-circle"></i> Add a small delay to avoid the warning
     setTimeout(() => {
         prompt(
-            '✅ Invoice created! The portal link has been opened in a new tab.\n\n' +
-            '📋 COPY THIS LINK AND SEND IT TO THE BRAND:\n' +
+                '<i class="fas fa-check-circle"></i> Invoice created! The portal link has been opened in a new tab.\n\n' +
+                    '📋 COPY THIS LINK AND SEND IT TO THE BRAND:\n' +
             '(Select the link below, press Ctrl+C to copy, then close this box.)\n\n' +
-            '💡 We are still setting up automatic email delivery. For now, manually send this link to the brand via WhatsApp, Slack, or email.',
+            '<i class="fas fa-lightbulb"></i> We are still setting up automatic email delivery. For now, manually send this link to the brand via WhatsApp, Slack, or email.',
             paymentLink
         );
     }, 100);
@@ -881,7 +887,8 @@
                 autoChaseToggle.checked = enabled;
 
                 autoChaseToggle.addEventListener('change', function() {
-                    localStorage.setItem('auto_chase_enabled', this.checked);
+    const enabled = this.checked;
+    saveAutoChasePreference(enabled);
                     autoChaseStatus.innerHTML = this.checked
                         ? '<i class="fas fa-check-circle" style="color: #34C759;"></i> Auto-chasing enabled'
                         : '<i class="fas fa-pause-circle" style="color: #FF9500;"></i> Auto-chasing paused';
@@ -893,6 +900,23 @@
             }
         }
 
+        async function saveAutoChasePreference(enabled) {
+    try {
+        const res = await fetch(`${API_URL}/profile/auto-chase`, {
+            method: 'PUT',
+            headers: getAuthHeaders(),
+            body: JSON.stringify({ enabled })
+        });
+        const result = await res.json();
+        if (!result.success) {
+            autoChaseToggle.checked = !enabled;
+            alert('Failed to save preference');
+        }
+    } catch (err) {
+        autoChaseToggle.checked = !enabled;
+        alert('Could not connect to server.');
+    }
+}
         // Export Invoices
 document.getElementById('exportInvoicesBtn').addEventListener('click', async () => {
     try {
