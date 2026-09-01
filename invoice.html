@@ -306,6 +306,7 @@
             <button class="btn-primary" id="openModalBtn">+ Create Invoice</button>
              <button class="btn-secondary" id="exportInvoicesBtn"><i class="fas fa-file-export"></i> Export CSV</button>
         </div>
+        
 
         <div class="invoice-grid" id="invoiceGrid">
             <div class="empty-state">
@@ -412,6 +413,8 @@
         );
         let allInvoices = [];
 
+        
+
         // ============================================
         // AUTH HELPERS
         // ============================================
@@ -514,6 +517,7 @@
                         <p>Could not load invoices. Please try again.</p>
                     </div>
                 `;
+                // exception while loading invoices
             }
         }
 

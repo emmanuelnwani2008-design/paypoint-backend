@@ -623,7 +623,20 @@ app.get('/api/usage', authenticate, async (req, res) => {
         const userId = req.userId;
         const fallbackUserId = req.reconciledUserId || null;
         const ids = [userId, fallbackUserId].filter(Boolean);
-        const dealUsage = await checkUsageLimit(ids, 'deal');
+        // For dashboard rings we want the deals count to reflect total deals (not just this month)
+        // so compute deals separately to match what the frontend displays in the Active Deals list.
+        let dealUsage;
+        try {
+            let dealQuery = supabaseAdmin.from('deals').select('id', { count: 'exact', head: true });
+            if (ids.length === 1) dealQuery = dealQuery.eq('user_id', ids[0]);
+            else dealQuery = dealQuery.in('user_id', ids);
+            const { count: dealCount, error: dealCountErr } = await dealQuery;
+            dealUsage = { allowed: true, current: dealCount || 0, max: PLAN_LIMITS.free.max_deals || 5, tier: 'free' };
+        } catch (err) {
+            console.error('Deal usage count error:', err);
+            dealUsage = { allowed: true, current: 0, max: PLAN_LIMITS.free.max_deals || 5, tier: 'free' };
+        }
+
         const invoiceUsage = await checkUsageLimit(ids, 'invoice');
         const expenseUsage = await checkUsageLimit(ids, 'expense');
         res.json({
