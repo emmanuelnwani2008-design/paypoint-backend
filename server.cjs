@@ -623,27 +623,34 @@ app.get('/api/usage', authenticate, async (req, res) => {
         const userId = req.userId;
         const fallbackUserId = req.reconciledUserId || null;
         const ids = [userId, fallbackUserId].filter(Boolean);
-        // For dashboard rings we want the deals count to reflect total deals (not just this month)
-        // so compute deals separately to match what the frontend displays in the Active Deals list.
-        let dealUsage;
-        try {
-            let dealQuery = supabaseAdmin.from('deals').select('id', { count: 'exact', head: true });
-            if (ids.length === 1) dealQuery = dealQuery.eq('user_id', ids[0]);
-            else dealQuery = dealQuery.in('user_id', ids);
-            const { count: dealCount, error: dealCountErr } = await dealQuery;
-            dealUsage = { allowed: true, current: dealCount || 0, max: PLAN_LIMITS.free.max_deals || 5, tier: 'free' };
-        } catch (err) {
-            console.error('Deal usage count error:', err);
-            dealUsage = { allowed: true, current: 0, max: PLAN_LIMITS.free.max_deals || 5, tier: 'free' };
-        }
 
-        const invoiceUsage = await checkUsageLimit(ids, 'invoice');
-        const expenseUsage = await checkUsageLimit(ids, 'expense');
+        // Count ALL deals
+        let dealQuery = supabaseAdmin.from('deals').select('id', { count: 'exact', head: true });
+        if (ids.length === 1) dealQuery = dealQuery.eq('user_id', ids[0]);
+        else dealQuery = dealQuery.in('user_id', ids);
+        const { count: dealCount } = await dealQuery;
+
+        // Count ALL invoices
+        let invoiceQuery = supabaseAdmin.from('invoices').select('id', { count: 'exact', head: true });
+        if (ids.length === 1) invoiceQuery = invoiceQuery.eq('user_id', ids[0]);
+        else invoiceQuery = invoiceQuery.in('user_id', ids);
+        const { count: invoiceCount } = await invoiceQuery;
+
+        // Count ALL expenses
+        let expenseQuery = supabaseAdmin.from('expenses').select('id', { count: 'exact', head: true });
+        if (ids.length === 1) expenseQuery = expenseQuery.eq('user_id', ids[0]);
+        else expenseQuery = expenseQuery.in('user_id', ids);
+        const { count: expenseCount } = await expenseQuery;
+
+        // Get max limits from PLAN_LIMITS
+        const plan = await getUserPlan(ids[0]);
+        const limits = PLAN_LIMITS[plan.tier || 'free'];
+
         res.json({
             success: true,
-            deals: { current: dealUsage.current, max: dealUsage.max },
-            invoices: { current: invoiceUsage.current, max: invoiceUsage.max },
-            expenses: { current: expenseUsage.current, max: expenseUsage.max }
+            deals: { current: dealCount || 0, max: limits.max_deals || 5 },
+            invoices: { current: invoiceCount || 0, max: limits.max_invoices || 5 },
+            expenses: { current: expenseCount || 0, max: limits.max_expenses || 10 }
         });
     } catch (err) {
         console.error('Usage API error:', err);
