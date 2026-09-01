@@ -882,7 +882,7 @@ app.post('/api/auth/login', authLimiter, async (req, res) => {
         res.cookie('paypoint_session', data.session.access_token, {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
-            sameSite: 'Lax',
+            sameSite: 'COOKIE_SAME_SITE',
             maxAge: 7 * 24 * 60 * 60 * 1000
         });
 
