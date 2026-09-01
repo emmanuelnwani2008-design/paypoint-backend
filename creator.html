@@ -7,6 +7,8 @@
     <link rel="icon" type="image/png" href="logo.png">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link rel="stylesheet" href="mobile.css">
+    <script src="auth.js"></script>
+    <script src="toast.js"></script>
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-HFJ9JM358E"></script>
     <script>
         window.dataLayer = window.dataLayer || [];
@@ -460,51 +462,54 @@
         const API_URL = '/api';
 
         // ============================================
-        // AUTH HELPERS
+        // AUTH HELPERS (prefer global `auth.js`)
         // ============================================
-        function getAuthHeaders() {
-            const token = localStorage.getItem('paypoint_session') || sessionStorage.getItem('paypoint_session');
-            const headers = { 'Content-Type': 'application/json' };
-            if (token) headers['Authorization'] = `Bearer ${token}`;
-            return headers;
+        if (typeof getAuthHeaders !== 'function') {
+            function getAuthHeaders() {
+                const token = localStorage.getItem('paypoint_session') || sessionStorage.getItem('paypoint_session');
+                const headers = { 'Content-Type': 'application/json' };
+                if (token) headers['Authorization'] = `Bearer ${token}`;
+                return headers;
+            }
         }
 
         // ============================================
-        // CHECK AUTH
+        // CHECK AUTH (prefer global `auth.js`)
         // ============================================
-        async function checkAuth() {
-            try {
-                const token = localStorage.getItem('paypoint_session') || sessionStorage.getItem('paypoint_session');
-                const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
-                // Always include content-type to be consistent with other pages
-                headers['Content-Type'] = 'application/json';
+        if (typeof checkAuth !== 'function') {
+            async function checkAuth() {
+                try {
+                    const token = localStorage.getItem('paypoint_session') || sessionStorage.getItem('paypoint_session');
+                    const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+                    headers['Content-Type'] = 'application/json';
 
-                const res = await fetch(`${API_URL}/auth/user`, {
-                    headers,
-                    credentials: 'include'
-                });
+                    const res = await fetch(`${API_URL}/auth/user`, {
+                        headers,
+                        credentials: 'include'
+                    });
 
-                if (res.status === 401) {
-                    console.log('🔐 Not authenticated, redirecting to login');
-                    localStorage.removeItem('paypoint_user');
+                    if (res.status === 401) {
+                        console.log('Not authenticated, redirecting to login');
+                        localStorage.removeItem('paypoint_user');
+                        window.location.replace('login.html');
+                        return false;
+                    }
+
+                    const data = await res.json();
+                    if (data.success && data.user) {
+                        localStorage.setItem('paypoint_user', JSON.stringify(data.user));
+                        if (typeof updateUI === 'function') updateUI(data.user);
+                        return true;
+                    } else {
+                        localStorage.removeItem('paypoint_user');
+                        window.location.replace('login.html');
+                        return false;
+                    }
+                } catch (err) {
+                    console.error('Error checking auth:', err);
                     window.location.replace('login.html');
                     return false;
                 }
-
-                const data = await res.json();
-                if (data.success && data.user) {
-                    localStorage.setItem('paypoint_user', JSON.stringify(data.user));
-                    if (typeof updateUI === 'function') updateUI(data.user);
-                    return true;
-                } else {
-                    localStorage.removeItem('paypoint_user');
-                    window.location.replace('login.html');
-                    return false;
-                }
-            } catch (err) {
-                console.error('❌ Error checking auth:', err);
-                window.location.replace('login.html');
-                return false;
             }
         }
 
@@ -1013,14 +1018,23 @@
         // ============================================
         // HELPER FUNCTIONS
         // ============================================
-        function showMessage(id, text) {
+        // Delegate to global toast/showMessage if available
+        function showMessage(id, text, type) {
             const el = document.getElementById(id);
-            el.textContent = text;
-            el.classList.add('show');
+            if (typeof window.showMessage === 'function') {
+                try { window.showMessage(id, text, type); return; } catch (e) { /* fallthrough */ }
+            }
+            if (el) {
+                el.textContent = text;
+                el.classList.add('show');
+            } else {
+                window.showToast(text, type);
+            }
         }
 
         function hideMessage(id) {
-            document.getElementById(id).classList.remove('show');
+            const el = document.getElementById(id);
+            if (el) el.classList.remove('show');
         }
 
         // ============================================

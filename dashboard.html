@@ -6,6 +6,8 @@
     <title>PayPoint · Finance OS for Creators</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link rel="stylesheet" href="mobile.css">
+    <script src="auth.js"></script>
+    <script src="toast.js"></script>
     <link rel="icon" type="image/png" href="logo.png">
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-HFJ9JM358E"></script>
     <script>
@@ -881,7 +883,6 @@
     // ============================================
     // BULLETPROOF AUTH (FIXED)
     // ============================================
-    const API_URL = '/api';
     let globalDeals = [];
     let globalExpenses = [];
 
@@ -900,12 +901,6 @@
     }
 
     // ----- Helper Functions -----
-    function getAuthHeaders() {
-        const token = localStorage.getItem('paypoint_session');
-        const headers = { 'Content-Type': 'application/json' };
-        if (token) headers['Authorization'] = `Bearer ${token}`;
-        return headers;
-    }
 
     function formatCurrency(amount, currency) {
         if (!amount && amount !== 0) return '$0';
@@ -929,51 +924,7 @@
         else sidebarAvatarImg.src = 'user.png';
     }
 
-    // ----- ⭐ CHECK AUTH (robust) ⭐ -----
-    async function checkAuth() {
-        const token = localStorage.getItem('paypoint_session');
-        const cachedUser = localStorage.getItem('paypoint_user');
-
-        if (token && cachedUser) {
-            try {
-                const userData = JSON.parse(cachedUser);
-                updateSidebarUI(userData);
-                return true;
-            } catch (e) {
-                console.warn('⚠️ Invalid cached user, will re-fetch');
-            }
-        }
-
-        try {
-            const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
-            const res = await fetch(`${API_URL}/auth/user`, {
-                headers,
-                credentials: token ? 'same-origin' : 'include'
-            });
-
-            if (res.status === 401) {
-                localStorage.removeItem('paypoint_user');
-                localStorage.removeItem('paypoint_session');
-                window.location.replace('login.html');
-                return false;
-            }
-
-            const data = await res.json();
-            if (data && data.success && data.user) {
-                localStorage.setItem('paypoint_user', JSON.stringify(data.user));
-                updateSidebarUI(data.user);
-                return true;
-            }
-
-            localStorage.removeItem('paypoint_user');
-            localStorage.removeItem('paypoint_session');
-            window.location.replace('login.html');
-            return false;
-        } catch (err) {
-            console.error('❌ Error checking auth:', err);
-            return false;
-        }
-    }
+    // ----- ⭐ CHECK AUTH (handled by global `auth.js`) ⭐ -----
 
     // ============================================
     // FETCH USAGE DATA AND UPDATE RINGS
@@ -986,7 +937,7 @@
                 return;
             }
 
-            const res = await fetch(`${API_URL}/usage`, {
+            const res = await fetch(`${window.API_URL}/usage`, {
                 headers: getAuthHeaders(),
                 credentials: 'include'
             });
@@ -1049,7 +1000,7 @@
             const currencySymbol = currency === 'USD' ? '$' : '₦';
 
             // Fetch from backend for change percentages and tax rate
-            const res = await fetch(`${API_URL}/dashboard/stats`, {
+            const res = await fetch(`${window.API_URL}/dashboard/stats`, {
                 headers: getAuthHeaders(),
                 credentials: 'include'
             });
@@ -1175,7 +1126,7 @@
                 return;
             }
 
-            const res = await fetch(`${API_URL}/deals`, {
+            const res = await fetch(`${window.API_URL}/deals`, {
                 headers: getAuthHeaders(),
                 credentials: 'include'
             });
@@ -1213,7 +1164,7 @@
             const leftDiv = document.createElement('div');
             const brandDiv = document.createElement('div');
             brandDiv.className = 'deal-brand';
-            brandDiv.textContent = escapeHtml(deal.brand_name || deal.brand || 'Unknown');
+            brandDiv.textContent = deal.brand_name || deal.brand || 'Unknown';
             leftDiv.appendChild(brandDiv);
 
             const rightDiv = document.createElement('div');
@@ -1245,7 +1196,7 @@
                 return;
             }
 
-            const res = await fetch(`${API_URL}/expenses`, {
+            const res = await fetch(`${window.API_URL}/expenses`, {
                 headers: getAuthHeaders(),
                 credentials: 'include'
             });
@@ -1282,7 +1233,7 @@
 
             const vendorDiv = document.createElement('div');
             vendorDiv.className = 'expense-vendor';
-            vendorDiv.textContent = escapeHtml(exp.vendor || 'Unknown');
+            vendorDiv.textContent = exp.vendor || 'Unknown';
 
             const rightDiv = document.createElement('div');
             const catSpan = document.createElement('span');
@@ -1313,9 +1264,9 @@
         const deliverable = document.getElementById('dealDeliverable').value.trim();
         const due_date = document.getElementById('dealDueDate').value;
         const currency = document.getElementById('dealCurrency').value;
-        if (!brand_name || !amount) { alert('Brand Name and Amount are required!'); return; }
+        if (!brand_name || !amount) { window.showToast('Brand Name and Amount are required!', 'error'); return; }
         try {
-            const res = await fetch(`${API_URL}/deals`, {
+            const res = await fetch(`${window.API_URL}/deals`, {
                 method: 'POST',
                 headers: getAuthHeaders(),
                 body: JSON.stringify({
@@ -1329,7 +1280,7 @@
             });
             const result = await res.json();
             if (result.success) {
-                alert('<i class="fas fa-check-circle"></i> Deal added successfully!');
+                window.showToast('Deal added successfully!', 'success');
                 modal.classList.remove('active');
                 document.getElementById('brandName').value = '';
                 document.getElementById('dealAmount').value = '';
@@ -1337,10 +1288,10 @@
                 document.getElementById('dealDueDate').value = '';
                 loadDeals();
             } else {
-                alert('❌ Error: ' + (result.error || 'Unknown error'));
+                window.showToast('Error: ' + (result.error || 'Unknown error'), 'error');
             }
         } catch (err) {
-            alert('❌ Could not connect to backend.');
+            window.showToast('Could not connect to backend.', 'error');
             console.error(err);
         }
     });
@@ -1355,16 +1306,7 @@
         document.getElementById('sidebarOverlay').classList.remove('active');
     });
 
-    // ----- LOGOUT -----
-    document.getElementById('navLogout')?.addEventListener('click', async (e) => {
-        e.preventDefault();
-        try {
-            await fetch(`${API_URL}/auth/logout`, { method: 'POST', headers: getAuthHeaders() });
-        } catch (err) {}
-        localStorage.removeItem('paypoint_user');
-        localStorage.removeItem('paypoint_session');
-        window.location.replace('login.html');
-    });
+    // ----- LOGOUT handled by global `auth.js` (logout listener removed) -----
 
     // ----- DATE -----
     document.getElementById('currentDate').textContent = new Date().toLocaleDateString('en-US', {
@@ -1373,12 +1315,7 @@
         year: 'numeric'
     });
 
-    function escapeHtml(text) {
-        if (!text) return '';
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
-    }
+    // local escapeHtml removed — use safe DOM text assignment instead
 
     // ============================================
     // ⭐ INIT
@@ -1417,7 +1354,7 @@
             }
 
             console.log('PayPoint Dashboard loaded successfully');
-            console.log('Connected to:', API_URL);
+            console.log('Connected to:', window.API_URL);
 
         } catch (err) {
             console.error('❌ Init error:', err);

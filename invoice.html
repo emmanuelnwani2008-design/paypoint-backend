@@ -6,6 +6,8 @@
     <title>PayPoint · Invoices</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link rel="stylesheet" href="mobile.css">
+    <script src="auth.js"></script>
+    <script src="toast.js"></script>
     <link rel="icon" type="image/png" href="logo.png">
     <!-- Google tag -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-HFJ9JM358E"></script>
@@ -415,15 +417,17 @@
 
         
 
-        // ============================================
-        // AUTH HELPERS
-        // ============================================
-        function getAuthHeaders() {
-            const token = sessionStorage.getItem('paypoint_session');
-            return {
-                'Content-Type': 'application/json',
-                ...(token ? { Authorization: `Bearer ${token}` } : {})
-            };
+        // use global auth helper
+        // NOTE: `auth.js` provides `getAuthHeaders()` and `checkAuth()` globally
+        // fallback if not loaded
+        if (typeof getAuthHeaders !== 'function') {
+            function getAuthHeaders() {
+                const token = sessionStorage.getItem('paypoint_session');
+                return {
+                    'Content-Type': 'application/json',
+                    ...(token ? { Authorization: `Bearer ${token}` } : {})
+                };
+            }
         }
 
         // ============================================
@@ -448,29 +452,29 @@
             return div.innerHTML;
         }
 
-        // ============================================
-        // CHECK AUTH
-        // ============================================
-        function checkAuth() {
-            const token = sessionStorage.getItem('paypoint_session');
-            const user = sessionStorage.getItem('paypoint_user');
-            if (!token || !user) {
-                console.log('Not authenticated, redirecting to login');
-                sessionStorage.removeItem('paypoint_user');
-                sessionStorage.removeItem('paypoint_session');
-                window.location.replace('login.html');
-                return false;
-            }
-            try {
-                const userData = JSON.parse(user);
-                const name = userData?.user_metadata?.name || userData?.name || 'Creator';
-                document.getElementById('userBadge').innerHTML = '<i class="fas fa-user"></i> ' + escapeHtml(name);
-                return true;
-            } catch (e) {
-                sessionStorage.removeItem('paypoint_user');
-                sessionStorage.removeItem('paypoint_session');
-                window.location.replace('login.html');
-                return false;
+        // Use global checkAuth when available
+        if (typeof checkAuth !== 'function') {
+            function checkAuth() {
+                const token = sessionStorage.getItem('paypoint_session');
+                const user = sessionStorage.getItem('paypoint_user');
+                if (!token || !user) {
+                    console.log('Not authenticated, redirecting to login');
+                    sessionStorage.removeItem('paypoint_user');
+                    sessionStorage.removeItem('paypoint_session');
+                    window.location.replace('login.html');
+                    return false;
+                }
+                try {
+                    const userData = JSON.parse(user);
+                    const name = userData?.user_metadata?.name || userData?.name || 'Creator';
+                    document.getElementById('userBadge').innerHTML = '<i class="fas fa-user"></i> ' + escapeHtml(name);
+                    return true;
+                } catch (e) {
+                    sessionStorage.removeItem('paypoint_user');
+                    sessionStorage.removeItem('paypoint_session');
+                    window.location.replace('login.html');
+                    return false;
+                }
             }
         }
 

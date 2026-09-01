@@ -6,6 +6,8 @@
     <title>PayPoint · Expenses</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link rel="stylesheet" href="mobile.css">
+    <script src="auth.js"></script>
+    <script src="toast.js"></script>
     <link rel="icon" type="image/png" href="logo.png">
     <!-- Google tag (gtag.js) -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-HFJ9JM358E"></script>
@@ -737,15 +739,17 @@ function setCachedData(key, data) {
         const API_URL = '/api';
 
         // ============================================
-        // AUTH HELPERS
+        // AUTH HELPERS (prefer global `auth.js`)
         // ============================================
-        function getAuthHeaders() {
-    const token = localStorage.getItem('paypoint_session');
-    return {
-        'Content-Type': 'application/json',
-        ...(token ? { Authorization: `Bearer ${token}` } : {})
-    };
-}
+        if (typeof getAuthHeaders !== 'function') {
+            function getAuthHeaders() {
+                const token = localStorage.getItem('paypoint_session');
+                return {
+                    'Content-Type': 'application/json',
+                    ...(token ? { Authorization: `Bearer ${token}` } : {})
+                };
+            }
+        }
 
         // ============================================
         // CURRENCY HELPER

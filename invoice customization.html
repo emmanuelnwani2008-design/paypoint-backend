@@ -6,6 +6,8 @@
     <title>Invoice Customization · PayPoint</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link rel="stylesheet" href="mobile.css">
+    <script src="auth.js"></script>
+    <script src="toast.js"></script>
     <link rel="icon" type="image/png" href="logo.png">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -260,8 +262,9 @@
     <script>
         const API_URL = '/api';
         // ============================================
-// CHECK AUTHENTICATION
+// CHECK AUTHENTICATION (prefer global `checkAuth`)
 // ============================================
+if (typeof checkAuth !== 'function') {
 async function checkAuth() {
     try {
         const res = await fetch(`${API_URL}/auth/user`, {
@@ -290,8 +293,12 @@ async function checkAuth() {
     }
 }
 
-        function getAuthHeaders() {
-            return { 'Content-Type': 'application/json' };
+        // prefer global getAuthHeaders
+        if (typeof getAuthHeaders !== 'function') {
+            function getAuthHeaders() {
+                return { 'Content-Type': 'application/json' };
+            }
+        }
         }
 
         async function loadCustomization() {

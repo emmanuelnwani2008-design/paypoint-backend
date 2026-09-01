@@ -2043,6 +2043,15 @@ const portalLink = `${BACKEND_URL}/portal/${portalToken}`;
         const subject = `📄 Invoice #${invoiceNumber} from ${deal.brand_name}`;
         const sent = await sendEmailWithRetry(brandEmail, subject, html);
 
+        // Debug: log stored token and returned portal link to help diagnose public lookup issues
+        try {
+            console.log('Inserted invoice id:', newInvoice.id);
+            console.log('Inserted portal_token:', newInvoice.portal_token || portalToken);
+            console.log('Returned portal_link:', portalLink);
+        } catch (e) {
+            console.warn('Unable to log invoice debug info', e);
+        }
+
         res.status(201).json({
             success: true,
             data: newInvoice,

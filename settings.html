@@ -7,6 +7,8 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link rel="icon" type="image/png" href="logo.png">
     <link rel="stylesheet" href="mobile.css">
+    <script src="auth.js"></script>
+    <script src="toast.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -260,20 +262,23 @@
             };
         }
 
-        function checkAuth() {
-            const user = localStorage.getItem('paypoint_user');
-            if (!user) {
-                window.location.replace('login.html');
-                return false;
-            }
-            try {
-                const userData = JSON.parse(user);
-                const name = userData?.user_metadata?.name || userData?.name || 'Creator';
-                document.getElementById('userBadge').innerHTML = `<i class="fas fa-user"></i> ${escapeHtml(name)}`;
-                return true;
-            } catch (e) {
-                window.location.replace('login.html');
-                return false;
+        // Prefer global checkAuth
+        if (typeof checkAuth !== 'function') {
+            function checkAuth() {
+                const user = localStorage.getItem('paypoint_user');
+                if (!user) {
+                    window.location.replace('login.html');
+                    return false;
+                }
+                try {
+                    const userData = JSON.parse(user);
+                    const name = userData?.user_metadata?.name || userData?.name || 'Creator';
+                    document.getElementById('userBadge').innerHTML = `<i class="fas fa-user"></i> ${escapeHtml(name)}`;
+                    return true;
+                } catch (e) {
+                    window.location.replace('login.html');
+                    return false;
+                }
             }
         }
 
@@ -291,6 +296,9 @@
         }
 
         function showMessage(id, text, type) {
+            if (typeof window.showMessage === 'function') {
+                try { window.showMessage(id, text, type); return; } catch (e) { /* fallthrough */ }
+            }
             const el = document.getElementById(id);
             el.innerHTML = text;
             el.className = `message ${type}`;

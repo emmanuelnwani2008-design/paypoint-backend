@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Deal Detail · PayPoint</title>
     <link rel="stylesheet" href="mobile.css">
+    <script src="auth.js"></script>
+    <script src="toast.js"></script>
     <link rel="icon" type="image/png" href="logo.png">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -305,20 +307,8 @@ function setCachedData(key, data) {
     sessionStorage.setItem(key, JSON.stringify({ data, timestamp: Date.now() }));
 }
         // ============================================
-        // CONFIGURATION
+        // CONFIGURATION (use `window.API_URL` and global auth helpers)
         // ============================================
-        const API_URL = '/api';
-
-        // ============================================
-        // AUTH HELPERS
-        // ============================================
-        function getAuthHeaders() {
-    return { 'Content-Type': 'application/json' };
-            return {
-                'Content-Type': 'application/json',
-                ...(token ? { Authorization: `Bearer ${token}` } : {})
-            };
-        }
 
         function formatCurrency(amount, currency) {
     if (!amount) return '$0';
@@ -330,40 +320,7 @@ function setCachedData(key, data) {
     return symbol + Number(amount).toLocaleString();
 }
 
-        // ============================================
-        // CHECK AUTH
-        // ============================================
-        async function checkAuth() {
-    try {
-        const res = await fetch(`${API_URL}/auth/user`, {
-            credentials: 'include'   // ✅ sends the cookie automatically
-        });
-
-        if (res.status === 401) {
-            console.log('Not authenticated, redirecting to login');
-            localStorage.removeItem('paypoint_user');
-            window.location.replace('login.html');
-            return false;
-        }
-
-        const data = await res.json();
-        if (data.success && data.user) {
-            // Update localStorage with fresh user data (no token)
-            localStorage.setItem('paypoint_user', JSON.stringify(data.user));
-            if (typeof updateUI === 'function') updateUI(data.user);
-            return true;
-        } else {
-            console.log('No user data, redirecting');
-            localStorage.removeItem('paypoint_user');
-            window.location.replace('login.html');
-            return false;
-        }
-    } catch (err) {
-        console.error('Error checking auth:', err);
-        window.location.replace('login.html');
-        return false;
-    }
-}
+        // CHECK AUTH handled by global `auth.js`
 
         // ============================================
         // FETCH DEAL DETAILS
@@ -386,7 +343,7 @@ function setCachedData(key, data) {
             }
 
             try {
-                const res = await fetch(`${API_URL}/deals/${dealId}`, { headers: getAuthHeaders() });
+                const res = await fetch(`${window.API_URL}/deals/${dealId}`, { headers: getAuthHeaders() });
                 const result = await res.json();
 
                 if (!result.success) {
@@ -458,25 +415,7 @@ function setCachedData(key, data) {
     `;
     document.getElementById('dealContent').innerHTML = html;
 }
-        function escapeHtml(text) {
-    if (!text) return '';
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
-}
-
-        // ============================================
-        // LOGOUT
-        // ============================================
-        document.getElementById('navLogout')?.addEventListener('click', async (e) => {
-            e.preventDefault();
-            try {
-                await fetch(`${API_URL}/auth/logout`, { method: 'POST', headers: getAuthHeaders() });
-            } catch (err) {}
-            localStorage.removeItem('paypoint_user');
-            localStorage.removeItem('paypoint_session');
-            window.location.replace('login.html');
-        });
+        // local escapeHtml and logout listener removed — use global helpers from `auth.js`
 
         // ============================================
         // INIT
