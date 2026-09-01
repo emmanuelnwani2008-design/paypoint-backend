@@ -1,5 +1,6 @@
 const dns = require('dns');
 dns.setDefaultResultOrder('ipv4first');
+require('dotenv').config();
 
 const express = require('express');
 const cors = require('cors');
@@ -1828,10 +1829,10 @@ app.post('/api/invoices/:id/resend', authenticate, async (req, res) => {
             .eq('id', userId)
             .single();
 
-        const newInvoice = data[0];
-
-// Build portal link using the BACKEND URL
-const BACKEND_URL = process.env.BACKEND_URL || 'https://paypoint-7dmc.onrender.com';
+        // Build portal link using the BACKEND URL and the invoice's portal token
+        const portalToken = invoice.portal_token || invoice.portalToken || '';
+        const BACKEND_URL = process.env.BACKEND_URL || 'https://paypoint-7dmc.onrender.com';
+        const portalLink = `${BACKEND_URL}/portal/${portalToken}`;
 
         const html = buildInvoiceEmail({
             invoice,
@@ -2691,18 +2692,37 @@ app.post('/api/subscribe', authenticate, async (req, res) => {
 app.get('/api/public/invoice/:token', async (req, res) => {
     try {
         const { token } = req.params;
-        if (!token || token.length < 20) {
+        if (!token || token.length < 8) {
             return res.status(400).json({ error: 'Invalid token' });
         }
 
-        // 1. Find the invoice with this portal token
-        const { data: invoice, error: invError } = await supabaseAdmin
+        console.log('🔎 Public invoice lookup token:', token, 'length:', token.length);
+
+        // 1. Try exact match first
+        let { data: invoice, error: invError } = await supabaseAdmin
             .from('invoices')
             .select('deal_id, invoice_number, brand_name, brand_email, total, currency, due_date, line_items, notes, status, created_at')
             .eq('portal_token', token)
             .single();
 
+        // 1b. Fallback: try partial / case‑insensitive match if exact lookup failed
         if (invError || !invoice) {
+            console.log('🔁 Exact portal_token lookup failed, attempting partial match...');
+            const { data: partialList, error: partialErr } = await supabaseAdmin
+                .from('invoices')
+                .select('deal_id, invoice_number, brand_name, brand_email, total, currency, due_date, line_items, notes, status, created_at')
+                .ilike('portal_token', `%${token}%`)
+                .limit(1);
+
+            if (!partialErr && partialList && partialList.length > 0) {
+                invoice = partialList[0];
+                invError = null;
+                console.log('✅ Found invoice via partial match');
+            }
+        }
+
+        if (invError || !invoice) {
+            console.log('❌ Public invoice not found for token:', token);
             return res.status(404).json({ error: 'Invoice not found' });
         }
 
