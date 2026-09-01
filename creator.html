@@ -463,7 +463,10 @@
         // AUTH HELPERS
         // ============================================
         function getAuthHeaders() {
-            return { 'Content-Type': 'application/json' };
+            const token = localStorage.getItem('paypoint_session') || sessionStorage.getItem('paypoint_session');
+            const headers = { 'Content-Type': 'application/json' };
+            if (token) headers['Authorization'] = `Bearer ${token}`;
+            return headers;
         }
 
         // ============================================
@@ -471,7 +474,13 @@
         // ============================================
         async function checkAuth() {
             try {
+                const token = localStorage.getItem('paypoint_session') || sessionStorage.getItem('paypoint_session');
+                const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+                // Always include content-type to be consistent with other pages
+                headers['Content-Type'] = 'application/json';
+
                 const res = await fetch(`${API_URL}/auth/user`, {
+                    headers,
                     credentials: 'include'
                 });
 
