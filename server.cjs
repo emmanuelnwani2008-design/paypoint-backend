@@ -878,15 +878,14 @@ app.post('/api/auth/login', authLimiter, async (req, res) => {
             return res.status(401).json({ error: 'Invalid credentials' });
         }
 
-        // ✅ Set the cookie (for all pages that use cookies)
+        // Set the cookie
         res.cookie('paypoint_session', data.session.access_token, {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
-            sameSite: 'COOKIE_SAME_SITE',
+            sameSite: 'Lax',
             maxAge: 7 * 24 * 60 * 60 * 1000
         });
 
-        // ✅ Also return the session (so invoice page can store token in localStorage)
         res.json({ success: true, user: data.user, session: data.session });
     } catch (err) {
         console.error('Login server error:', err);
