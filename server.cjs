@@ -156,6 +156,66 @@ async function sendEmailWithRetry(to, subject, html, retries = 2) {
     return true;
 }
 
+function normalizeUserPayload(user) {
+    if (!user || typeof user !== 'object') return user;
+
+    const metadata = { ...(user.user_metadata || {}) };
+    const displayName = metadata.name || metadata.full_name || metadata.display_name ||
+        [metadata.given_name, metadata.family_name].filter(Boolean).join(' ').trim() ||
+        user.name || user.full_name || user.display_name || '';
+
+    if (displayName) {
+        metadata.name = displayName;
+        metadata.full_name = metadata.full_name || displayName;
+        metadata.display_name = metadata.display_name || displayName;
+    }
+
+    return {
+        ...user,
+        name: user.name || displayName || '',
+        full_name: user.full_name || displayName || '',
+        display_name: user.display_name || displayName || '',
+        user_metadata: metadata
+    };
+}
+
+async function ensureUserDisplayName(user) {
+    if (!user || !user.id) return normalizeUserPayload(user);
+
+    const normalized = normalizeUserPayload(user);
+    const metadata = normalized.user_metadata || {};
+    const displayName = metadata.name || metadata.full_name || metadata.display_name ||
+        (user.email ? user.email.split('@')[0] : '');
+
+    if (!metadata.name && displayName) {
+        const nextMetadata = {
+            ...metadata,
+            name: displayName,
+            full_name: metadata.full_name || displayName,
+            display_name: metadata.display_name || displayName
+        };
+
+        try {
+            const { error } = await supabaseAdmin.auth.admin.updateUserById(user.id, {
+                user_metadata: nextMetadata
+            });
+
+            if (!error) {
+                normalized.user_metadata = nextMetadata;
+                normalized.name = displayName;
+                normalized.full_name = displayName;
+                normalized.display_name = displayName;
+            } else {
+                console.warn('Display name sync skipped for user', user.id, error.message || error);
+            }
+        } catch (err) {
+            console.warn('Display name sync failed for user', user.id, err.message || err);
+        }
+    }
+
+    return normalized;
+}
+
 // ============================================
 // CRON JOB – Automated Invoice Chasing (Safe Version)
 // ============================================
