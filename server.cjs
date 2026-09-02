@@ -24,6 +24,16 @@ console.log(`🌐 Frontend URL: ${FRONTEND_URL}`);
 const IS_PROD = process.env.NODE_ENV === 'production';
 const COOKIE_SAME_SITE = IS_PROD ? 'none' : 'lax';
 
+function getSessionCookieOptions() {
+    return {
+        httpOnly: true,
+        secure: IS_PROD,
+        sameSite: COOKIE_SAME_SITE,
+        path: '/',
+        maxAge: 7 * 24 * 60 * 60 * 1000
+    };
+}
+
 // ============================================
 // SECURITY MIDDLEWARE
 // ============================================
@@ -878,13 +888,9 @@ app.post('/api/auth/login', authLimiter, async (req, res) => {
             return res.status(401).json({ error: 'Invalid credentials' });
         }
 
-        // Set the cookie
-        res.cookie('paypoint_session', data.session.access_token, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'Lax',
-            maxAge: 7 * 24 * 60 * 60 * 1000
-        });
+        // Set the cookie. In production the frontend is on a different origin (Netlify),
+        // so the browser needs SameSite=None and Secure to actually send the cookie.
+        res.cookie('paypoint_session', data.session.access_token, getSessionCookieOptions());
 
         res.json({ success: true, user: data.user, session: data.session });
     } catch (err) {
@@ -896,8 +902,8 @@ app.post('/api/auth/login', authLimiter, async (req, res) => {
 app.post('/api/auth/logout', authenticate, async (req, res) => {
     try {
         // Clear the cookie if present
-        res.clearCookie('paypoint_session');
-        
+        res.clearCookie('paypoint_session', { path: '/' });
+
         // Sign out from Supabase
         const { error } = await supabase.auth.signOut();
         if (error) return res.status(400).json({ error: error.message });
@@ -954,13 +960,8 @@ app.post('/api/auth/oauth', async (req, res) => {
             return res.status(401).json({ error: 'Invalid or expired token' });
         }
 
-        // ✅ Set cookie
-        res.cookie('paypoint_session', access_token, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'Lax',
-            maxAge: 7 * 24 * 60 * 60 * 1000
-        });
+        // ✅ Set cookie for cross-origin frontend usage in production.
+        res.cookie('paypoint_session', access_token, getSessionCookieOptions());
 
         // ✅ Return session
         res.json({
