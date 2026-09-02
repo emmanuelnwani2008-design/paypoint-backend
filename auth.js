@@ -31,7 +31,8 @@
 
             const data = await res.json();
             if (data && data.success && data.user) {
-                localStorage.setItem('paypoint_user', JSON.stringify(data.user));
+                const normalizedUser = window.normalizeUser ? window.normalizeUser(data.user) : data.user;
+                localStorage.setItem('paypoint_user', JSON.stringify(normalizedUser));
                 if (data.session?.access_token) {
                     sessionStorage.setItem('paypoint_session', data.session.access_token);
                 }
@@ -52,6 +53,27 @@
         const div = document.createElement('div');
         div.textContent = String(text);
         return div.innerHTML;
+    };
+
+    window.normalizeUser = function (user) {
+        if (!user || typeof user !== 'object') return user;
+
+        const metadata = { ...(user.user_metadata || {}) };
+        const displayName = metadata.name || metadata.full_name || metadata.display_name ||
+            [metadata.given_name, metadata.family_name].filter(Boolean).join(' ').trim() ||
+            user.name || user.full_name || user.display_name || '';
+
+        if (displayName) {
+            metadata.name = displayName;
+            metadata.full_name = metadata.full_name || displayName;
+            metadata.display_name = metadata.display_name || displayName;
+            user.name = user.name || displayName;
+            user.full_name = user.full_name || displayName;
+            user.display_name = user.display_name || displayName;
+        }
+
+        user.user_metadata = metadata;
+        return user;
     };
 
     window.logout = async function () {

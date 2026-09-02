@@ -537,11 +537,13 @@
         // UPDATE UI WITH USER DATA
         // ============================================
         function updateUI(userData) {
-            const name = userData?.user_metadata?.name || userData?.name || 'Creator';
-            const email = userData?.email || 'creator@example.com';
-            const bio = userData?.user_metadata?.bio || '';
-            const avatarUrl = userData?.user_metadata?.avatar_url;
-            const joinedAt = userData?.created_at ? new Date(userData.created_at).toLocaleDateString() : 'Today';
+            const normalizedUser = typeof window.normalizeUser === 'function' ? window.normalizeUser(userData) : userData;
+            const metadata = normalizedUser?.user_metadata || {};
+            const name = metadata.name || metadata.full_name || metadata.display_name || normalizedUser?.name || normalizedUser?.full_name || normalizedUser?.display_name || 'Creator';
+            const email = normalizedUser?.email || 'creator@example.com';
+            const bio = metadata.bio || '';
+            const avatarUrl = metadata.avatar_url || normalizedUser?.avatar_url;
+            const joinedAt = normalizedUser?.created_at ? new Date(normalizedUser.created_at).toLocaleDateString() : 'Today';
 
             document.getElementById('userBadge').innerHTML = `<i class="fas fa-user"></i> ${escapeHtml(name)}`;
             document.getElementById('profileName').textContent = name;

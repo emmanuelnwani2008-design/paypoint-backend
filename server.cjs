@@ -441,8 +441,8 @@ async function authenticate(req, res, next) {
         // --------------------------------------------
         // 4. SET USER DATA ON REQUEST OBJECT
         // --------------------------------------------
-        req.user = userData.user;
-        req.userId = userData.user.id;
+        req.user = normalizeUserPayload(userData.user);
+        req.userId = req.user.id;
 
         // --------------------------------------------
         // 5. ENSURE USER HAS A PROFILE WITH DEFAULT CURRENCY
@@ -927,7 +927,7 @@ app.get('/api/auth/user', authenticate, async (req, res) => {
             console.error('Profile fetch error:', error);
         }
 
-        const user = req.user;
+        const user = normalizeUserPayload(req.user);
         if (profile) {
             user.user_metadata = {
                 ...user.user_metadata,
@@ -960,13 +960,15 @@ app.post('/api/auth/oauth', async (req, res) => {
             return res.status(401).json({ error: 'Invalid or expired token' });
         }
 
+        const normalizedUser = await ensureUserDisplayName(userData.user);
+
         // ✅ Set cookie for cross-origin frontend usage in production.
         res.cookie('paypoint_session', access_token, getSessionCookieOptions());
 
         // ✅ Return session
         res.json({
             success: true,
-            user: userData.user,
+            user: normalizedUser,
             session: { access_token: access_token }
         });
     } catch (err) {
