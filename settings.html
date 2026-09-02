@@ -415,9 +415,14 @@
         });
 
         // Init
-        if (checkAuth()) {
-            loadSettings();
-        }
+if (checkAuth()) {
+    // ✅ Load user data from localStorage and update the badge
+    const userData = JSON.parse(localStorage.getItem('paypoint_user') || '{}');
+    const name = userData?.user_metadata?.name || userData?.name || 'Creator';
+    document.getElementById('userBadge').innerHTML = `<i class="fas fa-user"></i> ${escapeHtml(name)}`;
+    
+    loadSettings();
+}
 
         console.log('⚙️ PayPoint Settings page loaded');
     </script>

@@ -1053,16 +1053,20 @@
         });
 
         // ============================================
-        // INIT
-        // ============================================
-        (async function init() {
-            const isAuthed = await checkAuth();
-            if (isAuthed) {
-                const tier = await fetchUserWithSubscription();
-                updateSubscriptionUI(tier);
-                loadStats();
-            }
-        })();
+// INIT
+// ============================================
+(async function init() {
+    const isAuthed = await checkAuth();
+    if (isAuthed) {
+        // ✅ Load user data from localStorage and update the UI
+        const userData = JSON.parse(localStorage.getItem('paypoint_user') || '{}');
+        if (typeof updateUI === 'function') updateUI(userData);
+        
+        const tier = await fetchUserWithSubscription();
+        updateSubscriptionUI(tier);
+        loadStats();
+    }
+})();
 
         console.log('👤 PayPoint Creator Profile loaded');
         console.log('📡 Connected to:', API_URL);
