@@ -1,6 +1,8 @@
 /* Global auth helpers for PayPoint frontend */
 (function () {
-    window.__API_URL__ = window.__API_URL__ || (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' ? '/api' : 'https://paypoint-7dmc.onrender.com/api');
+    // Use the frontend proxy so auth requests keep the same origin as the page.
+    // This avoids browser CORS and cross-site cookie failures on deployed pages.
+    window.__API_URL__ = window.__API_URL__ || '/api';
     window.API_URL = window.__API_URL__;
 
     window.getApiUrl = function () {

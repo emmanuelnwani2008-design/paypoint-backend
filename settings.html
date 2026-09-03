@@ -257,7 +257,7 @@
         // ============================================
 
         // Use the global API_URL from auth.js
-        const API_URL = window.API_URL || '/api';
+        const API_URL = window.getApiUrl ? window.getApiUrl() : (window.API_URL || '/api');
 
         // XSS protection (defined before use)
         function escapeHtml(text) {
@@ -419,10 +419,12 @@
         // ============================================
         (async function init() {
             try {
-                // Use global checkAuth (from auth.js) – redirects on fail
-                const isAuth = await window.checkAuth();
+                // Validate this page without allowing a failed request to trigger a
+                // secondary redirect from another page's cached-session logic.
+                const isAuth = await window.checkAuth(false);
                 if (!isAuth) {
-                    console.log('⛔ Auth failed, redirecting...');
+                    console.log('⛔ Settings authentication failed');
+                    window.location.replace('login.html');
                     return;
                 }
 
