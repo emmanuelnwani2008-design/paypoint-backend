@@ -10,6 +10,7 @@
     <script src="auth.js"></script>
     <script src="toast.js"></script>
     <style>
+        /* ====== All existing styles – unchanged ====== */
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: 'Inter', -apple-system, sans-serif;
@@ -154,6 +155,19 @@
         .message.success { display: block; background: rgba(52, 199, 89, 0.1); color: #34C759; border: 1px solid rgba(52, 199, 89, 0.2); }
         .message.error { display: block; background: rgba(255, 59, 48, 0.1); color: #FF3B30; border: 1px solid rgba(255, 59, 48, 0.2); }
 
+        .pro-badge {
+            display: inline-block;
+            background: #4F7CFF;
+            color: #FFFFFF;
+            font-size: 10px;
+            font-weight: 700;
+            padding: 2px 10px;
+            border-radius: 40px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-left: 8px;
+        }
+
         @media (max-width: 768px) {
             .settings-card { padding: 20px; }
             .settings-card .form-group { flex-direction: column; align-items: stretch; }
@@ -167,7 +181,7 @@
 <body>
 
     <div class="app-container">
-        <!-- Navbar (no Settings link here) -->
+        <!-- Navbar -->
         <nav class="navbar">
             <a href="dashboard.html" class="logo">
                 <img src="logo.png" alt="PayPoint">
@@ -179,10 +193,9 @@
                 <a href="expense.html">Expenses</a>
                 <a href="invoice.html">Invoices</a>
                 <a href="creator.html">Creator</a>
-                <a href="invoice-customization.html" class="settings-link">
-                <!-- Settings is NOT in the top navbar -->
-                <span class="user-badge" id="userBadge">👤 Creator</span>
-                <a href="#" class="logout" id="navLogout">Logout</a>
+                <!-- Settings is not in the top navbar -->
+                <span class="user-badge" id="userBadge"><i class="fas fa-user"></i> Creator</span>
+                <a href="#" class="logout" id="navLogout"><i class="fas fa-sign-out-alt"></i> Logout</a>
             </div>
         </nav>
 
@@ -194,7 +207,7 @@
 
         <!-- Currency Settings -->
         <div class="settings-card">
-            <h3>💱 Currency</h3>
+            <h3><i class="fas fa-money-bill-wave"></i> Currency</h3>
             <p class="description">Choose your preferred currency for all amounts.</p>
             <div class="form-group">
                 <label for="currencySelect">Currency</label>
@@ -202,7 +215,7 @@
                     <option value="NGN">₦ NGN (Nigeria)</option>
                     <option value="USD">$ USD (International)</option>
                 </select>
-                <button class="btn-primary" id="saveCurrencyBtn">Save Currency</button>
+                <button class="btn-primary" id="saveCurrencyBtn"><i class="fas fa-save"></i> Save Currency</button>
             </div>
             <div class="message success" id="currencyMessage"><i class="fas fa-check-circle"></i> Currency updated!</div>
         </div>
@@ -214,19 +227,19 @@
             <div class="form-group">
                 <label for="taxRateInput">Tax Rate (%)</label>
                 <input type="number" id="taxRateInput" placeholder="30" min="0" max="100">
-                <button class="btn-primary" id="saveTaxBtn">Save Tax Rate</button>
+                <button class="btn-primary" id="saveTaxBtn"><i class="fas fa-save"></i> Save Tax Rate</button>
             </div>
             <div class="message success" id="taxMessage"><i class="fas fa-check-circle"></i> Tax rate updated!</div>
         </div>
 
-        <!-- Invoice Customization -->
-<div class="settings-card">
-    <h3>🎨 Invoice Customization <span class="pro-badge">Pro</span></h3>
-    <p class="description">Customize your invoices with your logo, brand colors, and custom text.</p>
-    <a href="invoice-customization.html" class="btn-primary" style="display: inline-block; text-decoration: none;">
-        Customize Invoices →
-    </a>
-</div>
+        <!-- Invoice Customization (Pro) -->
+        <div class="settings-card">
+            <h3><i class="fas fa-paint-roller"></i> Invoice Customization <span class="pro-badge">Pro</span></h3>
+            <p class="description">Customize your invoices with your logo, brand colors, and custom text.</p>
+            <a href="invoice-customization.html" class="btn-primary" style="display: inline-block; text-decoration: none;">
+                <i class="fas fa-arrow-right"></i> Customize Invoices
+            </a>
+        </div>
 
         <!-- Danger Zone -->
         <div class="settings-card" style="border-color: rgba(255, 59, 48, 0.2);">
@@ -236,29 +249,30 @@
         </div>
     </div>
 
-    <!-- ❌ NO BOTTOM NAVIGATION HERE – Settings only accessible from sidebar -->
+    <!-- ❌ NO BOTTOM NAVIGATION – Settings only accessible from sidebar -->
 
     <script>
+        // ============================================
+        // SETTINGS PAGE – FIXED AUTH
+        // ============================================
+
+        // Use the global API_URL from auth.js
         const API_URL = window.API_URL || '/api';
 
-        async function refreshUserData() {
-    try {
-        const res = await fetch(`${API_URL}/auth/user`, {
-            headers: getAuthHeaders(),
-            credentials: 'include'
-        });
-        const data = await res.json();
-        if (data.success && data.user) {
-            localStorage.setItem('paypoint_user', JSON.stringify(data.user));
+        // XSS protection (defined before use)
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
         }
-    } catch (err) {
-        console.error('Failed to refresh user data:', err);
-    }
-}
+
+        // Helper to get auth headers (from global auth.js)
         function getAuthHeaders() {
             if (typeof window.getAuthHeaders === 'function') {
                 return window.getAuthHeaders();
             }
+            // Fallback if auth.js didn't load
             const token = sessionStorage.getItem('paypoint_session') || localStorage.getItem('paypoint_session');
             return {
                 'Content-Type': 'application/json',
@@ -266,26 +280,7 @@
             };
         }
 
-        // Prefer global checkAuth
-        if (typeof checkAuth !== 'function') {
-            function checkAuth() {
-                const user = localStorage.getItem('paypoint_user');
-                if (!user) {
-                    window.location.replace('login.html');
-                    return false;
-                }
-                try {
-                    const userData = JSON.parse(user);
-                    const name = userData?.user_metadata?.name || userData?.name || 'Creator';
-                    document.getElementById('userBadge').innerHTML = `<i class="fas fa-user"></i> ${escapeHtml(name)}`;
-                    return true;
-                } catch (e) {
-                    window.location.replace('login.html');
-                    return false;
-                }
-            }
-        }
-
+        // Load settings from backend
         async function loadSettings() {
             try {
                 const res = await fetch(`${API_URL}/settings`, {
@@ -294,23 +289,25 @@
                 });
                 const result = await res.json();
                 if (result.success) {
-                    document.getElementById('currencySelect').value = result.data.currency || 'NGN';
+                    document.getElementById('currencySelect').value = result.data.currency || 'USD';
                     document.getElementById('taxRateInput').value = result.data.taxRate || 30;
                 }
             } catch (err) {
                 console.error('Error loading settings:', err);
+                window.showToast('Failed to load settings', 'error');
             }
         }
 
-        function showMessage(id, text, type) {
-            if (typeof window.showMessage === 'function') {
-                try { window.showMessage(id, text, type); return; } catch (e) { /* fallthrough */ }
-            }
+        // Show message in a specific element
+        function showMessage(id, html, type) {
             const el = document.getElementById(id);
-            el.innerHTML = text;
+            if (!el) return;
+            el.innerHTML = html;
             el.className = `message ${type}`;
             setTimeout(() => { el.className = 'message'; }, 3000);
         }
+
+        // ====== Event Listeners ======
 
         // Save Currency
         document.getElementById('saveCurrencyBtn').addEventListener('click', async () => {
@@ -324,8 +321,9 @@
                 });
                 const result = await res.json();
                 if (result.success) {
-                    showMessage('currencyMessage', '<i class="fas fa-check-circle"></i> Currency updated to ' + escapeHtml(currency) + '!', 'success');
-                    const user = JSON.parse(localStorage.getItem('paypoint_user'));
+                    showMessage('currencyMessage', `<i class="fas fa-check-circle"></i> Currency updated to ${escapeHtml(currency)}!`, 'success');
+                    // Update local cached user metadata
+                    const user = JSON.parse(localStorage.getItem('paypoint_user') || '{}');
                     if (user) {
                         user.user_metadata = user.user_metadata || {};
                         user.user_metadata.default_currency = currency;
@@ -355,22 +353,17 @@
                 });
                 const result = await res.json();
                 if (result.success) {
-                    showMessage('taxMessage', '<i class="fas fa-check-circle"></i> Tax rate updated to ' + escapeHtml(String(taxRate)) + '%!', 'success');
-                    // Refresh settings from server and update local user copy so other pages show the change
-                    try {
-                        // Update local cached user metadata if present
-                        const stored = localStorage.getItem('paypoint_user');
-                        if (stored) {
-                            const user = JSON.parse(stored);
-                            user.user_metadata = user.user_metadata || {};
-                            user.user_metadata.tax_rate = (result.data && result.data.tax_rate) || taxRate;
-                            localStorage.setItem('paypoint_user', JSON.stringify(user));
-                        }
-                    } catch (e) {
-                        console.warn('Could not update local user metadata:', e);
+                    showMessage('taxMessage', `<i class="fas fa-check-circle"></i> Tax rate updated to ${taxRate}%!`, 'success');
+                    // Update local cached user metadata
+                    const stored = localStorage.getItem('paypoint_user');
+                    if (stored) {
+                        const user = JSON.parse(stored);
+                        user.user_metadata = user.user_metadata || {};
+                        user.user_metadata.tax_rate = (result.data && result.data.tax_rate) || taxRate;
+                        localStorage.setItem('paypoint_user', JSON.stringify(user));
                     }
-                    // Reload settings input from backend to reflect the saved value
-                    loadSettings();
+                    // Reload settings to reflect the saved value
+                    await loadSettings();
                 } else {
                     showMessage('taxMessage', '❌ ' + (result.error || 'Failed to update'), 'error');
                 }
@@ -379,17 +372,9 @@
             }
         });
 
-        function escapeHtml(text) {
-    if (!text) return '';
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
-}
-        
-
         // Delete Account
         document.getElementById('deleteAccountBtn').addEventListener('click', async () => {
-            if (!confirm('<i class="fas fa-exclamation-triangle"></i> Are you sure you want to delete your account? This cannot be undone!')) return;
+            if (!confirm('⚠️ Are you sure you want to delete your account? This cannot be undone!')) return;
             if (!confirm('Type "yes" to confirm deletion')) return;
 
             try {
@@ -400,15 +385,15 @@
                 });
                 const result = await res.json();
                 if (result.success) {
-                    alert('🗑️ Account deleted successfully.');
+                    window.showToast('🗑️ Account deleted successfully.', 'success');
                     localStorage.removeItem('paypoint_user');
                     localStorage.removeItem('paypoint_session');
                     window.location.replace('login.html');
                 } else {
-                    alert('❌ Error: ' + (result.error || 'Failed to delete account'));
+                    window.showToast('❌ Error: ' + (result.error || 'Failed to delete account'), 'error');
                 }
             } catch (err) {
-                alert('❌ Could not connect to server');
+                window.showToast('❌ Could not connect to server', 'error');
                 console.error(err);
             }
         });
@@ -416,30 +401,46 @@
         // Logout
         document.getElementById('navLogout').addEventListener('click', async (e) => {
             e.preventDefault();
-            try {
-                await fetch(`${API_URL}/auth/logout`, { method: 'POST', headers: getAuthHeaders() });
-            } catch (err) {}
-            localStorage.removeItem('paypoint_user');
-            localStorage.removeItem('paypoint_session');
-            window.location.replace('login.html');
+            if (typeof window.logout === 'function') {
+                await window.logout();
+            } else {
+                // Fallback if auth.js failed
+                try {
+                    await fetch(`${API_URL}/auth/logout`, { method: 'POST', headers: getAuthHeaders() });
+                } catch (err) {}
+                localStorage.removeItem('paypoint_user');
+                localStorage.removeItem('paypoint_session');
+                window.location.replace('login.html');
+            }
         });
 
-        // Init
-(async function init() {
-    const authenticated = await checkAuth(false);
-    if (!authenticated) {
-        window.location.replace('login.html');
-        return;
-    }
+        // ============================================
+        // INIT – Uses global checkAuth from auth.js
+        // ============================================
+        (async function init() {
+            try {
+                // Use global checkAuth (from auth.js) – redirects on fail
+                const isAuth = await window.checkAuth();
+                if (!isAuth) {
+                    console.log('⛔ Auth failed, redirecting...');
+                    return;
+                }
 
-    const userData = JSON.parse(localStorage.getItem('paypoint_user') || '{}');
-    const metadata = userData.user_metadata || {};
-    const name = metadata.name || metadata.full_name || metadata.display_name || userData.name || userData.full_name || userData.display_name || 'Creator';
-    document.getElementById('userBadge').innerHTML = `<i class="fas fa-user"></i> ${escapeHtml(name)}`;
-    loadSettings();
-})();
+                // Update user badge from stored user data
+                const userData = JSON.parse(localStorage.getItem('paypoint_user') || '{}');
+                const metadata = userData.user_metadata || {};
+                const name = metadata.name || metadata.full_name || metadata.display_name || userData.name || userData.full_name || userData.display_name || 'Creator';
+                document.getElementById('userBadge').innerHTML = `<i class="fas fa-user"></i> ${escapeHtml(name)}`;
 
-        console.log('⚙️ PayPoint Settings page loaded');
+                // Load settings
+                await loadSettings();
+
+                console.log('⚙️ Settings page loaded successfully');
+            } catch (err) {
+                console.error('❌ Settings init error:', err);
+                window.location.replace('login.html');
+            }
+        })();
     </script>
 
 </body>
