@@ -239,12 +239,13 @@
     <!-- ❌ NO BOTTOM NAVIGATION HERE – Settings only accessible from sidebar -->
 
     <script>
-        const API_URL = '/api';
+        const API_URL = window.API_URL || '/api';
 
         async function refreshUserData() {
     try {
         const res = await fetch(`${API_URL}/auth/user`, {
-            headers: getAuthHeaders()
+            headers: getAuthHeaders(),
+            credentials: 'include'
         });
         const data = await res.json();
         if (data.success && data.user) {
@@ -255,7 +256,10 @@
     }
 }
         function getAuthHeaders() {
-    return { 'Content-Type': 'application/json' };
+            if (typeof window.getAuthHeaders === 'function') {
+                return window.getAuthHeaders();
+            }
+            const token = sessionStorage.getItem('paypoint_session') || localStorage.getItem('paypoint_session');
             return {
                 'Content-Type': 'application/json',
                 ...(token ? { Authorization: `Bearer ${token}` } : {})
@@ -284,7 +288,10 @@
 
         async function loadSettings() {
             try {
-                const res = await fetch(`${API_URL}/settings`, { headers: getAuthHeaders() });
+                const res = await fetch(`${API_URL}/settings`, {
+                    headers: getAuthHeaders(),
+                    credentials: 'include'
+                });
                 const result = await res.json();
                 if (result.success) {
                     document.getElementById('currencySelect').value = result.data.currency || 'NGN';
@@ -312,6 +319,7 @@
                 const res = await fetch(`${API_URL}/settings`, {
                     method: 'PUT',
                     headers: getAuthHeaders(),
+                    credentials: 'include',
                     body: JSON.stringify({ currency })
                 });
                 const result = await res.json();
@@ -342,6 +350,7 @@
                 const res = await fetch(`${API_URL}/settings`, {
                     method: 'PUT',
                     headers: getAuthHeaders(),
+                    credentials: 'include',
                     body: JSON.stringify({ taxRate })
                 });
                 const result = await res.json();
@@ -386,7 +395,8 @@
             try {
                 const res = await fetch(`${API_URL}/auth/delete`, {
                     method: 'DELETE',
-                    headers: getAuthHeaders()
+                    headers: getAuthHeaders(),
+                    credentials: 'include'
                 });
                 const result = await res.json();
                 if (result.success) {
@@ -415,14 +425,19 @@
         });
 
         // Init
-if (checkAuth()) {
-    // ✅ Load user data from localStorage and update the badge
+(async function init() {
+    const authenticated = await checkAuth(false);
+    if (!authenticated) {
+        window.location.replace('login.html');
+        return;
+    }
+
     const userData = JSON.parse(localStorage.getItem('paypoint_user') || '{}');
-    const name = userData?.user_metadata?.name || userData?.name || 'Creator';
+    const metadata = userData.user_metadata || {};
+    const name = metadata.name || metadata.full_name || metadata.display_name || userData.name || userData.full_name || userData.display_name || 'Creator';
     document.getElementById('userBadge').innerHTML = `<i class="fas fa-user"></i> ${escapeHtml(name)}`;
-    
     loadSettings();
-}
+})();
 
         console.log('⚙️ PayPoint Settings page loaded');
     </script>
