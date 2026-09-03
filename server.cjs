@@ -22,13 +22,14 @@ const port = process.env.PORT || 3000;
 const FRONTEND_URL = process.env.FRONTEND_URL || 'https://paypoint-backend.vercel.app';
 console.log(`🌐 Frontend URL: ${FRONTEND_URL}`);
 const IS_PROD = process.env.NODE_ENV === 'production';
-const COOKIE_SAME_SITE = IS_PROD ? 'none' : 'lax';
+function getSessionCookieOptions(req) {
+    const forwardedProtocol = req?.headers?.['x-forwarded-proto'];
+    const secureRequest = IS_PROD || req?.secure || forwardedProtocol === 'https';
 
-function getSessionCookieOptions() {
     return {
         httpOnly: true,
-        secure: IS_PROD,
-        sameSite: COOKIE_SAME_SITE,
+        secure: secureRequest,
+        sameSite: secureRequest ? 'none' : 'lax',
         path: '/',
         maxAge: 7 * 24 * 60 * 60 * 1000
     };
@@ -950,7 +951,7 @@ app.post('/api/auth/login', authLimiter, async (req, res) => {
 
         // Set the cookie. In production the frontend is on a different origin (Netlify),
         // so the browser needs SameSite=None and Secure to actually send the cookie.
-        res.cookie('paypoint_session', data.session.access_token, getSessionCookieOptions());
+        res.cookie('paypoint_session', data.session.access_token, getSessionCookieOptions(req));
 
         res.json({ success: true, user: data.user, session: data.session });
     } catch (err) {
@@ -1023,7 +1024,7 @@ app.post('/api/auth/oauth', async (req, res) => {
         const normalizedUser = await ensureUserDisplayName(userData.user);
 
         // ✅ Set cookie for cross-origin frontend usage in production.
-        res.cookie('paypoint_session', access_token, getSessionCookieOptions());
+        res.cookie('paypoint_session', access_token, getSessionCookieOptions(req));
 
         // ✅ Return session
         res.json({
