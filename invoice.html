@@ -18,7 +18,7 @@
         gtag('config', 'G-HFJ9JM358E');
     </script>
     <style>
-        /* ====== Existing styles – unchanged ====== */
+        /* ====== All styles unchanged ====== */
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -299,16 +299,15 @@
                 <a href="invoice.html" class="active">Invoices</a>
                 <a href="creator.html">Creator</a>
                 <span class="user-badge" id="userBadge"><i class="fas fa-user"></i> Creator</span>
-                <a href="#" class="logout" id="navLogout">Logout</a>
+                <a href="#" class="logout" id="navLogout"><i class="fas fa-sign-out-alt"></i> Logout</a>
             </div>
         </nav>
 
         <div class="page-header">
             <h1>Invoices <span>· Send professional invoices to brands</span></h1>
-            <button class="btn-primary" id="openModalBtn">+ Create Invoice</button>
-             <button class="btn-secondary" id="exportInvoicesBtn"><i class="fas fa-file-export"></i> Export CSV</button>
+            <button class="btn-primary" id="openModalBtn"><i class="fas fa-plus"></i> Create Invoice</button>
+            <button class="btn-secondary" id="exportInvoicesBtn"><i class="fas fa-file-export"></i> Export CSV</button>
         </div>
-        
 
         <div class="invoice-grid" id="invoiceGrid">
             <div class="empty-state">
@@ -368,9 +367,9 @@
             <textarea id="modalNotes" placeholder="Additional notes for the brand..." rows="2"></textarea>
 
             <div style="background: #F8FAFC; padding: 12px; border-radius: 8px; margin: 12px 0;">
-                <p><strong>Subtotal:</strong> <span id="modalSubtotal">₦0.00</span></p>
-                <p><strong>VAT:</strong> <span id="modalVat">₦0.00</span></p>
-                <p><strong>Total:</strong> <span id="modalTotal">₦0.00</span></p>
+                <p><strong>Subtotal:</strong> <span id="modalSubtotal">$0.00</span></p>
+                <p><strong>VAT:</strong> <span id="modalVat">$0.00</span></p>
+                <p><strong>Total:</strong> <span id="modalTotal">$0.00</span></p>
             </div>
 
             <div class="modal-actions">
@@ -406,45 +405,25 @@
 
     <script>
         // ============================================
-        // CONFIGURATION
+        // CONFIGURATION – use global API_URL
         // ============================================
-        const API_URL = window.__API_URL__ || (
-            window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-                ? '/api'
-                : 'https://paypoint-7dmc.onrender.com/api'
-        );
+        const API_URL = window.API_URL || (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' ? '/api' : 'https://paypoint-7dmc.onrender.com/api');
         let allInvoices = [];
 
-        
-
-        // use global auth helper
-        // NOTE: `auth.js` provides `getAuthHeaders()` and `checkAuth()` globally
-        // fallback if not loaded
-        if (typeof getAuthHeaders !== 'function') {
-            function getAuthHeaders() {
-                const token = sessionStorage.getItem('paypoint_session');
-                return {
-                    'Content-Type': 'application/json',
-                    ...(token ? { Authorization: `Bearer ${token}` } : {})
-                };
+        // ============================================
+        // HELPERS – use global when available
+        // ============================================
+        function getAuthHeaders() {
+            if (typeof window.getAuthHeaders === 'function') {
+                return window.getAuthHeaders();
             }
+            const token = sessionStorage.getItem('paypoint_session') || localStorage.getItem('paypoint_session');
+            return {
+                'Content-Type': 'application/json',
+                ...(token ? { Authorization: `Bearer ${token}` } : {})
+            };
         }
 
-        // ============================================
-        // FORMAT CURRENCY
-        // ============================================
-        function formatCurrency(amount, currency) {
-            if (!amount && amount !== 0) return '$0';
-            const userData = JSON.parse(localStorage.getItem('paypoint_user') || '{}');
-            const userCurrency = userData?.user_metadata?.default_currency || 'USD';
-            const symbols = { USD: '$', NGN: '₦' };
-            const symbol = symbols[currency] || symbols[userCurrency] || '$';
-            return symbol + Number(amount).toLocaleString();
-        }
-
-        // ============================================
-        // XSS PROTECTION
-        // ============================================
         function escapeHtml(text) {
             if (!text) return '';
             const div = document.createElement('div');
@@ -452,30 +431,13 @@
             return div.innerHTML;
         }
 
-        // Use global checkAuth when available
-        if (typeof checkAuth !== 'function') {
-            function checkAuth() {
-                const token = sessionStorage.getItem('paypoint_session');
-                const user = sessionStorage.getItem('paypoint_user');
-                if (!token || !user) {
-                    console.log('Not authenticated, redirecting to login');
-                    sessionStorage.removeItem('paypoint_user');
-                    sessionStorage.removeItem('paypoint_session');
-                    window.location.replace('login.html');
-                    return false;
-                }
-                try {
-                    const userData = JSON.parse(user);
-                    const name = userData?.user_metadata?.name || userData?.name || 'Creator';
-                    document.getElementById('userBadge').innerHTML = '<i class="fas fa-user"></i> ' + escapeHtml(name);
-                    return true;
-                } catch (e) {
-                    sessionStorage.removeItem('paypoint_user');
-                    sessionStorage.removeItem('paypoint_session');
-                    window.location.replace('login.html');
-                    return false;
-                }
-            }
+        function formatCurrency(amount, currency) {
+            if (!amount && amount !== 0) return '$0';
+            const userData = JSON.parse(localStorage.getItem('paypoint_user') || '{}');
+            const userCurrency = userData?.user_metadata?.default_currency || 'USD';
+            const symbols = { USD: '$', NGN: '₦' };
+            const symbol = symbols[currency] || symbols[userCurrency] || '$';
+            return symbol + Number(amount).toLocaleString();
         }
 
         // ============================================
@@ -497,19 +459,28 @@
         const lineItemsContainer = document.getElementById('lineItemsContainer');
 
         // ============================================
-        // LOAD INVOICES (NEW endpoint)
+        // UPDATE USER BADGE
+        // ============================================
+        function updateUserBadge() {
+            const userData = JSON.parse(localStorage.getItem('paypoint_user') || '{}');
+            const metadata = userData?.user_metadata || {};
+            const name = metadata.name || metadata.full_name || metadata.display_name || userData.name || userData.full_name || userData.display_name || 'Creator';
+            document.getElementById('userBadge').innerHTML = `<i class="fas fa-user"></i> ${escapeHtml(name)}`;
+        }
+
+        // ============================================
+        // LOAD INVOICES
         // ============================================
         async function loadInvoices() {
             try {
                 const res = await fetch(`${API_URL}/invoices`, {
-                    headers: getAuthHeaders()
+                    headers: getAuthHeaders(),
+                    credentials: 'include'
                 });
                 const result = await res.json();
-
                 if (result.success) {
                     allInvoices = result.data || [];
                     renderInvoices(allInvoices);
-                    // Also populate the deal dropdown for creating new invoices
                     await populateDealDropdown();
                 }
             } catch (err) {
@@ -521,12 +492,12 @@
                         <p>Could not load invoices. Please try again.</p>
                     </div>
                 `;
-                // exception while loading invoices
+                window.showToast('Failed to load invoices', 'error');
             }
         }
 
         // ============================================
-        // RENDER INVOICES (real invoices)
+        // RENDER INVOICES
         // ============================================
         function renderInvoices(invoices) {
             if (!invoices || invoices.length === 0) {
@@ -539,7 +510,6 @@
                 `;
                 return;
             }
-
             invoiceGrid.innerHTML = '';
             invoices.forEach(inv => {
                 const card = document.createElement('div');
@@ -567,11 +537,14 @@
         }
 
         // ============================================
-        // POPULATE DEAL DROPDOWN (for creating new invoices)
+        // POPULATE DEAL DROPDOWN
         // ============================================
         async function populateDealDropdown() {
             try {
-                const res = await fetch(`${API_URL}/deals`, { headers: getAuthHeaders() });
+                const res = await fetch(`${API_URL}/deals`, {
+                    headers: getAuthHeaders(),
+                    credentials: 'include'
+                });
                 const result = await res.json();
                 if (!result.success) return;
                 const deals = result.data || [];
@@ -588,18 +561,23 @@
                 });
             } catch (err) {
                 console.error('Error loading deals for dropdown:', err);
+                window.showToast('Failed to load deals', 'error');
             }
         }
 
         // ============================================
-        // PREVIEW INVOICE (PDF)
+        // PREVIEW & DOWNLOAD
         // ============================================
         async function previewInvoice(dealId) {
-            if (!dealId) return alert('No deal associated with this invoice.');
+            if (!dealId) {
+                window.showToast('No deal associated with this invoice.', 'error');
+                return;
+            }
             try {
                 const res = await fetch(`${API_URL}/invoices/generate`, {
                     method: 'POST',
                     headers: getAuthHeaders(),
+                    credentials: 'include',
                     body: JSON.stringify({ dealId })
                 });
                 if (res.ok) {
@@ -609,22 +587,23 @@
                     setTimeout(() => URL.revokeObjectURL(url), 10000);
                 } else {
                     const err = await res.json();
-                    alert('Preview failed: ' + (err.error || 'Unknown error'));
+                    window.showToast('Preview failed: ' + (err.error || 'Unknown error'), 'error');
                 }
             } catch (err) {
-                alert('Could not connect to server');
+                window.showToast('Could not connect to server', 'error');
             }
         }
 
-        // ============================================
-        // DOWNLOAD INVOICE (PDF)
-        // ============================================
         async function downloadInvoice(dealId) {
-            if (!dealId) return alert('No deal associated with this invoice.');
+            if (!dealId) {
+                window.showToast('No deal associated with this invoice.', 'error');
+                return;
+            }
             try {
                 const res = await fetch(`${API_URL}/invoices/generate`, {
                     method: 'POST',
                     headers: getAuthHeaders(),
+                    credentials: 'include',
                     body: JSON.stringify({ dealId })
                 });
                 if (res.ok) {
@@ -639,35 +618,35 @@
                     URL.revokeObjectURL(url);
                 } else {
                     const err = await res.json();
-                    alert('Download failed: ' + (err.error || 'Unknown error'));
+                    window.showToast('Download failed: ' + (err.error || 'Unknown error'), 'error');
                 }
             } catch (err) {
-                alert('Could not connect to server');
+                window.showToast('Could not connect to server', 'error');
             }
         }
 
         // ============================================
-        // RESEND INVOICE – FIXED ENDPOINT
+        // RESEND INVOICE
         // ============================================
         async function resendInvoice(invoiceId) {
             if (!confirm('Resend this invoice to the brand via email?')) return;
             try {
                 const res = await fetch(`${API_URL}/invoices/${invoiceId}/resend`, {
                     method: 'POST',
-                    headers: getAuthHeaders()
+                    headers: getAuthHeaders(),
+                    credentials: 'include'
                 });
                 const result = await res.json();
                 if (result.success) {
-                    alert('<i class="fas fa-check-circle"></i> Invoice resent successfully!');
-                    // Optionally auto-open the portal link
+                    window.showToast('Invoice resent successfully!', 'success');
                     if (result.portal_link) {
                         window.open(result.portal_link, '_blank');
                     }
                 } else {
-                    alert('❌ ' + (result.error || 'Failed to resend'));
+                    window.showToast('Failed to resend: ' + (result.error || 'Unknown error'), 'error');
                 }
             } catch (err) {
-                alert('Could not connect to server.');
+                window.showToast('Could not connect to server.', 'error');
                 console.error(err);
             }
         }
@@ -684,7 +663,6 @@
             modalDueDate.value = '';
             modalVatRate.value = '0';
             modalNotes.value = '';
-            // Reset line items to one empty row
             lineItemsContainer.innerHTML = `
                 <div class="line-item" style="display: flex; gap: 8px; margin-bottom: 8px;">
                     <input type="text" class="item-description" placeholder="Description" style="flex: 2;">
@@ -700,11 +678,8 @@
         function closeModal() {
             modal.classList.remove('active');
         }
-
         closeModalBtn.addEventListener('click', closeModal);
-        modal.addEventListener('click', (e) => {
-            if (e.target === modal) closeModal();
-        });
+        modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
 
         // ============================================
         // LINE ITEMS – ADD / REMOVE / TOTALS
@@ -720,7 +695,6 @@
                 <button class="btn-remove-item" style="background: none; border: none; color: #FF3B30; cursor: pointer;">✕</button>
             `;
             lineItemsContainer.appendChild(div);
-            // Re‑attach remove handlers
             document.querySelectorAll('.btn-remove-item').forEach(btn => {
                 btn.removeEventListener('click', removeLineItem);
                 btn.addEventListener('click', removeLineItem);
@@ -733,43 +707,37 @@
                 item.remove();
                 updateTotals();
             } else {
-                alert('You must have at least one line item.');
+                window.showToast('You must have at least one line item.', 'warning');
             }
         }
 
-        // Attach remove handlers to existing items
         document.querySelectorAll('.btn-remove-item').forEach(btn => {
             btn.addEventListener('click', removeLineItem);
         });
-
-        // Recalculate totals on input change
         document.addEventListener('input', updateTotals);
 
         function updateTotals() {
-    const items = document.querySelectorAll('.line-item');
-    let subtotal = 0;
-    items.forEach(item => {
-        const qty = parseFloat(item.querySelector('.item-quantity')?.value) || 0;
-        const price = parseFloat(item.querySelector('.item-price')?.value) || 0;
-        subtotal += qty * price;
-    });
-    const vatRate = parseFloat(document.getElementById('modalVatRate').value) || 0;
-    const vat = subtotal * (vatRate / 100);
-    const total = subtotal + vat;
-
-    // ✅ Get user's default currency
-    const userData = JSON.parse(localStorage.getItem('paypoint_user') || '{}');
-    const userCurrency = userData?.user_metadata?.default_currency || 'USD';
-    const symbols = { USD: '$', NGN: '₦' };
-    const symbol = symbols[userCurrency] || '$';
-
-    document.getElementById('modalSubtotal').textContent = symbol + subtotal.toFixed(2);
-    document.getElementById('modalVat').textContent = symbol + vat.toFixed(2);
-    document.getElementById('modalTotal').textContent = symbol + total.toFixed(2);
-}
+            const items = document.querySelectorAll('.line-item');
+            let subtotal = 0;
+            items.forEach(item => {
+                const qty = parseFloat(item.querySelector('.item-quantity')?.value) || 0;
+                const price = parseFloat(item.querySelector('.item-price')?.value) || 0;
+                subtotal += qty * price;
+            });
+            const vatRate = parseFloat(document.getElementById('modalVatRate').value) || 0;
+            const vat = subtotal * (vatRate / 100);
+            const total = subtotal + vat;
+            const userData = JSON.parse(localStorage.getItem('paypoint_user') || '{}');
+            const userCurrency = userData?.user_metadata?.default_currency || 'USD';
+            const symbols = { USD: '$', NGN: '₦' };
+            const symbol = symbols[userCurrency] || '$';
+            document.getElementById('modalSubtotal').textContent = symbol + subtotal.toFixed(2);
+            document.getElementById('modalVat').textContent = symbol + vat.toFixed(2);
+            document.getElementById('modalTotal').textContent = symbol + total.toFixed(2);
+        }
 
         // ============================================
-        // CREATE INVOICE (sends all fields)
+        // CREATE INVOICE
         // ============================================
         createInvoiceBtn.addEventListener('click', async () => {
             const dealId = modalDeal.value;
@@ -781,7 +749,6 @@
             const vatRate = parseFloat(modalVatRate.value) || 0;
             const notes = modalNotes.value.trim();
 
-            // Collect line items
             const items = [];
             document.querySelectorAll('.line-item').forEach(item => {
                 const description = item.querySelector('.item-description')?.value?.trim() || '';
@@ -793,15 +760,15 @@
             });
 
             if (!dealId) {
-                alert('Please select a deal');
+                window.showToast('Please select a deal', 'error');
                 return;
             }
             if (!brandEmail) {
-                alert('Please enter the brand email');
+                window.showToast('Please enter the brand email', 'error');
                 return;
             }
             if (items.length === 0) {
-                alert('Please add at least one valid line item.');
+                window.showToast('Please add at least one valid line item.', 'warning');
                 return;
             }
 
@@ -809,6 +776,7 @@
                 const res = await fetch(`${API_URL}/invoices/create`, {
                     method: 'POST',
                     headers: getAuthHeaders(),
+                    credentials: 'include',
                     body: JSON.stringify({
                         dealId,
                         brandEmail,
@@ -821,26 +789,25 @@
                         notes: notes || undefined
                     })
                 });
-
                 const result = await res.json();
 
                 if (result.success) {
-    const paymentLink = result.portal_link || 'No link generated';
-    if (result.portal_link) {
-        window.open(result.portal_link, '_blank');
-    }
-    // <i class="fas fa-check-circle"></i> Add a small delay to avoid the warning
-    setTimeout(() => {
-        prompt(
-                '<i class="fas fa-check-circle"></i> Invoice created! The portal link has been opened in a new tab.\n\n' +
-                    '📋 COPY THIS LINK AND SEND IT TO THE BRAND:\n' +
-            '(Select the link below, press Ctrl+C to copy, then close this box.)\n\n' +
-            '<i class="fas fa-lightbulb"></i> We are still setting up automatic email delivery. For now, manually send this link to the brand via WhatsApp, Slack, or email.',
-            paymentLink
-        );
-    }, 100);
-    closeModal();
-    loadInvoices(); // refresh list
+                    const paymentLink = result.portal_link || 'No link generated';
+                    if (result.portal_link) {
+                        window.open(result.portal_link, '_blank');
+                    }
+                    // Use prompt with plain text (no HTML)
+                    setTimeout(() => {
+                        prompt(
+                            '✅ Invoice created! The portal link has been opened in a new tab.\n\n' +
+                            '📋 COPY THIS LINK AND SEND IT TO THE BRAND:\n' +
+                            '(Select the link below, press Ctrl+C to copy, then close this box.)\n\n' +
+                            '💡 We are still setting up automatic email delivery. For now, manually send this link to the brand via WhatsApp, Slack, or email.',
+                            paymentLink
+                        );
+                    }, 100);
+                    closeModal();
+                    loadInvoices();
                 } else if (result.limit_reached) {
                     const confirmUpgrade = confirm(
                         `${result.error}\n\nYou've used ${result.current} out of ${result.max} free invoices.\nUpgrade to Pro for unlimited invoices!`
@@ -849,50 +816,72 @@
                         window.location.href = 'pricing.html';
                     }
                 } else {
-                    alert('❌ Error: ' + (result.error || 'Failed to create invoice'));
+                    window.showToast('Error: ' + (result.error || 'Failed to create invoice'), 'error');
                 }
             } catch (err) {
-                alert('❌ Could not connect to server');
+                window.showToast('Could not connect to server', 'error');
                 console.error(err);
             }
         });
 
         // ============================================
-        // LOGOUT
+        // LOGOUT – use global logout
         // ============================================
         document.getElementById('navLogout')?.addEventListener('click', async (e) => {
             e.preventDefault();
-            try {
-                await fetch(`${API_URL}/auth/logout`, {
-                    method: 'POST',
-                    headers: getAuthHeaders()
-                });
-            } catch (err) {}
-            sessionStorage.removeItem('paypoint_user');
-            sessionStorage.removeItem('paypoint_session');
-            window.location.replace('login.html');
+            if (typeof window.logout === 'function') {
+                await window.logout();
+            } else {
+                // fallback
+                try {
+                    await fetch(`${API_URL}/auth/logout`, { method: 'POST', headers: getAuthHeaders(), credentials: 'include' });
+                } catch (err) {}
+                sessionStorage.removeItem('paypoint_user');
+                sessionStorage.removeItem('paypoint_session');
+                localStorage.removeItem('paypoint_user');
+                localStorage.removeItem('paypoint_session');
+                window.location.replace('login.html');
+            }
         });
 
         // ============================================
-        // AUTO-CHASING TOGGLE (Pro)
+        // AUTO-CHASE TOGGLE
         // ============================================
         const tier = localStorage.getItem('user_subscription_tier') || 'free';
         const autoChaseToggle = document.getElementById('autoChaseToggle');
         const autoChaseLabel = document.getElementById('autoChaseLabel');
         const autoChaseStatus = document.getElementById('autoChaseStatus');
 
+        async function saveAutoChasePreference(enabled) {
+            try {
+                const res = await fetch(`${API_URL}/profile/auto-chase`, {
+                    method: 'PUT',
+                    headers: getAuthHeaders(),
+                    credentials: 'include',
+                    body: JSON.stringify({ enabled })
+                });
+                const result = await res.json();
+                if (!result.success) {
+                    autoChaseToggle.checked = !enabled;
+                    window.showToast('Failed to save preference', 'error');
+                }
+            } catch (err) {
+                autoChaseToggle.checked = !enabled;
+                window.showToast('Could not connect to server.', 'error');
+            }
+        }
+
         if (autoChaseToggle && autoChaseLabel && autoChaseStatus) {
             if (tier === 'pro') {
                 autoChaseToggle.disabled = false;
                 autoChaseLabel.textContent = 'Enable Auto-Chasing';
                 autoChaseStatus.innerHTML = '<i class="fas fa-check-circle" style="color: #34C759;"></i> Pro feature – active';
-
                 const enabled = localStorage.getItem('auto_chase_enabled') === 'true';
                 autoChaseToggle.checked = enabled;
 
                 autoChaseToggle.addEventListener('change', function() {
-    const enabled = this.checked;
-    saveAutoChasePreference(enabled);
+                    const enabled = this.checked;
+                    saveAutoChasePreference(enabled);
                     autoChaseStatus.innerHTML = this.checked
                         ? '<i class="fas fa-check-circle" style="color: #34C759;"></i> Auto-chasing enabled'
                         : '<i class="fas fa-pause-circle" style="color: #FF9500;"></i> Auto-chasing paused';
@@ -904,56 +893,55 @@
             }
         }
 
-        async function saveAutoChasePreference(enabled) {
-    try {
-        const res = await fetch(`${API_URL}/profile/auto-chase`, {
-            method: 'PUT',
-            headers: getAuthHeaders(),
-            body: JSON.stringify({ enabled })
+        // ============================================
+        // EXPORT INVOICES CSV
+        // ============================================
+        document.getElementById('exportInvoicesBtn').addEventListener('click', async () => {
+            try {
+                const res = await fetch(`${API_URL}/invoices/export`, {
+                    headers: getAuthHeaders(),
+                    credentials: 'include'
+                });
+                const blob = await res.blob();
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `invoices-${Date.now()}.csv`;
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                URL.revokeObjectURL(url);
+            } catch (err) {
+                window.showToast('Failed to export invoices.', 'error');
+                console.error(err);
+            }
         });
-        const result = await res.json();
-        if (!result.success) {
-            autoChaseToggle.checked = !enabled;
-            alert('Failed to save preference');
-        }
-    } catch (err) {
-        autoChaseToggle.checked = !enabled;
-        alert('Could not connect to server.');
-    }
-}
-        // Export Invoices
-document.getElementById('exportInvoicesBtn').addEventListener('click', async () => {
-    try {
-        const res = await fetch(`${API_URL}/invoices/export`, {
-            headers: getAuthHeaders()
-        });
-        const blob = await res.blob();
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `invoices-${Date.now()}.csv`;
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-        URL.revokeObjectURL(url);
-    } catch (err) {
-        alert('Failed to export invoices.');
-        console.error(err);
-    }
-});
 
         // ============================================
         // INIT
         // ============================================
         (async function init() {
-            const authed = checkAuth();
-            if (authed) {
+            try {
+                // Use global checkAuth – redirects on fail
+                const authenticated = await window.checkAuth();
+                if (!authenticated) {
+                    console.log('⛔ Auth failed, redirecting...');
+                    return;
+                }
+                // Update user badge
+                updateUserBadge();
+
                 const loading = document.getElementById('loadingIndicator');
                 if (loading) loading.style.display = 'block';
                 await loadInvoices();
                 if (loading) loading.style.display = 'none';
-                console.log('📄 PayPoint Invoices Page loaded (fully fixed)');
+                console.log('📄 PayPoint Invoices Page loaded (fixed)');
                 console.log('📡 Connected to:', API_URL);
+            } catch (err) {
+                console.error('❌ Init error:', err);
+                const loading = document.getElementById('loadingIndicator');
+                if (loading) loading.style.display = 'none';
+                window.showToast('Failed to load page. Please refresh.', 'error');
             }
         })();
     </script>
