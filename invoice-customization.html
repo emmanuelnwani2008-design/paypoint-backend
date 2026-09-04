@@ -10,6 +10,7 @@
     <script src="toast.js"></script>
     <link rel="icon" type="image/png" href="logo.png">
     <style>
+        /* ====== All existing styles – unchanged ====== */
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: 'Inter', -apple-system, sans-serif;
@@ -260,50 +261,53 @@
     </div>
 
     <script>
-        const API_URL = '/api';
         // ============================================
-// CHECK AUTHENTICATION (prefer global `checkAuth`)
-// ============================================
-if (typeof checkAuth !== 'function') {
-async function checkAuth() {
-    try {
-        const res = await fetch(`${API_URL}/auth/user`, {
-            credentials: 'include'
-        });
+        // CONFIGURATION – stable local auth
+        // ============================================
+        const API_URL = window.API_URL || (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' ? '/api' : 'https://paypoint-7dmc.onrender.com/api');
 
-        if (res.status === 401) {
-            console.log('🔐 Not authenticated, redirecting to login');
-            localStorage.removeItem('paypoint_user');
-            window.location.replace('login.html');
-            return false;
+        // ============================================
+        // AUTH HELPERS (local token-based, works consistently)
+        // ============================================
+        function getAuthHeaders() {
+            const token = sessionStorage.getItem('paypoint_session') || localStorage.getItem('paypoint_session');
+            return {
+                'Content-Type': 'application/json',
+                ...(token ? { Authorization: `Bearer ${token}` } : {})
+            };
         }
 
-        const data = await res.json();
-        if (data.success && data.user) {
-            localStorage.setItem('paypoint_user', JSON.stringify(data.user));
-            return true;
-        } else {
-            window.location.replace('login.html');
-            return false;
-        }
-    } catch (err) {
-        console.error('❌ Error checking auth:', err);
-        window.location.replace('login.html');
-        return false;
-    }
-}
-
-        // prefer global getAuthHeaders
-        if (typeof getAuthHeaders !== 'function') {
-            function getAuthHeaders() {
-                return { 'Content-Type': 'application/json' };
+        function checkAuth() {
+            const token = sessionStorage.getItem('paypoint_session') || localStorage.getItem('paypoint_session');
+            const user = sessionStorage.getItem('paypoint_user') || localStorage.getItem('paypoint_user');
+            if (!token || !user) {
+                sessionStorage.removeItem('paypoint_user');
+                sessionStorage.removeItem('paypoint_session');
+                localStorage.removeItem('paypoint_user');
+                localStorage.removeItem('paypoint_session');
+                window.location.replace('login.html');
+                return false;
             }
-        }
+            return true;
         }
 
+        // ============================================
+        // HELPERS
+        // ============================================
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // ============================================
+        // LOAD CUSTOMIZATION
+        // ============================================
         async function loadCustomization() {
             try {
                 const res = await fetch(`${API_URL}/profile/invoice-customization`, {
+                    headers: getAuthHeaders(),
                     credentials: 'include'
                 });
                 const data = await res.json();
@@ -321,34 +325,35 @@ async function checkAuth() {
                     updatePreview();
 
                     if (!d.is_pro) {
-    // ✅ SHOW UPGRADE PROMPT
-    statusEl.className = 'message info';
-    statusEl.textContent = '🔒 This is a Pro feature. Upgrade to customize your invoices.';
-    document.getElementById('customizationCard').classList.add('lock-overlay');
-    document.getElementById('saveCustomizationBtn').disabled = true;
+                        statusEl.className = 'message info';
+                        statusEl.textContent = '🔒 This is a Pro feature. Upgrade to customize your invoices.';
+                        document.getElementById('customizationCard').classList.add('lock-overlay');
+                        document.getElementById('saveCustomizationBtn').disabled = true;
 
-    // ✅ ASK USER IF THEY WANT TO UPGRADE
-    const upgrade = confirm(
-        '🔒 Invoice customization is a Pro feature.\n\n' +
-        'Upgrade to Pro to customize your invoices with your logo, brand colors, and more.'
-    );
-    if (upgrade) {
-        window.location.href = 'pricing.html';
-    }
-} else {
-    statusEl.className = 'message success';
-    statusEl.textContent = '✅ Pro – Customize your invoices below!';
-    document.getElementById('customizationCard').classList.remove('lock-overlay');
-    document.getElementById('saveCustomizationBtn').disabled = false;
-}
-
-                    updatePreview();
+                        // Ask user to upgrade
+                        const upgrade = confirm(
+                            '🔒 Invoice customization is a Pro feature.\n\n' +
+                            'Upgrade to Pro to customize your invoices with your logo, brand colors, and more.'
+                        );
+                        if (upgrade) {
+                            window.location.href = 'pricing.html';
+                        }
+                    } else {
+                        statusEl.className = 'message success';
+                        statusEl.textContent = '✅ Pro – Customize your invoices below!';
+                        document.getElementById('customizationCard').classList.remove('lock-overlay');
+                        document.getElementById('saveCustomizationBtn').disabled = false;
+                    }
                 }
             } catch (err) {
                 console.error('Error loading customization:', err);
+                window.showToast('Failed to load customization settings', 'error');
             }
         }
 
+        // ============================================
+        // PREVIEW UPDATE
+        // ============================================
         function updatePreview() {
             const primary = document.getElementById('primaryColor').value || '#4F7CFF';
             const accent = document.getElementById('accentColor').value || '#1A1A2E';
@@ -376,6 +381,9 @@ async function checkAuth() {
         document.getElementById('logoUrl').addEventListener('input', updatePreview);
         document.getElementById('template').addEventListener('change', updatePreview);
 
+        // ============================================
+        // SAVE CUSTOMIZATION
+        // ============================================
         document.getElementById('saveCustomizationBtn').addEventListener('click', async () => {
             const logoUrl = document.getElementById('logoUrl').value.trim();
             const primaryColor = document.getElementById('primaryColor').value;
@@ -409,29 +417,34 @@ async function checkAuth() {
                     msg.innerHTML = '<i class="fas fa-check-circle" style="color: #34C759;"></i> Invoice customization saved!';
                     msg.style.display = 'block';
                     setTimeout(() => { msg.style.display = 'none'; }, 3000);
+                    window.showToast('Customization saved successfully!', 'success');
                 } else if (result.upgrade_required) {
-                    alert('🔒 This is a Pro feature. Please upgrade to customize your invoices.');
+                    window.showToast('🔒 This is a Pro feature. Please upgrade to customize your invoices.', 'warning');
                     window.location.href = 'pricing.html';
                 } else {
                     msg.className = 'message error';
                     msg.textContent = '❌ ' + (result.error || 'Failed to save');
                     msg.style.display = 'block';
+                    window.showToast('Failed to save customization', 'error');
                 }
             } catch (err) {
                 msg.className = 'message error';
                 msg.textContent = '❌ Could not connect to server.';
                 msg.style.display = 'block';
+                window.showToast('Could not connect to server', 'error');
                 console.error(err);
             }
         });
 
-        loadCustomization();
+        // ============================================
+        // INIT
+        // ============================================
         (async function init() {
-    const authed = await checkAuth();
-    if (authed) {
-        await loadCustomization();
-    }
-})();
+            const authed = checkAuth();
+            if (authed) {
+                await loadCustomization();
+            }
+        })();
     </script>
 </body>
 </html>
