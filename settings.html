@@ -253,26 +253,14 @@
 
     <script>
         // ============================================
-        // SETTINGS PAGE – FIXED AUTH
+        // CONFIGURATION – stable local auth
         // ============================================
+        const API_URL = window.API_URL || (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' ? '/api' : 'https://paypoint-7dmc.onrender.com/api');
 
-        // Use the global API_URL from auth.js
-        const API_URL = window.getApiUrl ? window.getApiUrl() : (window.API_URL || '/api');
-
-        // XSS protection (defined before use)
-        function escapeHtml(text) {
-            if (!text) return '';
-            const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
-        }
-
-        // Helper to get auth headers (from global auth.js)
+        // ============================================
+        // AUTH HELPERS (local token-based, works consistently)
+        // ============================================
         function getAuthHeaders() {
-            if (typeof window.getAuthHeaders === 'function') {
-                return window.getAuthHeaders();
-            }
-            // Fallback if auth.js didn't load
             const token = sessionStorage.getItem('paypoint_session') || localStorage.getItem('paypoint_session');
             return {
                 'Content-Type': 'application/json',
@@ -280,7 +268,46 @@
             };
         }
 
-        // Load settings from backend
+        function checkAuth() {
+            const token = sessionStorage.getItem('paypoint_session') || localStorage.getItem('paypoint_session');
+            const user = sessionStorage.getItem('paypoint_user') || localStorage.getItem('paypoint_user');
+            if (!token || !user) {
+                sessionStorage.removeItem('paypoint_user');
+                sessionStorage.removeItem('paypoint_session');
+                localStorage.removeItem('paypoint_user');
+                localStorage.removeItem('paypoint_session');
+                window.location.replace('login.html');
+                return false;
+            }
+            try {
+                const userData = JSON.parse(user);
+                const metadata = userData?.user_metadata || {};
+                const name = metadata.name || metadata.full_name || metadata.display_name || userData.name || userData.full_name || userData.display_name || 'Creator';
+                document.getElementById('userBadge').innerHTML = `<i class="fas fa-user"></i> ${escapeHtml(name)}`;
+                return true;
+            } catch (e) {
+                sessionStorage.removeItem('paypoint_user');
+                sessionStorage.removeItem('paypoint_session');
+                localStorage.removeItem('paypoint_user');
+                localStorage.removeItem('paypoint_session');
+                window.location.replace('login.html');
+                return false;
+            }
+        }
+
+        // ============================================
+        // HELPERS
+        // ============================================
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // ============================================
+        // LOAD SETTINGS
+        // ============================================
         async function loadSettings() {
             try {
                 const res = await fetch(`${API_URL}/settings`, {
@@ -298,7 +325,6 @@
             }
         }
 
-        // Show message in a specific element
         function showMessage(id, html, type) {
             const el = document.getElementById(id);
             if (!el) return;
@@ -307,7 +333,9 @@
             setTimeout(() => { el.className = 'message'; }, 3000);
         }
 
-        // ====== Event Listeners ======
+        // ============================================
+        // EVENT LISTENERS
+        // ============================================
 
         // Save Currency
         document.getElementById('saveCurrencyBtn').addEventListener('click', async () => {
@@ -322,7 +350,6 @@
                 const result = await res.json();
                 if (result.success) {
                     showMessage('currencyMessage', `<i class="fas fa-check-circle"></i> Currency updated to ${escapeHtml(currency)}!`, 'success');
-                    // Update local cached user metadata
                     const user = JSON.parse(localStorage.getItem('paypoint_user') || '{}');
                     if (user) {
                         user.user_metadata = user.user_metadata || {};
@@ -354,7 +381,6 @@
                 const result = await res.json();
                 if (result.success) {
                     showMessage('taxMessage', `<i class="fas fa-check-circle"></i> Tax rate updated to ${taxRate}%!`, 'success');
-                    // Update local cached user metadata
                     const stored = localStorage.getItem('paypoint_user');
                     if (stored) {
                         const user = JSON.parse(stored);
@@ -362,7 +388,6 @@
                         user.user_metadata.tax_rate = (result.data && result.data.tax_rate) || taxRate;
                         localStorage.setItem('paypoint_user', JSON.stringify(user));
                     }
-                    // Reload settings to reflect the saved value
                     await loadSettings();
                 } else {
                     showMessage('taxMessage', '❌ ' + (result.error || 'Failed to update'), 'error');
@@ -388,6 +413,8 @@
                     window.showToast('🗑️ Account deleted successfully.', 'success');
                     localStorage.removeItem('paypoint_user');
                     localStorage.removeItem('paypoint_session');
+                    sessionStorage.removeItem('paypoint_user');
+                    sessionStorage.removeItem('paypoint_session');
                     window.location.replace('login.html');
                 } else {
                     window.showToast('❌ Error: ' + (result.error || 'Failed to delete account'), 'error');
@@ -401,46 +428,28 @@
         // Logout
         document.getElementById('navLogout').addEventListener('click', async (e) => {
             e.preventDefault();
-            if (typeof window.logout === 'function') {
-                await window.logout();
-            } else {
-                // Fallback if auth.js failed
-                try {
-                    await fetch(`${API_URL}/auth/logout`, { method: 'POST', headers: getAuthHeaders() });
-                } catch (err) {}
-                localStorage.removeItem('paypoint_user');
-                localStorage.removeItem('paypoint_session');
-                window.location.replace('login.html');
-            }
+            try {
+                await fetch(`${API_URL}/auth/logout`, {
+                    method: 'POST',
+                    headers: getAuthHeaders(),
+                    credentials: 'include'
+                });
+            } catch (err) {}
+            sessionStorage.removeItem('paypoint_user');
+            sessionStorage.removeItem('paypoint_session');
+            localStorage.removeItem('paypoint_user');
+            localStorage.removeItem('paypoint_session');
+            window.location.replace('login.html');
         });
 
         // ============================================
-        // INIT – Uses global checkAuth from auth.js
+        // INIT
         // ============================================
         (async function init() {
-            try {
-                // Validate this page without allowing a failed request to trigger a
-                // secondary redirect from another page's cached-session logic.
-                const isAuth = await window.checkAuth(false);
-                if (!isAuth) {
-                    console.log('⛔ Settings authentication failed');
-                    window.location.replace('login.html');
-                    return;
-                }
-
-                // Update user badge from stored user data
-                const userData = JSON.parse(localStorage.getItem('paypoint_user') || '{}');
-                const metadata = userData.user_metadata || {};
-                const name = metadata.name || metadata.full_name || metadata.display_name || userData.name || userData.full_name || userData.display_name || 'Creator';
-                document.getElementById('userBadge').innerHTML = `<i class="fas fa-user"></i> ${escapeHtml(name)}`;
-
-                // Load settings
+            const authed = checkAuth();
+            if (authed) {
                 await loadSettings();
-
                 console.log('⚙️ Settings page loaded successfully');
-            } catch (err) {
-                console.error('❌ Settings init error:', err);
-                window.location.replace('login.html');
             }
         })();
     </script>
