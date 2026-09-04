@@ -18,7 +18,7 @@
         gtag('config', 'G-HFJ9JM358E');
     </script>
     <style>
-        /* ====== All styles unchanged ====== */
+        /* ====== All existing styles – unchanged ====== */
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -418,34 +418,15 @@
 
     <script>
         // ============================================
-        // CONFIGURATION – use global API_URL
+        // CONFIGURATION – use local API_URL from environment
         // ============================================
-        const API_URL = window.__API_URL__ || window.API_URL || (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' ? '/api' : 'https://paypoint-7dmc.onrender.com/api');
+        const API_URL = window.__API_URL__ || (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' ? '/api' : 'https://paypoint-7dmc.onrender.com/api');
         let allInvoices = [];
 
         // ============================================
-        // HELPERS – use global when available
+        // AUTH HELPERS (local, token-based – works consistently)
         // ============================================
-        function parseJsonResponse(res) {
-            return res.text().then((text) => {
-                try {
-                    return text ? JSON.parse(text) : {};
-                } catch (_) {
-                    return { raw: text };
-                }
-            });
-        }
-
-        function getDefaultCurrencySymbol() {
-            const userData = JSON.parse(localStorage.getItem('paypoint_user') || '{}');
-            const userCurrency = userData?.user_metadata?.default_currency || 'USD';
-            return { USD: '$', NGN: '₦' }[userCurrency] || '$';
-        }
-
         function getAuthHeaders() {
-            if (typeof window.getAuthHeaders === 'function') {
-                return window.getAuthHeaders();
-            }
             const token = sessionStorage.getItem('paypoint_session') || localStorage.getItem('paypoint_session');
             return {
                 'Content-Type': 'application/json',
@@ -453,6 +434,36 @@
             };
         }
 
+        function checkAuth() {
+            const token = sessionStorage.getItem('paypoint_session') || localStorage.getItem('paypoint_session');
+            const user = sessionStorage.getItem('paypoint_user') || localStorage.getItem('paypoint_user');
+            if (!token || !user) {
+                console.log('Not authenticated, redirecting to login');
+                sessionStorage.removeItem('paypoint_user');
+                sessionStorage.removeItem('paypoint_session');
+                localStorage.removeItem('paypoint_user');
+                localStorage.removeItem('paypoint_session');
+                window.location.replace('login.html');
+                return false;
+            }
+            try {
+                const userData = JSON.parse(user);
+                const name = userData?.user_metadata?.name || userData?.name || 'Creator';
+                document.getElementById('userBadge').innerHTML = '<i class="fas fa-user"></i> ' + escapeHtml(name);
+                return true;
+            } catch (e) {
+                sessionStorage.removeItem('paypoint_user');
+                sessionStorage.removeItem('paypoint_session');
+                localStorage.removeItem('paypoint_user');
+                localStorage.removeItem('paypoint_session');
+                window.location.replace('login.html');
+                return false;
+            }
+        }
+
+        // ============================================
+        // HELPERS – Toast, Escape, Format
+        // ============================================
         function escapeHtml(text) {
             if (!text) return '';
             const div = document.createElement('div');
@@ -467,6 +478,12 @@
             const symbols = { USD: '$', NGN: '₦' };
             const symbol = symbols[currency] || symbols[userCurrency] || '$';
             return symbol + Number(amount).toLocaleString();
+        }
+
+        function getDefaultCurrencySymbol() {
+            const userData = JSON.parse(localStorage.getItem('paypoint_user') || '{}');
+            const userCurrency = userData?.user_metadata?.default_currency || 'USD';
+            return { USD: '$', NGN: '₦' }[userCurrency] || '$';
         }
 
         // ============================================
@@ -488,16 +505,6 @@
         const lineItemsContainer = document.getElementById('lineItemsContainer');
 
         // ============================================
-        // UPDATE USER BADGE
-        // ============================================
-        function updateUserBadge() {
-            const userData = JSON.parse(localStorage.getItem('paypoint_user') || '{}');
-            const metadata = userData?.user_metadata || {};
-            const name = metadata.name || metadata.full_name || metadata.display_name || userData.name || userData.full_name || userData.display_name || 'Creator';
-            document.getElementById('userBadge').innerHTML = `<i class="fas fa-user"></i> ${escapeHtml(name)}`;
-        }
-
-        // ============================================
         // LOAD INVOICES
         // ============================================
         async function loadInvoices() {
@@ -506,26 +513,12 @@
                     headers: getAuthHeaders(),
                     credentials: 'include'
                 });
-                const result = await parseJsonResponse(res);
-                if (!res.ok || !result.success) {
-                    console.error('Invoice load failed:', result);
-                    invoiceGrid.innerHTML = `
-                        <div class="empty-state">
-                            <div class="icon"><i class="fas fa-exclamation-triangle"></i></div>
-                            <h3>Unable to load invoices</h3>
-                            <p>${escapeHtml(result?.error || 'Please refresh and try again.')}</p>
-                        </div>
-                    `;
-                    if (res.status === 401) {
-                        window.showToast('Your session expired. Please log in again.', 'error');
-                    } else {
-                        window.showToast('Failed to load invoices', 'error');
-                    }
-                    return;
+                const result = await res.json();
+                if (result.success) {
+                    allInvoices = result.data || [];
+                    renderInvoices(allInvoices);
+                    await populateDealDropdown();
                 }
-                allInvoices = result.data || [];
-                renderInvoices(allInvoices);
-                await populateDealDropdown();
             } catch (err) {
                 console.error('Error loading invoices:', err);
                 invoiceGrid.innerHTML = `
@@ -588,11 +581,8 @@
                     headers: getAuthHeaders(),
                     credentials: 'include'
                 });
-                const result = await parseJsonResponse(res);
-                if (!res.ok || !result.success) {
-                    modalDeal.innerHTML = '<option value="">Unable to load deals</option>';
-                    return;
-                }
+                const result = await res.json();
+                if (!result.success) return;
                 const deals = result.data || [];
                 modalDeal.innerHTML = '';
                 if (deals.length === 0) {
@@ -839,9 +829,9 @@
                         notes: notes || undefined
                     })
                 });
-                const result = await parseJsonResponse(res);
+                const result = await res.json();
 
-                if (res.ok && result.success) {
+                if (result.success) {
                     const paymentLink = result.portal_link || 'No link generated';
                     if (result.portal_link) {
                         window.open(result.portal_link, '_blank');
@@ -877,31 +867,53 @@
         });
 
         // ============================================
-        // LOGOUT – use global logout
+        // LOGOUT
         // ============================================
         document.getElementById('navLogout')?.addEventListener('click', async (e) => {
             e.preventDefault();
-            if (typeof window.logout === 'function') {
-                await window.logout();
-            } else {
-                // fallback
-                try {
-                    await fetch(`${API_URL}/auth/logout`, { method: 'POST', headers: getAuthHeaders(), credentials: 'include' });
-                } catch (err) {}
-                sessionStorage.removeItem('paypoint_user');
-                sessionStorage.removeItem('paypoint_session');
-                localStorage.removeItem('paypoint_user');
-                localStorage.removeItem('paypoint_session');
-                window.location.replace('login.html');
-            }
+            try {
+                await fetch(`${API_URL}/auth/logout`, {
+                    method: 'POST',
+                    headers: getAuthHeaders(),
+                    credentials: 'include'
+                });
+            } catch (err) {}
+            sessionStorage.removeItem('paypoint_user');
+            sessionStorage.removeItem('paypoint_session');
+            localStorage.removeItem('paypoint_user');
+            localStorage.removeItem('paypoint_session');
+            window.location.replace('login.html');
         });
 
         // ============================================
         // AUTO-CHASE TOGGLE
         // ============================================
+        const tier = localStorage.getItem('user_subscription_tier') || 'free';
         const autoChaseToggle = document.getElementById('autoChaseToggle');
         const autoChaseLabel = document.getElementById('autoChaseLabel');
         const autoChaseStatus = document.getElementById('autoChaseStatus');
+
+        if (autoChaseToggle && autoChaseLabel && autoChaseStatus) {
+            if (tier === 'pro') {
+                autoChaseToggle.disabled = false;
+                autoChaseLabel.textContent = 'Enable Auto-Chasing';
+                autoChaseStatus.innerHTML = '<i class="fas fa-check-circle" style="color: #34C759;"></i> Pro feature – active';
+                const enabled = localStorage.getItem('auto_chase_enabled') === 'true';
+                autoChaseToggle.checked = enabled;
+
+                autoChaseToggle.addEventListener('change', function() {
+                    const enabled = this.checked;
+                    saveAutoChasePreference(enabled);
+                    autoChaseStatus.innerHTML = this.checked
+                        ? '<i class="fas fa-check-circle" style="color: #34C759;"></i> Auto-chasing enabled'
+                        : '<i class="fas fa-pause-circle" style="color: #FF9500;"></i> Auto-chasing paused';
+                });
+            } else {
+                autoChaseToggle.disabled = true;
+                autoChaseLabel.innerHTML = '<i class="fas fa-lock" style="color: #FF9500;"></i> Pro Feature – Upgrade to Enable';
+                autoChaseStatus.innerHTML = '<i class="fas fa-exclamation-triangle" style="color: #FF9500;"></i> Upgrade to Pro to unlock auto-chasing';
+            }
+        }
 
         async function saveAutoChasePreference(enabled) {
             try {
@@ -911,52 +923,14 @@
                     credentials: 'include',
                     body: JSON.stringify({ enabled })
                 });
-                const result = await parseJsonResponse(res);
-                if (!res.ok || !result.success) {
+                const result = await res.json();
+                if (!result.success) {
                     autoChaseToggle.checked = !enabled;
                     window.showToast('Failed to save preference', 'error');
                 }
             } catch (err) {
                 autoChaseToggle.checked = !enabled;
                 window.showToast('Could not connect to server.', 'error');
-            }
-        }
-
-        async function initializeAutoChaseToggle() {
-            if (!autoChaseToggle || !autoChaseLabel || !autoChaseStatus) return;
-
-            try {
-                const tier = localStorage.getItem('user_subscription_tier') || 'free';
-                const res = await fetch(`${API_URL}/profile/auto-chase`, {
-                    headers: getAuthHeaders(),
-                    credentials: 'include'
-                });
-                const result = await parseJsonResponse(res);
-                const serverEnabled = !!(result?.enabled);
-
-                if (tier === 'pro') {
-                    autoChaseToggle.disabled = false;
-                    autoChaseLabel.textContent = 'Enable Auto-Chasing';
-                    autoChaseStatus.innerHTML = '<i class="fas fa-check-circle" style="color: #34C759;"></i> Pro feature – active';
-                    autoChaseToggle.checked = serverEnabled;
-
-                    autoChaseToggle.addEventListener('change', function() {
-                        const enabled = this.checked;
-                        saveAutoChasePreference(enabled);
-                        autoChaseStatus.innerHTML = this.checked
-                            ? '<i class="fas fa-check-circle" style="color: #34C759;"></i> Auto-chasing enabled'
-                            : '<i class="fas fa-pause-circle" style="color: #FF9500;"></i> Auto-chasing paused';
-                    });
-                } else {
-                    autoChaseToggle.disabled = true;
-                    autoChaseLabel.innerHTML = '<i class="fas fa-lock" style="color: #FF9500;"></i> Pro Feature – Upgrade to Enable';
-                    autoChaseStatus.innerHTML = '<i class="fas fa-exclamation-triangle" style="color: #FF9500;"></i> Upgrade to Pro to unlock auto-chasing';
-                }
-            } catch (err) {
-                console.error('Auto chase init error:', err);
-                autoChaseToggle.disabled = true;
-                autoChaseLabel.innerHTML = '<i class="fas fa-lock" style="color: #FF9500;"></i> Pro Feature – Upgrade to Enable';
-                autoChaseStatus.innerHTML = '<i class="fas fa-exclamation-triangle" style="color: #FF9500;"></i> Unable to load preference';
             }
         }
 
@@ -970,8 +944,8 @@
                     credentials: 'include'
                 });
                 if (!res.ok) {
-                    const result = await parseJsonResponse(res);
-                    throw new Error(result?.error || 'Export failed');
+                    const err = await res.json();
+                    throw new Error(err?.error || 'Export failed');
                 }
                 const blob = await res.blob();
                 const url = URL.createObjectURL(blob);
@@ -993,28 +967,14 @@
         // INIT
         // ============================================
         (async function init() {
-            try {
-                // Use global checkAuth – redirects on fail
-                const authenticated = await window.checkAuth();
-                if (!authenticated) {
-                    console.log('⛔ Auth failed, redirecting...');
-                    return;
-                }
-                // Update user badge
-                updateUserBadge();
-
+            const authed = checkAuth();
+            if (authed) {
                 const loading = document.getElementById('loadingIndicator');
                 if (loading) loading.style.display = 'block';
                 await loadInvoices();
-                await initializeAutoChaseToggle();
                 if (loading) loading.style.display = 'none';
-                console.log('📄 PayPoint Invoices Page loaded (fixed)');
+                console.log('📄 PayPoint Invoices Page loaded (final – stable auth)');
                 console.log('📡 Connected to:', API_URL);
-            } catch (err) {
-                console.error('❌ Init error:', err);
-                const loading = document.getElementById('loadingIndicator');
-                if (loading) loading.style.display = 'none';
-                window.showToast('Failed to load page. Please refresh.', 'error');
             }
         })();
     </script>
