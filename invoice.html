@@ -101,6 +101,19 @@
             box-shadow: 0 2px 8px rgba(79, 124, 255, 0.25);
         }
         .btn-primary:hover { background: #3A5FD9; transform: translateY(-1px); box-shadow: 0 4px 16px rgba(79, 124, 255, 0.35); }
+        .btn-secondary {
+            background: #F8FAFC;
+            border: 1px solid #E8EDF2;
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 14px;
+            color: #5E6F82;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-family: 'Inter', sans-serif;
+        }
+        .btn-secondary:hover { background: #EEF2F7; }
         .invoice-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -407,12 +420,28 @@
         // ============================================
         // CONFIGURATION – use global API_URL
         // ============================================
-        const API_URL = window.API_URL || (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' ? '/api' : 'https://paypoint-7dmc.onrender.com/api');
+        const API_URL = window.__API_URL__ || window.API_URL || (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' ? '/api' : 'https://paypoint-7dmc.onrender.com/api');
         let allInvoices = [];
 
         // ============================================
         // HELPERS – use global when available
         // ============================================
+        function parseJsonResponse(res) {
+            return res.text().then((text) => {
+                try {
+                    return text ? JSON.parse(text) : {};
+                } catch (_) {
+                    return { raw: text };
+                }
+            });
+        }
+
+        function getDefaultCurrencySymbol() {
+            const userData = JSON.parse(localStorage.getItem('paypoint_user') || '{}');
+            const userCurrency = userData?.user_metadata?.default_currency || 'USD';
+            return { USD: '$', NGN: '₦' }[userCurrency] || '$';
+        }
+
         function getAuthHeaders() {
             if (typeof window.getAuthHeaders === 'function') {
                 return window.getAuthHeaders();
@@ -477,12 +506,26 @@
                     headers: getAuthHeaders(),
                     credentials: 'include'
                 });
-                const result = await res.json();
-                if (result.success) {
-                    allInvoices = result.data || [];
-                    renderInvoices(allInvoices);
-                    await populateDealDropdown();
+                const result = await parseJsonResponse(res);
+                if (!res.ok || !result.success) {
+                    console.error('Invoice load failed:', result);
+                    invoiceGrid.innerHTML = `
+                        <div class="empty-state">
+                            <div class="icon"><i class="fas fa-exclamation-triangle"></i></div>
+                            <h3>Unable to load invoices</h3>
+                            <p>${escapeHtml(result?.error || 'Please refresh and try again.')}</p>
+                        </div>
+                    `;
+                    if (res.status === 401) {
+                        window.showToast('Your session expired. Please log in again.', 'error');
+                    } else {
+                        window.showToast('Failed to load invoices', 'error');
+                    }
+                    return;
                 }
+                allInvoices = result.data || [];
+                renderInvoices(allInvoices);
+                await populateDealDropdown();
             } catch (err) {
                 console.error('Error loading invoices:', err);
                 invoiceGrid.innerHTML = `
@@ -545,8 +588,11 @@
                     headers: getAuthHeaders(),
                     credentials: 'include'
                 });
-                const result = await res.json();
-                if (!result.success) return;
+                const result = await parseJsonResponse(res);
+                if (!res.ok || !result.success) {
+                    modalDeal.innerHTML = '<option value="">Unable to load deals</option>';
+                    return;
+                }
                 const deals = result.data || [];
                 modalDeal.innerHTML = '';
                 if (deals.length === 0) {
@@ -561,6 +607,7 @@
                 });
             } catch (err) {
                 console.error('Error loading deals for dropdown:', err);
+                modalDeal.innerHTML = '<option value="">Failed to load deals</option>';
                 window.showToast('Failed to load deals', 'error');
             }
         }
@@ -654,7 +701,10 @@
         // ============================================
         // MODAL CONTROLS
         // ============================================
-        openModalBtn.addEventListener('click', () => {
+        openModalBtn.addEventListener('click', async () => {
+            if (!modalDeal.options.length) {
+                await populateDealDropdown();
+            }
             modalDeal.value = '';
             modalBrandEmail.value = '';
             modalBrandName.value = '';
@@ -727,10 +777,7 @@
             const vatRate = parseFloat(document.getElementById('modalVatRate').value) || 0;
             const vat = subtotal * (vatRate / 100);
             const total = subtotal + vat;
-            const userData = JSON.parse(localStorage.getItem('paypoint_user') || '{}');
-            const userCurrency = userData?.user_metadata?.default_currency || 'USD';
-            const symbols = { USD: '$', NGN: '₦' };
-            const symbol = symbols[userCurrency] || '$';
+            const symbol = getDefaultCurrencySymbol();
             document.getElementById('modalSubtotal').textContent = symbol + subtotal.toFixed(2);
             document.getElementById('modalVat').textContent = symbol + vat.toFixed(2);
             document.getElementById('modalTotal').textContent = symbol + total.toFixed(2);
@@ -772,6 +819,9 @@
                 return;
             }
 
+            createInvoiceBtn.disabled = true;
+            createInvoiceBtn.textContent = 'Creating...';
+
             try {
                 const res = await fetch(`${API_URL}/invoices/create`, {
                     method: 'POST',
@@ -789,14 +839,13 @@
                         notes: notes || undefined
                     })
                 });
-                const result = await res.json();
+                const result = await parseJsonResponse(res);
 
-                if (result.success) {
+                if (res.ok && result.success) {
                     const paymentLink = result.portal_link || 'No link generated';
                     if (result.portal_link) {
                         window.open(result.portal_link, '_blank');
                     }
-                    // Use prompt with plain text (no HTML)
                     setTimeout(() => {
                         prompt(
                             '✅ Invoice created! The portal link has been opened in a new tab.\n\n' +
@@ -807,7 +856,7 @@
                         );
                     }, 100);
                     closeModal();
-                    loadInvoices();
+                    await loadInvoices();
                 } else if (result.limit_reached) {
                     const confirmUpgrade = confirm(
                         `${result.error}\n\nYou've used ${result.current} out of ${result.max} free invoices.\nUpgrade to Pro for unlimited invoices!`
@@ -821,6 +870,9 @@
             } catch (err) {
                 window.showToast('Could not connect to server', 'error');
                 console.error(err);
+            } finally {
+                createInvoiceBtn.disabled = false;
+                createInvoiceBtn.textContent = 'Create Invoice';
             }
         });
 
@@ -847,7 +899,6 @@
         // ============================================
         // AUTO-CHASE TOGGLE
         // ============================================
-        const tier = localStorage.getItem('user_subscription_tier') || 'free';
         const autoChaseToggle = document.getElementById('autoChaseToggle');
         const autoChaseLabel = document.getElementById('autoChaseLabel');
         const autoChaseStatus = document.getElementById('autoChaseStatus');
@@ -860,8 +911,8 @@
                     credentials: 'include',
                     body: JSON.stringify({ enabled })
                 });
-                const result = await res.json();
-                if (!result.success) {
+                const result = await parseJsonResponse(res);
+                if (!res.ok || !result.success) {
                     autoChaseToggle.checked = !enabled;
                     window.showToast('Failed to save preference', 'error');
                 }
@@ -871,25 +922,41 @@
             }
         }
 
-        if (autoChaseToggle && autoChaseLabel && autoChaseStatus) {
-            if (tier === 'pro') {
-                autoChaseToggle.disabled = false;
-                autoChaseLabel.textContent = 'Enable Auto-Chasing';
-                autoChaseStatus.innerHTML = '<i class="fas fa-check-circle" style="color: #34C759;"></i> Pro feature – active';
-                const enabled = localStorage.getItem('auto_chase_enabled') === 'true';
-                autoChaseToggle.checked = enabled;
+        async function initializeAutoChaseToggle() {
+            if (!autoChaseToggle || !autoChaseLabel || !autoChaseStatus) return;
 
-                autoChaseToggle.addEventListener('change', function() {
-                    const enabled = this.checked;
-                    saveAutoChasePreference(enabled);
-                    autoChaseStatus.innerHTML = this.checked
-                        ? '<i class="fas fa-check-circle" style="color: #34C759;"></i> Auto-chasing enabled'
-                        : '<i class="fas fa-pause-circle" style="color: #FF9500;"></i> Auto-chasing paused';
+            try {
+                const tier = localStorage.getItem('user_subscription_tier') || 'free';
+                const res = await fetch(`${API_URL}/profile/auto-chase`, {
+                    headers: getAuthHeaders(),
+                    credentials: 'include'
                 });
-            } else {
+                const result = await parseJsonResponse(res);
+                const serverEnabled = !!(result?.enabled);
+
+                if (tier === 'pro') {
+                    autoChaseToggle.disabled = false;
+                    autoChaseLabel.textContent = 'Enable Auto-Chasing';
+                    autoChaseStatus.innerHTML = '<i class="fas fa-check-circle" style="color: #34C759;"></i> Pro feature – active';
+                    autoChaseToggle.checked = serverEnabled;
+
+                    autoChaseToggle.addEventListener('change', function() {
+                        const enabled = this.checked;
+                        saveAutoChasePreference(enabled);
+                        autoChaseStatus.innerHTML = this.checked
+                            ? '<i class="fas fa-check-circle" style="color: #34C759;"></i> Auto-chasing enabled'
+                            : '<i class="fas fa-pause-circle" style="color: #FF9500;"></i> Auto-chasing paused';
+                    });
+                } else {
+                    autoChaseToggle.disabled = true;
+                    autoChaseLabel.innerHTML = '<i class="fas fa-lock" style="color: #FF9500;"></i> Pro Feature – Upgrade to Enable';
+                    autoChaseStatus.innerHTML = '<i class="fas fa-exclamation-triangle" style="color: #FF9500;"></i> Upgrade to Pro to unlock auto-chasing';
+                }
+            } catch (err) {
+                console.error('Auto chase init error:', err);
                 autoChaseToggle.disabled = true;
                 autoChaseLabel.innerHTML = '<i class="fas fa-lock" style="color: #FF9500;"></i> Pro Feature – Upgrade to Enable';
-                autoChaseStatus.innerHTML = '<i class="fas fa-exclamation-triangle" style="color: #FF9500;"></i> Upgrade to Pro to unlock auto-chasing';
+                autoChaseStatus.innerHTML = '<i class="fas fa-exclamation-triangle" style="color: #FF9500;"></i> Unable to load preference';
             }
         }
 
@@ -902,6 +969,10 @@
                     headers: getAuthHeaders(),
                     credentials: 'include'
                 });
+                if (!res.ok) {
+                    const result = await parseJsonResponse(res);
+                    throw new Error(result?.error || 'Export failed');
+                }
                 const blob = await res.blob();
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
@@ -911,8 +982,9 @@
                 a.click();
                 a.remove();
                 URL.revokeObjectURL(url);
+                window.showToast('Invoices exported successfully.', 'success');
             } catch (err) {
-                window.showToast('Failed to export invoices.', 'error');
+                window.showToast(err.message || 'Failed to export invoices.', 'error');
                 console.error(err);
             }
         });
@@ -934,6 +1006,7 @@
                 const loading = document.getElementById('loadingIndicator');
                 if (loading) loading.style.display = 'block';
                 await loadInvoices();
+                await initializeAutoChaseToggle();
                 if (loading) loading.style.display = 'none';
                 console.log('📄 PayPoint Invoices Page loaded (fixed)');
                 console.log('📡 Connected to:', API_URL);
