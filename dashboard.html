@@ -1338,25 +1338,53 @@
     // ============================================
     // ⭐ INIT
     // ============================================
-    (async function init() {
-    try {
-        const isAuth = await checkAuth();
-        if (!isAuth) {
-            console.log('⛔ Auth failed, redirecting...');
-            return;
-        }
-
-        // ✅ Populate sidebar from the logged-in user
-        const userData = JSON.parse(localStorage.getItem('paypoint_user') || '{}');
-        if (typeof updateSidebarUI === 'function') {
-            updateSidebarUI(userData);
-        }
-
+        (async function init() {
         const dashboardShell = document.getElementById('dashboardShell');
         const loadingEl = document.getElementById('loadingIndicator');
 
-            // Re-run currency stats in case they were called before expenses loaded
-            updateCurrencyStats();
+        try {
+            const isAuth = await checkAuth();
+            if (!isAuth) {
+                console.log('⛔ Auth failed, redirecting...');
+                return;
+            }
+
+            if (dashboardShell) dashboardShell.classList.remove('ready');
+            if (loadingEl) {
+                loadingEl.classList.add('visible');
+                loadingEl.setAttribute('aria-busy', 'true');
+            }
+
+            // 1. Sidebar update — wrapped so it can NEVER break the loads
+            try {
+                const userData = JSON.parse(localStorage.getItem('paypoint_user') || '{}');
+                if (typeof updateSidebarUI === 'function') {
+                    updateSidebarUI(userData);
+                }
+            } catch (sidebarErr) {
+                console.warn('Sidebar update failed (non-fatal):', sidebarErr);
+            }
+
+            // 2. Load all data — each one wrapped so one failure can't kill the rest
+            const results = await Promise.allSettled([
+                loadDashboardStats(),
+                loadDeals(),
+                loadExpenses(),
+                loadUsageRings()
+            ]);
+
+            results.forEach((r, i) => {
+                if (r.status === 'rejected') {
+                    console.error(`Load step ${i} failed:`, r.reason);
+                }
+            });
+
+            // 3. Update the currency display after everything is loaded
+            try {
+                updateCurrencyStats();
+            } catch (currencyErr) {
+                console.warn('updateCurrencyStats failed:', currencyErr);
+            }
 
             if (dashboardShell) dashboardShell.classList.add('ready');
             if (loadingEl) {
@@ -1369,14 +1397,11 @@
 
         } catch (err) {
             console.error('❌ Init error:', err);
-            const loadingEl = document.getElementById('loadingIndicator');
             if (loadingEl) {
                 loadingEl.classList.remove('visible');
                 loadingEl.setAttribute('aria-busy', 'false');
             }
-            // Show error state if you have it
-            const errorEl = document.getElementById('errorState');
-            if (errorEl) errorEl.style.display = 'block';
+            if (dashboardShell) dashboardShell.classList.add('ready');
         }
     })();
 </script>
