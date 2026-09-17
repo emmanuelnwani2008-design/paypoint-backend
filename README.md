@@ -18,8 +18,8 @@ A finance workspace for content creators — track brand deals, expenses, and ge
 
 ## What's coming soon (intentionally disabled)
 
-- 🚧 **Pro subscriptions** — the upgrade button shows "coming soon". The Paystack integration code is stubbed but preserved. To enable, see [Enabling Pro subscriptions](#enabling-pro-subscriptions-optional) below.
-- 🚧 **Invoice email delivery** — invoices are created and stored, but the "email to brand" step is not wired up. The server logs to console instead. Add Resend or Nodemailer to enable.
+- 🚧 **Pro subscriptions** — the upgrade button shows "coming soon". The Paystack integration code is stubbed but preserved. See [Enabling Pro subscriptions](#enabling-pro-subscriptions-optional) below.
+- 🚧 **Invoice email delivery** — invoices are created and stored, but the "email to brand" step is not wired up. Add Resend or Nodemailer to enable.
 - 🚧 **Auto-chase reminders** — scheduled reminders for overdue invoices are not implemented.
 
 ---

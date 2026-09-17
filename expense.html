@@ -1107,11 +1107,22 @@ function setCachedData(key, data) {
                 const result = await res.json();
 
 if (result.success) {
-    sessionStorage.removeItem('expenses');
-    sessionStorage.removeItem('usage');
-    window.showToast('Expense added!', 'success');
-    closeModal();
-    loadExpenses();
+    // Close the modal directly — no dependency on closeModal()
+    try { modal.classList.remove('active'); } catch (_) {}
+
+    // Clear caches (safe even if sessionStorage errors)
+    try { sessionStorage.removeItem('expenses'); } catch (_) {}
+    try { sessionStorage.removeItem('usage'); } catch (_) {}
+
+    // Show success without letting a toast failure break the flow
+    try { window.showToast('Expense added!', 'success'); } catch (_) {}
+
+    // Reload list without letting a failure show a false error
+    try {
+        if (typeof loadExpenses === 'function') await loadExpenses();
+    } catch (e) {
+        console.error('Failed to reload expenses list (expense was saved):', e);
+    }
 } else if (result.limit_reached) {
     const confirmUpgrade = confirm(
         `${result.error}\n\nYou've used ${result.current} out of ${result.max} free expenses.\nUpgrade to Pro for unlimited expenses!`
