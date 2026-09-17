@@ -913,16 +913,26 @@
     }
 
     function updateSidebarUI(userData) {
-        if (!userData) return;
-        const name = userData?.user_metadata?.name || userData?.name || 'Creator';
-        const email = userData?.email || 'creator@paypoint.com';
-        const avatarUrl = userData?.user_metadata?.avatar_url;
-        document.getElementById('sidebarName').textContent = name;
-        document.getElementById('sidebarEmail').textContent = email;
-        const sidebarAvatarImg = document.getElementById('sidebarAvatarImg');
-        if (avatarUrl) sidebarAvatarImg.src = avatarUrl;
-        else sidebarAvatarImg.src = 'user.png';
-    }
+    if (!userData) return;
+    const metadata = userData.user_metadata || {};
+    const name =
+        metadata.name ||
+        metadata.full_name ||
+        metadata.display_name ||
+        userData.name ||
+        userData.full_name ||
+        (userData.email ? userData.email.split('@')[0] : 'Creator');
+    const email = userData.email || 'creator@paypoint.com';
+    const avatarUrl = metadata.avatar_url;
+
+    const nameEl = document.getElementById('sidebarName');
+    const emailEl = document.getElementById('sidebarEmail');
+    const avatarEl = document.getElementById('sidebarAvatarImg');
+
+    if (nameEl) nameEl.textContent = name;
+    if (emailEl) emailEl.textContent = email;
+    if (avatarEl) avatarEl.src = avatarUrl || 'user.png';
+}
 
     // ----- ⭐ CHECK AUTH (handled by global `auth.js`) ⭐ -----
 
@@ -1329,28 +1339,21 @@
     // ⭐ INIT
     // ============================================
     (async function init() {
-        try {
-            const isAuth = await checkAuth();
-            if (!isAuth) {
-                console.log('⛔ Auth failed, redirecting...');
-                return;
-            }
+    try {
+        const isAuth = await checkAuth();
+        if (!isAuth) {
+            console.log('⛔ Auth failed, redirecting...');
+            return;
+        }
 
-            const dashboardShell = document.getElementById('dashboardShell');
-            const loadingEl = document.getElementById('loadingIndicator');
+        // ✅ Populate sidebar from the logged-in user
+        const userData = JSON.parse(localStorage.getItem('paypoint_user') || '{}');
+        if (typeof updateSidebarUI === 'function') {
+            updateSidebarUI(userData);
+        }
 
-            if (dashboardShell) dashboardShell.classList.remove('ready');
-            if (loadingEl) {
-                loadingEl.classList.add('visible');
-                loadingEl.setAttribute('aria-busy', 'true');
-            }
-
-            await Promise.all([
-                loadDashboardStats(),
-                loadDeals(),
-                loadExpenses(),
-                loadUsageRings()
-            ]);
+        const dashboardShell = document.getElementById('dashboardShell');
+        const loadingEl = document.getElementById('loadingIndicator');
 
             // Re-run currency stats in case they were called before expenses loaded
             updateCurrencyStats();
