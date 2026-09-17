@@ -284,20 +284,6 @@
         <p style="color: #8A9AAB; margin-top: 12px;">Loading your data...</p>
     </div>
 
-    <!-- Pro Feature: Auto-Chasing Toggle -->
-    <div id="autoChaseContainer" style="margin-bottom: 20px;">
-        <div style="background: #FFFFFF; border: 1px solid #E8EDF2; border-radius: 12px; padding: 20px;">
-            <h3 style="font-size: 16px; font-weight: 600; margin-bottom: 8px;"><i class="fas fa-rocket"></i> Automated Invoice Chasing</h3>
-            <p style="color: #8A9AAB; font-size: 14px;">Automatically send reminder emails to brands when invoices are overdue.</p>
-            <div style="margin-top: 12px;">
-                <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
-                    <input type="checkbox" id="autoChaseToggle" style="width: 20px; height: 20px; accent-color: #4F7CFF;">
-                    <span id="autoChaseLabel" style="font-weight: 500;">Enable Auto-Chasing</span>
-                </label>
-                <span id="autoChaseStatus" style="font-size: 12px; color: #8A9AAB; margin-left: 30px;"></span>
-            </div>
-        </div>
-    </div>
 
     <div class="app-container">
         <nav class="navbar">
@@ -565,7 +551,6 @@
                     <div class="invoice-actions">
                         <button class="btn-invoice gold" onclick="previewInvoice('${inv.deal_id}')"><i class="fas fa-eye"></i> Preview</button>
                         <button class="btn-invoice blue" onclick="downloadInvoice('${inv.deal_id}')"><i class="fas fa-download"></i> Download</button>
-                        <button class="btn-invoice green" onclick="resendInvoice('${inv.id}')"><i class="fas fa-envelope"></i> Send Invoice</button>
                     </div>
                 `;
                 invoiceGrid.appendChild(card);
@@ -662,31 +647,7 @@
             }
         }
 
-        // ============================================
-        // RESEND INVOICE
-        // ============================================
-        async function resendInvoice(invoiceId) {
-            if (!confirm('Resend this invoice to the brand via email?')) return;
-            try {
-                const res = await fetch(`${API_URL}/invoices/${invoiceId}/resend`, {
-                    method: 'POST',
-                    headers: getAuthHeaders(),
-                    credentials: 'include'
-                });
-                const result = await res.json();
-                if (result.success) {
-                    window.showToast('Invoice resent successfully!', 'success');
-                    if (result.portal_link) {
-                        window.open(result.portal_link, '_blank');
-                    }
-                } else {
-                    window.showToast('Failed to resend: ' + (result.error || 'Unknown error'), 'error');
-                }
-            } catch (err) {
-                window.showToast('Could not connect to server.', 'error');
-                console.error(err);
-            }
-        }
+    
 
         // ============================================
         // MODAL CONTROLS
@@ -831,20 +792,10 @@
                 });
                 const result = await res.json();
 
-                if (result.success) {
-                    const paymentLink = result.portal_link || 'No link generated';
-                    if (result.portal_link) {
-                        window.open(result.portal_link, '_blank');
-                    }
-                    setTimeout(() => {
-                        prompt(
-                            '✅ Invoice created! The portal link has been opened in a new tab.\n\n' +
-                            '📋 COPY THIS LINK AND SEND IT TO THE BRAND:\n' +
-                            '(Select the link below, press Ctrl+C to copy, then close this box.)\n\n' +
-                            '💡 We are still setting up automatic email delivery. For now, manually send this link to the brand via WhatsApp, Slack, or email.',
-                            paymentLink
-                        );
-                    }, 100);
+                                if (result.success) {
+                    sessionStorage.removeItem('invoices');
+                    sessionStorage.removeItem('usage');
+                    window.showToast('Invoice created successfully!', 'success');
                     closeModal();
                     await loadInvoices();
                 } else if (result.limit_reached) {
@@ -886,55 +837,6 @@
         });
 
         // ============================================
-        // AUTO-CHASE TOGGLE
-        // ============================================
-        const tier = localStorage.getItem('user_subscription_tier') || 'free';
-        const autoChaseToggle = document.getElementById('autoChaseToggle');
-        const autoChaseLabel = document.getElementById('autoChaseLabel');
-        const autoChaseStatus = document.getElementById('autoChaseStatus');
-
-        if (autoChaseToggle && autoChaseLabel && autoChaseStatus) {
-            if (tier === 'pro') {
-                autoChaseToggle.disabled = false;
-                autoChaseLabel.textContent = 'Enable Auto-Chasing';
-                autoChaseStatus.innerHTML = '<i class="fas fa-check-circle" style="color: #34C759;"></i> Pro feature – active';
-                const enabled = localStorage.getItem('auto_chase_enabled') === 'true';
-                autoChaseToggle.checked = enabled;
-
-                autoChaseToggle.addEventListener('change', function() {
-                    const enabled = this.checked;
-                    saveAutoChasePreference(enabled);
-                    autoChaseStatus.innerHTML = this.checked
-                        ? '<i class="fas fa-check-circle" style="color: #34C759;"></i> Auto-chasing enabled'
-                        : '<i class="fas fa-pause-circle" style="color: #FF9500;"></i> Auto-chasing paused';
-                });
-            } else {
-                autoChaseToggle.disabled = true;
-                autoChaseLabel.innerHTML = '<i class="fas fa-lock" style="color: #FF9500;"></i> Pro Feature – Upgrade to Enable';
-                autoChaseStatus.innerHTML = '<i class="fas fa-exclamation-triangle" style="color: #FF9500;"></i> Upgrade to Pro to unlock auto-chasing';
-            }
-        }
-
-        async function saveAutoChasePreference(enabled) {
-            try {
-                const res = await fetch(`${API_URL}/profile/auto-chase`, {
-                    method: 'PUT',
-                    headers: getAuthHeaders(),
-                    credentials: 'include',
-                    body: JSON.stringify({ enabled })
-                });
-                const result = await res.json();
-                if (!result.success) {
-                    autoChaseToggle.checked = !enabled;
-                    window.showToast('Failed to save preference', 'error');
-                }
-            } catch (err) {
-                autoChaseToggle.checked = !enabled;
-                window.showToast('Could not connect to server.', 'error');
-            }
-        }
-
-        // ============================================
         // EXPORT INVOICES CSV
         // ============================================
         document.getElementById('exportInvoicesBtn').addEventListener('click', async () => {
@@ -966,16 +868,14 @@
         // ============================================
         // INIT
         // ============================================
-        (async function init() {
-            const authed = checkAuth();
-            if (authed) {
-                const loading = document.getElementById('loadingIndicator');
-                if (loading) loading.style.display = 'block';
-                await loadInvoices();
-                if (loading) loading.style.display = 'none';
-                console.log('📄 PayPoint Invoices Page loaded (final – stable auth)');
-                console.log('📡 Connected to:', API_URL);
-            }
+                (async function init() {
+            const authed = await checkAuth();
+            if (!authed) return;
+            const loading = document.getElementById('loadingIndicator');
+            if (loading) loading.style.display = 'block';
+            await loadInvoices();
+            if (loading) loading.style.display = 'none';
+            console.log('📄 PayPoint Invoices Page loaded');
         })();
     </script>
 </body>

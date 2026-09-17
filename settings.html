@@ -445,8 +445,8 @@
         // ============================================
         // INIT
         // ============================================
-        (async function init() {
-            const authed = checkAuth();
+                (async function init() {
+            const authed = await checkAuth();
             if (authed) {
                 await loadSettings();
                 console.log('⚙️ Settings page loaded successfully');

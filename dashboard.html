@@ -1279,7 +1279,9 @@
                 })
             });
             const result = await res.json();
-            if (result.success) {
+                        if (result.success) {
+                sessionStorage.removeItem('deals');
+                sessionStorage.removeItem('usage');
                 window.showToast('Deal added successfully!', 'success');
                 modal.classList.remove('active');
                 document.getElementById('brandName').value = '';

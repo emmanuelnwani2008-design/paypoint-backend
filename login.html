@@ -320,7 +320,7 @@
             <div class="form-group">
                 <label>Password</label>
                 <div class="password-wrapper">
-                    <input type="password" id="signupPassword" placeholder="Create a password (min 6 characters)">
+                <input type="password" id="signupPassword" placeholder="Create a password (min 8 characters)">
                     <button type="button" class="password-toggle" id="toggleSignupPassword" aria-label="Show password">👁️</button>
                 </div>
             </div>
@@ -560,8 +560,8 @@ window.location.replace('dashboard.html');
                     signupError.style.display = 'block';
                     return;
                 }
-                if (password.length < 6) {
-                    signupError.textContent = 'Password must be at least 6 characters';
+                                if (password.length < 8) {
+                    signupError.textContent = 'Password must be at least 8 characters';
                     signupError.style.display = 'block';
                     return;
                 }

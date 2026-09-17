@@ -844,40 +844,6 @@ function setCachedData(key, data) {
     return symbol + Number(amount).toLocaleString();
 }
 
-        // ============================================
-        // CHECK AUTH
-        // ============================================
-        async function checkAuth() {
-    try {
-        const res = await fetch(`${API_URL}/auth/user`, {
-            credentials: 'include'   // ✅ sends the cookie automatically
-        });
-
-        if (res.status === 401) {
-            console.log('Not authenticated, redirecting to login');
-            localStorage.removeItem('paypoint_user');
-            window.location.replace('login.html');
-            return false;
-        }
-
-        const data = await res.json();
-        if (data.success && data.user) {
-            // Update localStorage with fresh user data (no token)
-            localStorage.setItem('paypoint_user', JSON.stringify(data.user));
-            if (typeof updateUI === 'function') updateUI(data.user);
-            return true;
-        } else {
-            console.log('No user data, redirecting');
-            localStorage.removeItem('paypoint_user');
-            window.location.replace('login.html');
-            return false;
-        }
-    } catch (err) {
-        console.error('Error checking auth:', err);
-        window.location.replace('login.html');
-        return false;
-    }
-}
 
         // ============================================
         // LOAD DEALS
@@ -983,13 +949,7 @@ function setCachedData(key, data) {
     });
 }
 
-            document.querySelectorAll('.action-btn.edit').forEach(btn => {
-                btn.addEventListener('click', () => openEditModal(btn.dataset.id));
-            });
 
-            document.querySelectorAll('.action-btn.delete').forEach(btn => {
-                btn.addEventListener('click', () => deleteDeal(btn.dataset.id));
-            });
     
         // ============================================
         // UPDATE STATS
@@ -1144,7 +1104,9 @@ function setCachedData(key, data) {
                 const result = await res.json();
 
 if (result.success) {
-    alert(isEdit ? 'Deal updated successfully!' : 'Deal added successfully!');
+    sessionStorage.removeItem('deals');
+    sessionStorage.removeItem('usage');
+    window.showToast(isEdit ? 'Deal updated!' : 'Deal added!', 'success');
     closeModal();
     loadDeals();
 } else if (result.limit_reached) {
@@ -1184,8 +1146,10 @@ if (result.success) {
                 });
 
                 const result = await res.json();
-                if (result.success) {
-                    alert('Deal deleted successfully!');
+                                if (result.success) {
+                    sessionStorage.removeItem('deals');
+                    sessionStorage.removeItem('usage');
+                    window.showToast('Deal deleted', 'success');
                     loadDeals();
                 } else {
                     alert('Error: ' + (result.error || 'Unknown error'));
@@ -1233,8 +1197,11 @@ document.getElementById('exportDealsBtn').addEventListener('click', async () => 
         // ============================================
         // INIT
         // ============================================
-        checkAuth();
-        loadDeals();
+                (async function init() {
+            const authed = await checkAuth();
+            if (!authed) return;
+            await loadDeals();
+        })();
         document.getElementById('loadingIndicator').style.display = 'block';
 // ... fetch data ...
 document.getElementById('loadingIndicator').style.display = 'none';

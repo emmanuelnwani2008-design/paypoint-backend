@@ -55,19 +55,21 @@
     }
 
     function showMessage(idOrText, textOrType, maybeType) {
-        try {
-            const el = document.getElementById(idOrText);
-            if (el) {
-                const text = textOrType || '';
-                el.innerHTML = text;
-                if (maybeType === 'success') el.style.color = '#16a34a';
-                else if (maybeType === 'error') el.style.color = '#dc2626';
-                else el.style.color = '';
-                return;
-            }
-        } catch (e) {
-            // ignore
+    try {
+        const el = document.getElementById(idOrText);
+        if (el) {
+            const text = textOrType || '';
+            el.innerHTML = text;
+            el.classList.add('show');
+            el.style.display = 'block';
+            if (maybeType === 'success') el.style.color = '#16a34a';
+            else if (maybeType === 'error') el.style.color = '#dc2626';
+            else el.style.color = '';
+            return;
         }
+    } catch (e) {
+        // ignore
+    }
 
         const text = typeof idOrText === 'string' ? idOrText : String(idOrText);
         const type = typeof textOrType === 'string' ? textOrType : (maybeType || 'info');
@@ -87,5 +89,12 @@
     }
 
     window.showToast = showToast;
+        window.hideMessage = function (id) {
+        const el = document.getElementById(id);
+        if (el) {
+            el.classList.remove('show');
+            el.style.display = 'none';
+        }
+    };
     window.showMessage = showMessage;
 })();

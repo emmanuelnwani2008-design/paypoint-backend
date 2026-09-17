@@ -92,5 +92,9 @@
         localStorage.removeItem('paypoint_session');
         sessionStorage.removeItem('paypoint_session');
         window.location.replace('login.html');
+            window.hideMessage = window.hideMessage || function (id) {
+        const el = document.getElementById(id);
+        if (el) el.classList.remove('show');
+    };
     };
 })();

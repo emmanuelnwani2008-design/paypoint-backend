@@ -785,7 +785,8 @@ function setCachedData(key, data) {
                     result.data.forEach(deal => {
                         const option = document.createElement('option');
                         option.value = deal.id;
-                        option.textContent = `${deal.brand_name} — ₦${Number(deal.amount).toLocaleString()}`;
+                        const sym = deal.currency === 'USD' ? '$' : '₦';
+                        option.textContent = `${deal.brand_name} — ${sym}${Number(deal.amount).toLocaleString()}`;
                         select.appendChild(option);
                     });
                 }
@@ -1101,7 +1102,9 @@ function setCachedData(key, data) {
                 const result = await res.json();
 
 if (result.success) {
-    alert('Expense added successfully!');
+    sessionStorage.removeItem('expenses');
+    sessionStorage.removeItem('usage');
+    window.showToast('Expense added!', 'success');
     closeModal();
     loadExpenses();
 } else if (result.limit_reached) {
@@ -1136,8 +1139,10 @@ if (result.success) {
                 });
 
                 const result = await res.json();
-                if (result.success) {
-                                alert('Expense deleted successfully!');
+                                if (result.success) {
+                    sessionStorage.removeItem('expenses');
+                    sessionStorage.removeItem('usage');
+                    window.showToast('Expense deleted', 'success');
                     loadExpenses();
                 } else {
                                 alert('Error: ' + (result.error || 'Unknown error'));
@@ -1179,8 +1184,11 @@ document.getElementById('exportExpensesBtn').addEventListener('click', async () 
     }
 });
 
-        checkAuth();
-        loadExpenses();
+                (async function init() {
+            const authed = await checkAuth();
+            if (!authed) return;
+            await loadExpenses();
+        })();
         const loadingEl = document.getElementById('loadingIndicator');
         if (loadingEl) {
             loadingEl.classList.add('visible');

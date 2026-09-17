@@ -9,7 +9,6 @@ const rateLimit = require('express-rate-limit');
 const { createClient } = require('@supabase/supabase-js');
 const PDFDocument = require('pdfkit');
 const crypto = require('crypto');
-const cron = require('node-cron');
 const multer = require('multer');
 const cookieParser = require('cookie-parser');
 const { findMatchingAuthUser } = require('./account-reconciliation');
@@ -19,7 +18,7 @@ app.use(cookieParser());
 app.set('trust proxy', 1);
 
 const port = process.env.PORT || 3000;
-const FRONTEND_URL = process.env.FRONTEND_URL || 'https://paypoint-backend.vercel.app';
+const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:3000';
 console.log(`🌐 Frontend URL: ${FRONTEND_URL}`);
 const IS_PROD = process.env.NODE_ENV === 'production';
 function getSessionCookieOptions(req) {
@@ -134,28 +133,6 @@ if (!supabaseUrl || !supabaseAnonKey || !supabaseServiceKey) {
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
 const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
 
-// ============================================
-// EMAIL DISABLED (Console Logger for Testing)
-// ============================================
-async function sendEmailWithRetry(to, subject, html, retries = 2) {
-    const linkMatch = html.match(/https:\/\/[^"]+\/portal\/[a-f0-9]+/);
-    
-    // <i class="fas fa-check-circle"></i> SECURITY: Only log in development, hide in production
-    if (process.env.NODE_ENV !== 'production') {
-        console.log(`📧 ========== INVOICE READY ==========`);
-        console.log(`📧 Brand Email: ${to}`);
-        console.log(`📧 Subject: ${subject}`);
-        if (linkMatch) {
-            console.log(`🔗 COPY THIS LINK TO PAY: ${linkMatch[0]}`);
-        } else {
-            console.log(`📧 No link found in HTML.`);
-        }
-        console.log(`📧 ===================================`);
-    } else {
-        console.log(`<i class="fas fa-check-circle"></i> Invoice prepared (email hidden)`);
-    }
-    return true;
-}
 
 function normalizeUserPayload(user) {
     if (!user || typeof user !== 'object') return user;
@@ -217,114 +194,6 @@ async function ensureUserDisplayName(user) {
     return normalized;
 }
 
-// ============================================
-// CRON JOB – Automated Invoice Chasing (Safe Version)
-// ============================================
-cron.schedule('0 9 * * *', async () => {
-    console.log('🔔 Running overdue invoice check...');
-
-    try {
-        const { data: invoices, error } = await supabase
-            .from('invoices')
-            .select(`
-                *,
-                deals ( id, brand_name, amount, due_date, user_id )
-            `)
-            .eq('status', 'sent')
-            .eq('paid', false)
-            .lt('reminder_count', 3);
-
-        if (error) {
-            console.error('Error fetching invoices:', error);
-            return;
-        }
-
-        if (!invoices || invoices.length === 0) {
-            console.log('<i class="fas fa-check-circle"></i> No overdue invoices to chase.');
-            return;
-        }
-
-        console.log(`📨 Found ${invoices.length} overdue invoices.`);
-
-        for (const invoice of invoices) {
-            const deal = invoice.deals;
-            if (!deal) continue;
-
-            const dueDate = deal.due_date;
-            if (!dueDate) continue;
-
-            // <i class="fas fa-check-circle"></i> Only fetch columns that definitely exist
-            const { data: profile, error: profileError } = await supabase
-                .from('profiles')
-                .select('email, subscription_tier, user_metadata')
-                .eq('id', deal.user_id)
-                .single();
-
-            if (profileError || !profile) {
-                console.error(`❌ Could not find profile for user ${deal.user_id}`);
-                continue;
-            }
-
-            // <i class="fas fa-check-circle"></i> Only chase invoices for Pro users
-            if (profile.subscription_tier !== 'pro') continue;
-
-            const daysOverdue = Math.floor((Date.now() - new Date(dueDate).getTime()) / (1000 * 60 * 60 * 24));
-
-            let reminderType = 'first';
-            let subject = '🔔 Friendly Reminder: Invoice Overdue';
-            let urgency = 'gentle';
-
-            if (daysOverdue >= 14) {
-                reminderType = 'final';
-                subject = '⚠️ URGENT: Invoice Final Notice';
-                urgency = 'urgent';
-            } else if (daysOverdue >= 7) {
-                reminderType = 'second';
-                subject = '⏰ Second Reminder: Invoice Overdue';
-                urgency = 'moderate';
-            }
-
-            const brandEmail = profile.email || 'brand@example.com';
-            const creatorName = profile.user_metadata?.name || 'Creator';
-            const paymentLink = `${FRONTEND_URL}/pay-invoice.html?deal=${deal.id}`;
-
-            const html = `
-                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #E8EDF2; border-radius: 12px;">
-                    <h1 style="color: #4F7CFF; text-align: center;">PayPoint</h1>
-                    <hr>
-                    <p>Dear Brand,</p>
-                    <p>This is a <strong>${reminderType}</strong> reminder that invoice <strong>#${invoice.invoice_number}</strong> of <strong>₦${Number(deal.amount).toLocaleString()}</strong> is now <strong style="color: #FF3B30;">${daysOverdue} days overdue</strong>.</p>
-                    ${urgency === 'urgent' ? '<p style="color: #FF3B30; font-weight: bold;">Please make payment immediately to avoid further escalation.</p>' : ''}
-                    <div style="text-align: center; margin: 24px 0;">
-                        <a href="${paymentLink}" style="background: #4F7CFF; color: white; padding: 12px 32px; border-radius: 8px; text-decoration: none; font-weight: 600;">
-                            💳 Pay Now
-                        </a>
-                    </div>
-                    <p style="font-size: 12px; color: #8A9AAB;">If you have already paid, please ignore this message. For questions, contact ${creatorName}.</p>
-                    <hr>
-                    <p style="text-align: center; color: #8A9AAB; font-size: 12px;">PayPoint · Finance OS for Creators</p>
-                </div>
-            `;
-
-            const sent = await sendEmailWithRetry(brandEmail, subject, html);
-
-            if (sent) {
-                await supabase
-                    .from('invoices')
-                    .update({
-                        reminder_count: invoice.reminder_count + 1,
-                        last_reminder_sent_at: new Date().toISOString()
-                    })
-                    .eq('id', invoice.id);
-                console.log(`<i class="fas fa-check-circle"></i> Reminder logged for invoice ${invoice.invoice_number} (${reminderType})`);
-            } else {
-                console.error(`❌ Failed to log reminder for invoice ${invoice.invoice_number}`);
-            }
-        }
-    } catch (err) {
-        console.error('Cron job error:', err);
-    }
-});
 
 // ============================================
 // HELPERS
@@ -822,9 +691,11 @@ app.put('/api/settings', authenticate, async (req, res) => {
             return res.status(500).json({ error: 'Failed to update settings: ' + error.message });
         }
 
-        if (updates.default_currency) {
-            await supabase.auth.updateUser({
-                data: { default_currency: updates.default_currency }
+                if (updates.default_currency) {
+            const { data: currentUser } = await supabaseAdmin.auth.admin.getUserById(userId);
+            const existing = currentUser?.user?.user_metadata || {};
+            await supabaseAdmin.auth.admin.updateUserById(userId, {
+                user_metadata: { ...existing, default_currency: updates.default_currency }
             });
         }
 
@@ -962,13 +833,7 @@ app.post('/api/auth/login', authLimiter, async (req, res) => {
 
 app.post('/api/auth/logout', authenticate, async (req, res) => {
     try {
-        // Clear the cookie if present
         res.clearCookie('paypoint_session', { path: '/' });
-
-        // Sign out from Supabase
-        const { error } = await supabase.auth.signOut();
-        if (error) return res.status(400).json({ error: error.message });
-        
         res.json({ success: true, message: 'Logged out successfully' });
     } catch (err) {
         console.error('Logout error:', err);
@@ -978,7 +843,7 @@ app.post('/api/auth/logout', authenticate, async (req, res) => {
 
 app.get('/api/auth/user', authenticate, async (req, res) => {
     try {
-        const { data: profile, error } = await supabase
+                const { data: profile, error } = await supabaseAdmin
             .from('profiles')
             .select('subscription_tier, subscription_status, subscription_expires_at')
             .eq('id', req.userId)
@@ -1072,7 +937,6 @@ app.post('/api/admin/force-pro', authLimiter, authenticate, async (req, res) => 
     try {
         const userId = req.userId;
 
-        // ✅ Check if user is admin (is_admin = true)
         const { data: profile, error: profileError } = await supabaseAdmin
             .from('profiles')
             .select('is_admin')
@@ -1088,16 +952,13 @@ app.post('/api/admin/force-pro', authLimiter, authenticate, async (req, res) => 
             return res.status(400).json({ error: 'Valid email is required' });
         }
 
-        // Find user by email
-        const { data: user, error: userError } = await supabaseAdmin
-            .from('profiles')
-            .select('id')
-            .eq('email', targetEmail)
-            .single();
+        const { data: userList, error: listError } = await supabaseAdmin.auth.admin.listUsers();
+        if (listError) return res.status(500).json({ error: 'Failed to list users' });
 
-        if (userError || !user) {
-            return res.status(404).json({ error: 'User not found' });
-        }
+        const target = userList.users.find(
+            u => (u.email || '').toLowerCase() === targetEmail.toLowerCase()
+        );
+        if (!target) return res.status(404).json({ error: 'User not found' });
 
         const expiresAt = new Date();
         expiresAt.setDate(expiresAt.getDate() + 30);
@@ -1105,7 +966,7 @@ app.post('/api/admin/force-pro', authLimiter, authenticate, async (req, res) => 
         const { error: upsertError } = await supabaseAdmin
             .from('profiles')
             .upsert({
-                id: user.id,
+                id: target.id,
                 subscription_tier: 'pro',
                 subscription_status: 'active',
                 subscription_expires_at: expiresAt.toISOString(),
@@ -1118,7 +979,7 @@ app.post('/api/admin/force-pro', authLimiter, authenticate, async (req, res) => 
         }
 
         await supabaseAdmin.auth.admin.updateUserById(
-            user.id,
+            target.id,
             { user_metadata: { subscription_tier: 'pro' } }
         );
 
@@ -1168,9 +1029,11 @@ app.post('/api/auth/upload-avatar', authenticate, upload.single('avatar'), async
         const { data: urlData } = supabaseAdmin.storage.from('avatars').getPublicUrl(fileName);
         const avatarUrl = urlData.publicUrl;
 
+                const { data: currentUser } = await supabaseAdmin.auth.admin.getUserById(userId);
+        const existingMetadata = currentUser?.user?.user_metadata || {};
         const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(
             userId,
-            { user_metadata: { avatar_url: avatarUrl } }
+            { user_metadata: { ...existingMetadata, avatar_url: avatarUrl } }
         );
         if (updateError) throw updateError;
 
@@ -1188,36 +1051,81 @@ app.put('/api/auth/update', authenticate, async (req, res) => {
     try {
         const { name, bio, default_currency } = req.body;
         if (!name) return res.status(400).json({ error: 'Name is required' });
-        
+
         const sanitizedName = sanitizeInput(name.trim());
         if (sanitizedName.length < 2 || sanitizedName.length > 50) {
             return res.status(400).json({ error: 'Name must be between 2 and 50 characters' });
         }
-        
         const sanitizedBio = bio ? sanitizeInput(bio.trim()) : '';
-        
+
+        const { data: currentUser } = await supabaseAdmin.auth.admin.getUserById(req.userId);
+        const existingMetadata = currentUser?.user?.user_metadata || {};
+
         const { data, error } = await supabaseAdmin.auth.admin.updateUserById(
             req.userId,
             {
                 user_metadata: {
+                    ...existingMetadata,
                     name: sanitizedName,
+                    full_name: sanitizedName,
+                    display_name: sanitizedName,
                     bio: sanitizedBio,
-                    default_currency: default_currency || 'USD'
+                    default_currency: default_currency || existingMetadata.default_currency || 'USD'
                 }
             }
         );
-        
+
         if (error) {
             console.error('Update profile error:', error);
             return res.status(400).json({ error: error.message });
         }
-        
+
+        if (default_currency && ['NGN', 'USD'].includes(default_currency)) {
+            await supabaseAdmin.from('profiles')
+                .update({ default_currency })
+                .eq('id', req.userId);
+        }
+
         const { data: userData } = await supabaseAdmin.auth.admin.getUserById(req.userId);
-        const user = userData?.user || data.user;
-        
-        res.json({ success: true, user: user, message: 'Profile updated successfully' });
+        res.json({ success: true, user: userData?.user || data.user, message: 'Profile updated successfully' });
     } catch (err) {
         console.error('Update profile server error:', err);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+app.put('/api/auth/change-password', authenticate, async (req, res) => {
+    try {
+        const { oldPassword, newPassword } = req.body;
+        if (!oldPassword || !newPassword) {
+            return res.status(400).json({ error: 'Both passwords required' });
+        }
+        if (newPassword.length < 8) {
+            return res.status(400).json({ error: 'New password must be at least 8 characters' });
+        }
+        if (newPassword === oldPassword) {
+            return res.status(400).json({ error: 'New password must be different' });
+        }
+
+        const email = req.user.email;
+        if (!email) return res.status(400).json({ error: 'No email on account' });
+
+        const { error: signInError } = await supabase.auth.signInWithPassword({
+            email,
+            password: oldPassword
+        });
+        if (signInError) {
+            return res.status(401).json({ error: 'Current password is incorrect' });
+        }
+
+        const { error } = await supabaseAdmin.auth.admin.updateUserById(req.userId, {
+            password: newPassword
+        });
+        if (error) return res.status(500).json({ error: error.message });
+
+        res.json({ success: true, message: 'Password updated successfully' });
+    } catch (err) {
+        console.error('Change password error:', err);
         res.status(500).json({ error: 'Internal server error' });
     }
 });
@@ -1344,14 +1252,15 @@ app.post('/api/deals', authenticate, async (req, res) => {
         }
         const { data, error } = await supabaseAdmin
             .from('deals')
-            .insert([{
+                        .insert([{
                 user_id: userId,
                 brand_name: sanitizedBrand,
                 amount: parseFloat(amount),
                 due_date: due_date || null,
                 deliverable: sanitizedDeliverable || '',
                 status: status || 'pending',
-                currency: currency || 'USD'
+                currency: currency || 'USD',
+                notes: req.body.notes ? sanitizeInput(req.body.notes.trim()).substring(0, 2000) : null
             }])
             .select();
         if (error) {
@@ -1572,6 +1481,17 @@ app.post('/api/expenses', authenticate, async (req, res) => {
         if (!isValidAmount(amount)) {
             return res.status(400).json({ error: 'Invalid amount' });
         }
+                if (req.body.deal_id) {
+            const { data: linkedDeal } = await supabaseAdmin
+                .from('deals')
+                .select('id')
+                .eq('id', req.body.deal_id)
+                .in('user_id', ids)
+                .single();
+            if (!linkedDeal) {
+                return res.status(400).json({ error: 'Invalid deal reference' });
+            }
+        }
         const validCategories = ['equipment', 'travel', 'meals', 'software', 'office', 'other', 'uncategorized'];
         const sanitizedCategory = category && validCategories.includes(category) ? category : 'uncategorized';
         if (receipt_url && !receipt_url.startsWith('data:image/')) {
@@ -1710,6 +1630,8 @@ app.post('/api/payments/initialize', authenticate, async (req, res) => {
     try {
         const { dealId, email } = req.body;
         const userId = req.userId;
+        const fallbackUserId = req.reconciledUserId || null;
+        const ids = [userId, fallbackUserId].filter(Boolean);
 
         if (!dealId) {
             return res.status(400).json({ error: 'dealId required' });
@@ -1799,8 +1721,15 @@ app.get('/api/payments/verify/:reference', authenticate, async (req, res) => {
         const dealId = result.data.metadata?.deal_id;
         const amountVerified = result.data.amount / 100;
 
+                // Ownership check
+        const metadataUserId = result.data.metadata?.user_id;
+        const fallbackUserId = req.reconciledUserId || null;
+        if (metadataUserId && metadataUserId !== req.userId && metadataUserId !== fallbackUserId) {
+            return res.status(403).json({ error: 'Not your transaction' });
+        }
+
         if (paid && dealId) {
-            const { data: deal } = await supabase
+            const { data: deal } = await supabaseAdmin
                 .from('deals')
                 .select('amount, status')
                 .eq('id', dealId)
@@ -1853,152 +1782,13 @@ app.get('/api/payments/verify/:reference', authenticate, async (req, res) => {
     }
 });
 
-// ============================================
-// INVOICE ROUTES – RESTful
-// ============================================
-
-// GET all invoices for the user
-app.get('/api/invoices', authenticate, async (req, res) => {
-    try {
-        const userId = req.userId;
-        const { data, error } = await supabaseAdmin
-            .from('invoices')
-            .select(`
-                *,
-                deals ( brand_name, amount, currency, status )
-            `)
-            .eq('user_id', userId)
-            .order('created_at', { ascending: false });
-
-        if (error) {
-            console.error('Invoices fetch error:', error);
-            return res.status(500).json({ error: error.message });
-        }
-        res.json({ success: true, data: data || [] });
-    } catch (err) {
-        console.error('Invoices GET error:', err);
-        res.status(500).json({ error: 'Internal server error' });
-    }
-});
-
 // POST – Create a new invoice
 app.post('/api/invoices', authenticate, handleInvoiceCreate);
-
-// POST – Resend an invoice email
-app.post('/api/invoices/:id/resend', authenticate, async (req, res) => {
-    try {
-        const { id: invoiceId } = req.params;
-        const userId = req.userId;
-
-        // Fetch invoice with deal and profile
-        const { data: invoice, error: invErr } = await supabaseAdmin
-            .from('invoices')
-            .select('*, deals(*)')
-            .eq('id', invoiceId)
-            .eq('user_id', userId)
-            .single();
-
-        if (invErr || !invoice) {
-            return res.status(404).json({ error: 'Invoice not found' });
-        }
-
-        const deal = invoice.deals;
-        if (!deal) return res.status(404).json({ error: 'Deal not found' });
-
-        // Fetch creator profile (bank details etc.)
-        const { data: profile, error: profErr } = await supabaseAdmin
-            .from('profiles')
-            .select('bank_account_name, bank_name, bank_account_number, payment_instructions')
-            .eq('id', userId)
-            .single();
-
-        // Build portal link using the BACKEND URL and the invoice's portal token
-        const portalToken = invoice.portal_token || invoice.portalToken || '';
-        const BACKEND_URL = process.env.BACKEND_URL || 'https://paypoint-7dmc.onrender.com';
-        const portalLink = `${BACKEND_URL}/portal/${portalToken}`;
-
-        const html = buildInvoiceEmail({
-            invoice,
-            deal,
-            profile: profile || {},
-            items: invoice.line_items || [],
-            subtotal: invoice.subtotal || 0,
-            vatAmount: invoice.vat_amount || 0,
-            total: invoice.total || deal.amount,
-            portalLink
-        });
-
-        const subject = `📄 Invoice #${invoice.invoice_number} from ${deal.brand_name}`;
-
-        // Send email (currently logs only, but you can replace with Resend)
-        const sent = await sendEmailWithRetry(invoice.brand_email, subject, html);
-
-        res.json({
-            success: true,
-            email_sent: sent,
-            portal_link: portalLink
-        });
-    } catch (err) {
-        console.error('Resend error:', err);
-        res.status(500).json({ error: 'Failed to resend' });
-    }
-});
 
 // ============================================
 // INVOICE ROUTES
 // ============================================
 
-// ---- extracted handler for invoice creation ----
-function buildInvoiceEmail({ invoice, deal, profile, items, subtotal, vatAmount, total, portalLink }) {
-    const date = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
-    const dueDate = invoice.due_date ? new Date(invoice.due_date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : 'Not set';
-    const currency = invoice.currency || deal.currency || 'NGN';
-const currencySymbol = currency === 'USD' ? '$' : '₦';
-    
-    let lineItemsHtml = '';
-    if (items && items.length > 0) {
-        lineItemsHtml = '<ul style="list-style: none; padding: 0;">';
-        items.forEach(item => {
-            lineItemsHtml += `<li style="display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid #eee;">
-                <span>${item.description || 'Item'}</span>
-                <span>${currencySymbol}${(item.price * (item.quantity || 1)).toFixed(2)}</span>
-            </li>`;
-        });
-        lineItemsHtml += '</ul>';
-    }
-
-    const bankDetails = profile || {};
-    const bankHtml = `
-        <div style="margin: 16px 0; padding: 16px; background: #F8FAFC; border-radius: 8px; border: 1px solid #E8EDF2;">
-            <h4 style="margin-bottom: 8px;">💳 Payment Instructions (Bank Transfer)</h4>
-            <p><strong>Account Name:</strong> ${bankDetails.bank_account_name || 'Not provided'}</p>
-            <p><strong>Bank:</strong> ${bankDetails.bank_name || 'Not provided'}</p>
-            <p><strong>Account Number:</strong> ${bankDetails.bank_account_number || 'Not provided'}</p>
-            <p style="font-size: 12px; color: #8A9AAB; margin-top: 8px;">${bankDetails.payment_instructions || 'Please use the invoice number as reference.'}</p>
-        </div>
-    `;
-
-    return `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #E8EDF2; border-radius: 12px;">
-            <h1 style="color: #4F7CFF; text-align: center;">PayPoint</h1>
-            <hr>
-            <h2 style="text-align: center;">Invoice #${invoice.invoice_number}</h2>
-            <p><strong>Brand:</strong> ${invoice.brand_name || deal.brand_name}</p>
-            <p><strong>Date:</strong> ${date}</p>
-            <p><strong>Due Date:</strong> ${dueDate}</p>
-            <p><strong>Total:</strong> <span style="font-size: 20px; font-weight: bold; color: #4F7CFF;">${currencySymbol}${Number(total || invoice.total || deal.amount).toFixed(2)}</span></p>
-            ${lineItemsHtml}
-            ${invoice.notes ? `<p><strong>Notes:</strong> ${invoice.notes}</p>` : ''}
-            ${bankHtml}
-            <div style="text-align: center; margin: 24px 0;">
-                <a href="${portalLink}" style="background: #4F7CFF; color: white; padding: 12px 32px; border-radius: 8px; text-decoration: none; font-weight: 600;">View & Pay Invoice</a>
-            </div>
-            <p style="font-size: 12px; color: #8A9AAB;">If you have any questions, please reply to this email.</p>
-            <hr>
-            <p style="text-align: center; color: #8A9AAB; font-size: 12px;">PayPoint · Finance OS for Creators</p>
-        </div>
-    `;
-}
 async function handleInvoiceCreate(req, res) {
     try {
         const userId = req.userId;
@@ -2014,7 +1804,16 @@ async function handleInvoiceCreate(req, res) {
             notes
         } = req.body;
 
-        // ✅ Check usage limit
+        if (!dealId) {
+            return res.status(400).json({ error: 'dealId is required' });
+        }
+        if (!brandEmail || !isValidEmail(brandEmail)) {
+            return res.status(400).json({ error: 'Valid brand email is required' });
+        }
+        if (!Array.isArray(lineItems) || lineItems.length === 0) {
+            return res.status(400).json({ error: 'At least one line item is required' });
+        }
+
         const usage = await checkUsageLimit(userId, 'invoice');
         if (!usage.allowed) {
             return res.status(403).json({
@@ -2025,7 +1824,6 @@ async function handleInvoiceCreate(req, res) {
             });
         }
 
-        // ✅ Get deal details
         const { data: deal, error: dealError } = await supabaseAdmin
             .from('deals')
             .select('*')
@@ -2037,26 +1835,13 @@ async function handleInvoiceCreate(req, res) {
             return res.status(404).json({ error: 'Deal not found' });
         }
 
-        // ✅ Auto‑generate invoice number
         const invoiceNumber = await generateInvoiceNumber(userId);
 
-        // ✅ Calculate totals
-        const items = lineItems || [];
+        const items = lineItems;
         const subtotal = items.reduce((sum, item) => sum + (Number(item.price) * (item.quantity || 1)), 0);
         const vatAmount = subtotal * ((vatRate || 0) / 100);
         const total = subtotal + vatAmount;
 
-        // ✅ Get creator details from profile
-        const { data: profile } = await supabaseAdmin
-            .from('profiles')
-            .select('business_name, business_address, business_phone, is_vat_registered, vat_number, bank_account_name, bank_name, bank_account_number, payment_instructions')
-            .eq('id', userId)
-            .single();
-
-        // ✅ Generate portal token BEFORE inserting
-        const portalToken = crypto.randomBytes(32).toString('hex');
-
-        // ✅ Create invoice WITH portal_token
         const { data, error } = await supabaseAdmin
             .from('invoices')
             .insert([{
@@ -2073,9 +1858,9 @@ async function handleInvoiceCreate(req, res) {
                 vat_rate: vatRate || 0,
                 vat_amount: vatAmount,
                 total: total,
+                currency: deal.currency || 'USD',
                 notes: notes || null,
-                status: 'sent',
-                portal_token: portalToken   // ✅ Include token here
+                status: 'sent'
             }])
             .select();
 
@@ -2084,43 +1869,9 @@ async function handleInvoiceCreate(req, res) {
             return res.status(500).json({ error: error.message });
         }
 
-        const newInvoice = data[0];
-
-        // ✅ Build portal link using the token
-        const BACKEND_URL = process.env.BACKEND_URL || 'https://paypoint-7dmc.onrender.com';
-
-const portalLink = `${BACKEND_URL}/portal/${portalToken}`;
-
-        // ✅ Build email HTML
-        const html = buildInvoiceEmail({
-            invoice: newInvoice,
-            deal,
-            profile,
-            items,
-            subtotal,
-            vatAmount,
-            total,
-            portalLink
-        });
-
-        const subject = `📄 Invoice #${invoiceNumber} from ${deal.brand_name}`;
-        const sent = await sendEmailWithRetry(brandEmail, subject, html);
-
-        // Debug: log stored token and returned portal link to help diagnose public lookup issues
-        try {
-            console.log('Inserted invoice id:', newInvoice.id);
-            console.log('Inserted portal_token:', newInvoice.portal_token || portalToken);
-            console.log('Returned portal_link:', portalLink);
-        } catch (e) {
-            console.warn('Unable to log invoice debug info', e);
-        }
-
         res.status(201).json({
             success: true,
-            data: newInvoice,
-            portal_token: portalToken,
-            portal_link: portalLink,
-            email_sent: sent
+            data: data[0]
         });
 
     } catch (err) {
@@ -2195,122 +1946,7 @@ app.get('/api/invoices/export', authenticate, async (req, res) => {
     }
 });
 
-// ============================================
-// RESEND INVOICE EMAIL
-// ============================================
-app.post('/api/invoices/:id/resend', authenticate, async (req, res) => {
-    try {
-        const { id: invoiceId } = req.params;
-        const userId = req.userId;
 
-        const { data: invoice, error: invErr } = await supabaseAdmin
-            .from('invoices')
-            .select('*, deals(*)')
-            .eq('id', invoiceId)
-            .eq('user_id', userId)
-            .single();
-
-        if (invErr || !invoice) {
-            return res.status(404).json({ error: 'Invoice not found' });
-        }
-
-        const deal = invoice.deals;
-        if (!deal) return res.status(404).json({ error: 'Deal not found' });
-
-        const { data: profile, error: profErr } = await supabaseAdmin
-            .from('profiles')
-            .select('bank_account_name, bank_name, bank_account_number, payment_instructions')
-            .eq('id', userId)
-            .single();
-
-        const portalToken = invoice.portal_token;
-        const portalLink = `${process.env.FRONTEND_URL || 'https://paypoint-app.netlify.app'}/portal/${portalToken}`;
-
-        const html = buildInvoiceEmail({
-            invoice,
-            deal,
-            profile: profile || {},
-            items: invoice.line_items || [],
-            subtotal: invoice.subtotal || 0,
-            vatAmount: invoice.vat_amount || 0,
-            total: invoice.total || deal.amount,
-            portalLink
-        });
-
-        const subject = `📄 Invoice #${invoice.invoice_number} from ${deal.brand_name}`;
-        const sent = await sendEmailWithRetry(invoice.brand_email, subject, html);
-
-        res.json({
-            success: true,
-            email_sent: sent,
-            portal_link: portalLink
-        });
-    } catch (err) {
-        console.error('Resend error:', err);
-        res.status(500).json({ error: 'Failed to resend' });
-    }
-});
-
-// ============================================
-// RESEND INVOICE EMAIL
-// ============================================
-app.post('/api/invoices/resend', authenticate, async (req, res) => {
-    try {
-        const { invoiceId } = req.body;
-        const userId = req.userId;
-
-        // Fetch invoice with deal and profile
-        const { data: invoice, error: invErr } = await supabaseAdmin
-            .from('invoices')
-            .select('*, deals(*)')
-            .eq('id', invoiceId)
-            .eq('user_id', userId)
-            .single();
-
-        if (invErr || !invoice) {
-            return res.status(404).json({ error: 'Invoice not found' });
-        }
-
-        const deal = invoice.deals;
-        if (!deal) return res.status(404).json({ error: 'Deal not found' });
-
-        // Fetch creator profile (bank details etc.)
-        const { data: profile, error: profErr } = await supabaseAdmin
-            .from('profiles')
-            .select('bank_account_name, bank_name, bank_account_number, payment_instructions')
-            .eq('id', userId)
-            .single();
-
-        // Build email HTML (reuse the same function)
-        const portalToken = invoice.portal_token;
-        const portalLink = `${process.env.FRONTEND_URL || 'https://paypoint-app.netlify.app'}/portal/${portalToken}`;
-
-        const html = buildInvoiceEmail({
-            invoice,
-            deal,
-            profile: profile || {},
-            items: invoice.line_items || [],
-            subtotal: invoice.subtotal || 0,
-            vatAmount: invoice.vat_amount || 0,
-            total: invoice.total || deal.amount,
-            portalLink
-        });
-
-        const subject = `📄 Invoice #${invoice.invoice_number} from ${deal.brand_name}`;
-
-        // Send email (currently logs only)
-        const sent = await sendEmailWithRetry(invoice.brand_email, subject, html);
-
-        res.json({
-            success: true,
-            email_sent: sent,
-            portal_link: portalLink
-        });
-    } catch (err) {
-        console.error('Resend error:', err);
-        res.status(500).json({ error: 'Failed to resend' });
-    }
-});
 
 // ============================================
 // GENERATE INVOICE PDF
@@ -2880,92 +2516,11 @@ app.get('/api/public/invoice/:token', async (req, res) => {
 });
 
 // ============================================
-// WEBHOOKS
-// ============================================
-app.post('/api/webhooks/paystack',
-    express.raw({ type: 'application/json' }),
-    async (req, res) => {
-        try {
-            const signature = req.headers['x-paystack-signature'];
-            if (!signature) {
-                return res.status(401).send('Missing signature');
-            }
-
-            const hash = crypto
-                .createHmac('sha512', PAYSTACK_SECRET_KEY)
-                .update(req.body)
-                .digest('hex');
-
-            if (hash !== signature) {
-                return res.status(401).send('Invalid signature');
-            }
-
-            // ✅ event is defined HERE, inside the try block
-            const event = JSON.parse(req.body.toString());
-            console.log('📨 Webhook received:', event.event);
-
-            if (event.event === 'charge.success' || event.event === 'subscription.create') {
-                const userId = event.data.metadata?.user_id;
-                if (!userId) {
-                    console.error('❌ No user_id in webhook');
-                    return res.status(400).send('Missing user_id');
-                }
-
-                const expiresAt = new Date();
-                expiresAt.setDate(expiresAt.getDate() + 30);
-
-                const { error: upsertError } = await supabaseAdmin
-                    .from('profiles')
-                    .upsert({
-                        id: userId,
-                        subscription_tier: 'pro',
-                        subscription_status: 'active',
-                        subscription_expires_at: expiresAt.toISOString(),
-                        paystack_subscription_code: event.data.subscription?.subscription_code || null,
-                        paystack_customer_code: event.data.customer?.customer_code || null,
-                        updated_at: new Date().toISOString()
-                    }, { onConflict: 'id' });
-
-                if (upsertError) {
-                    console.error('❌ Error updating profile:', upsertError);
-                    return res.status(500).send('Database update failed');
-                }
-
-                console.log(`✅ User ${userId} upgraded to Pro (expires: ${expiresAt.toISOString()})`);
-            }
-
-            res.sendStatus(200);
-
-        } catch (err) {
-            console.error('Webhook error:', err);
-            res.sendStatus(500);
-        }
-    }
-);
-
-// ============================================
 // PUBLIC PORTAL - View Invoice
 // ============================================
 // ============================================
 // PUBLIC PORTAL – Redirect to payment page
 // ============================================
-app.get('/portal/:token', async (req, res) => {
-    const { token } = req.params;
-    // Optional: validate token exists (quick check)
-    const { data: invoice, error } = await supabaseAdmin
-        .from('invoices')
-        .select('portal_token')
-        .eq('portal_token', token)
-        .single();
-
-    if (error || !invoice) {
-        return res.status(404).send('Invalid invoice link.');
-    }
-
-    // Redirect to the payment page with the token as parameter
-    const frontendUrl = process.env.FRONTEND_URL || 'https://paypoint-backend.vercel.app';
-    res.redirect(`${frontendUrl}/pay-invoice.html?token=${encodeURIComponent(token)}`);
-});
 
 // ============================================
 // ERROR HANDLERS
