@@ -71,9 +71,11 @@ app.use(cors({
     maxAge: 86400,
 }));
 
+// ✅ FIX: raised from 100 to 500 (a single dashboard load fires ~5 requests,
+// so 100 per 15min was too aggressive and users would hit "Too many requests")
 const limiter = rateLimit({
     windowMs: 15 * 60 * 1000,
-    max: 100,
+    max: 500,
     message: { error: 'Too many requests, please try again later.' },
     standardHeaders: true,
     legacyHeaders: false,
@@ -223,6 +225,18 @@ function isValidAmount(amount) {
     const num = parseFloat(amount);
     return !isNaN(num) && num > 0 && num < 1e9;
 }
+
+// ✅ FIX: proper CSV escaping so brand names with commas/quotes/newlines
+// don't break Excel or produce corrupt exports
+function csvEscape(value) {
+    if (value === null || value === undefined) return '';
+    const s = String(value);
+    if (s.includes(',') || s.includes('"') || s.includes('\n') || s.includes('\r')) {
+        return '"' + s.replace(/"/g, '""') + '"';
+    }
+    return s;
+}
+
 // ============================================
 // SUBSCRIPTION & USAGE HELPERS
 // ============================================
@@ -241,7 +255,9 @@ const PLAN_LIMITS = {
 };
 
 async function getUserPlan(userId) {
-    const { data: profile, error } = await supabase
+    // ✅ FIX: was `supabase` (anon) — RLS blocked the read, so Pro users
+    // always showed as free. Must use the admin client.
+    const { data: profile, error } = await supabaseAdmin
         .from('profiles')
         .select('subscription_tier, subscription_status, subscription_expires_at')
         .eq('id', userId)
@@ -301,6 +317,7 @@ async function checkUsageLimit(userIdOrIds, resourceType) {
         return { allowed: true, current: 0, max: 999999, tier: plan.tier };
     }
 }
+
 // ============================================
 // GENERATE SEQUENTIAL INVOICE NUMBER
 // ============================================
@@ -329,6 +346,22 @@ async function generateInvoiceNumber(userId) {
         .eq('user_id', userId);
 
     return `INV-${String(nextNumber).padStart(4, '0')}`;
+}
+
+// ============================================
+// USER CACHE FOR RECONCILIATION (perf)
+// ============================================
+// ✅ FIX: caching the user list prevents hitting Supabase Admin API on every request
+let userCache = { timestamp: 0, users: [] };
+async function getCachedUsers() {
+    const now = Date.now();
+    if (now - userCache.timestamp < 60000 && userCache.users.length > 0) {
+        return userCache.users;
+    }
+    const { data, error } = await supabaseAdmin.auth.admin.listUsers();
+    if (error) return null;
+    userCache = { timestamp: now, users: data?.users || [] };
+    return userCache.users;
 }
 
 // ============================================
@@ -386,33 +419,32 @@ async function authenticate(req, res, next) {
             .single();
 
         if (profileError && profileError.code === 'PGRST116') {
-    // Profile doesn't exist – create it
-    await supabaseAdmin.from('profiles').insert({
-        id: req.userId,
-        default_currency: 'USD',
-        subscription_tier: 'free',
-        subscription_status: 'active'
-    });
-} else if (profile && !profile.default_currency) {
-    // Profile exists but default_currency is null – update it
-    await supabaseAdmin.from('profiles')
-        .update({
-            default_currency: 'USD',
-            subscription_tier: 'free',
-            subscription_status: 'active'
-        })
-        .eq('id', req.userId);
-}
+            // Profile doesn't exist – create it
+            await supabaseAdmin.from('profiles').insert({
+                id: req.userId,
+                default_currency: 'USD',
+                subscription_tier: 'free',
+                subscription_status: 'active'
+            });
+        } else if (profile && !profile.default_currency) {
+            // Profile exists but default_currency is null – update it
+            await supabaseAdmin.from('profiles')
+                .update({
+                    default_currency: 'USD',
+                    subscription_tier: 'free',
+                    subscription_status: 'active'
+                })
+                .eq('id', req.userId);
+        }
 
         // --------------------------------------------
-        // 6. ACCOUNT RECONCILIATION (Keep your existing logic)
-        //    - Merges accounts with the same email (if you use it).
+        // 6. ACCOUNT RECONCILIATION
         // --------------------------------------------
         const email = userData.user?.email;
         if (email) {
-            const { data: userMatches, error: listError } = await supabaseAdmin.auth.admin.listUsers();
-            if (!listError) {
-                const matchingUser = findMatchingAuthUser(userMatches?.users, userData.user.id, email);
+            const users = await getCachedUsers();
+            if (users) {
+                const matchingUser = findMatchingAuthUser(users, userData.user.id, email);
                 if (matchingUser) {
                     req.reconciledUserId = matchingUser.id;
                     req.reconciledUserEmail = matchingUser.email;
@@ -430,8 +462,6 @@ async function authenticate(req, res, next) {
         res.status(500).json({ error: 'Authentication failed' });
     }
 }
-
-// (Removed stray top-level await block that caused startup errors.)
 
 // ============================================
 // DASHBOARD STATS WITH REAL PERCENTAGES
@@ -611,7 +641,8 @@ app.put('/api/profile/tax-rate', authenticate, async (req, res) => {
             return res.status(400).json({ error: 'Tax rate must be between 0 and 100' });
         }
 
-        const { error } = await supabase
+        // ✅ FIX: was `supabase` (anon) — silently failed under RLS
+        const { error } = await supabaseAdmin
             .from('profiles')
             .update({ tax_rate: taxRate })
             .eq('id', userId);
@@ -691,7 +722,7 @@ app.put('/api/settings', authenticate, async (req, res) => {
             return res.status(500).json({ error: 'Failed to update settings: ' + error.message });
         }
 
-                if (updates.default_currency) {
+        if (updates.default_currency) {
             const { data: currentUser } = await supabaseAdmin.auth.admin.getUserById(userId);
             const existing = currentUser?.user?.user_metadata || {};
             await supabaseAdmin.auth.admin.updateUserById(userId, {
@@ -733,7 +764,7 @@ app.get('/health', (req, res) => {
 
 app.get('/api/db-health', async (req, res) => {
     try {
-        const { data, error } = await supabase.from('profiles').select('count').limit(1);
+        const { data, error } = await supabaseAdmin.from('profiles').select('count').limit(1);
         if (error) throw error;
         res.json({ status: 'ok', message: 'Database connected' });
     } catch (err) {
@@ -843,7 +874,7 @@ app.post('/api/auth/logout', authenticate, async (req, res) => {
 
 app.get('/api/auth/user', authenticate, async (req, res) => {
     try {
-                const { data: profile, error } = await supabaseAdmin
+        const { data: profile, error } = await supabaseAdmin
             .from('profiles')
             .select('subscription_tier, subscription_status, subscription_expires_at')
             .eq('id', req.userId)
@@ -1029,7 +1060,7 @@ app.post('/api/auth/upload-avatar', authenticate, upload.single('avatar'), async
         const { data: urlData } = supabaseAdmin.storage.from('avatars').getPublicUrl(fileName);
         const avatarUrl = urlData.publicUrl;
 
-                const { data: currentUser } = await supabaseAdmin.auth.admin.getUserById(userId);
+        const { data: currentUser } = await supabaseAdmin.auth.admin.getUserById(userId);
         const existingMetadata = currentUser?.user?.user_metadata || {};
         const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(
             userId,
@@ -1252,7 +1283,7 @@ app.post('/api/deals', authenticate, async (req, res) => {
         }
         const { data, error } = await supabaseAdmin
             .from('deals')
-                        .insert([{
+            .insert([{
                 user_id: userId,
                 brand_name: sanitizedBrand,
                 amount: parseFloat(amount),
@@ -1355,7 +1386,7 @@ app.delete('/api/deals/:id', authenticate, async (req, res) => {
         res.status(500).json({ error: 'Internal server error' });
     }
 });
-        
+
 // ============================================
 // EXPORT DEALS TO CSV
 // ============================================
@@ -1374,7 +1405,7 @@ app.get('/api/deals/export', authenticate, async (req, res) => {
         if (error) throw error;
 
         const headers = ['Brand', 'Amount', 'Currency', 'Status', 'Due Date', 'Deliverable', 'Notes', 'Created At'];
-        const rows = deals.map(d => [
+        const rows = (deals || []).map(d => [
             d.brand_name || '',
             d.amount || 0,
             d.currency || 'USD',
@@ -1385,10 +1416,13 @@ app.get('/api/deals/export', authenticate, async (req, res) => {
             d.created_at ? new Date(d.created_at).toLocaleDateString() : ''
         ]);
 
-        let csv = headers.join(',') + '\n';
-        rows.forEach(row => { csv += row.join(',') + '\n'; });
+        // ✅ FIX: use csvEscape so commas/quotes/newlines don't corrupt the file
+        let csv = headers.map(csvEscape).join(',') + '\n';
+        rows.forEach(row => {
+            csv += row.map(csvEscape).join(',') + '\n';
+        });
 
-        res.setHeader('Content-Type', 'text/csv');
+        res.setHeader('Content-Type', 'text/csv; charset=utf-8');
         res.setHeader('Content-Disposition', `attachment; filename=deals-${Date.now()}.csv`);
         res.send(csv);
     } catch (err) {
@@ -1412,7 +1446,7 @@ app.get('/api/deals/:id', authenticate, async (req, res) => {
             .from('deals')
             .select('*')
             .eq('id', dealId)
-            .in('user_id', ids)   // ✅ Now 'ids' is defined
+            .in('user_id', ids)
             .single();
 
         if (dealError || !deal) {
@@ -1420,12 +1454,12 @@ app.get('/api/deals/:id', authenticate, async (req, res) => {
             return res.status(404).json({ error: 'Deal not found' });
         }
 
-        // 2. Fetch linked expenses
+        // 2. Fetch linked expenses (use reconciled ids too)
         const { data: expenses, error: expensesError } = await supabaseAdmin
             .from('expenses')
             .select('amount, vendor, category, created_at')
             .eq('deal_id', dealId)
-            .eq('user_id', userId);
+            .in('user_id', ids);
 
         if (expensesError) {
             console.error('Error fetching expenses for deal:', expensesError);
@@ -1481,7 +1515,7 @@ app.post('/api/expenses', authenticate, async (req, res) => {
         if (!isValidAmount(amount)) {
             return res.status(400).json({ error: 'Invalid amount' });
         }
-                if (req.body.deal_id) {
+        if (req.body.deal_id) {
             const { data: linkedDeal } = await supabaseAdmin
                 .from('deals')
                 .select('id')
@@ -1506,7 +1540,7 @@ app.post('/api/expenses', authenticate, async (req, res) => {
                 category: sanitizedCategory,
                 receipt_url: receipt_url || '',
                 currency: currency || 'USD',
-                deal_id: req.body.deal_id || null 
+                deal_id: req.body.deal_id || null
             }])
             .select();
         if (error) {
@@ -1528,12 +1562,14 @@ app.delete('/api/expenses/:id', authenticate, async (req, res) => {
     try {
         const expenseId = req.params.id;
         const userId = req.userId;
+        const fallbackUserId = req.reconciledUserId || null;
+        const ids = [userId, fallbackUserId].filter(Boolean);
 
         const { data: expense, error: findError } = await supabaseAdmin
             .from('expenses')
             .select('id')
             .eq('id', expenseId)
-            .eq('user_id', userId)
+            .in('user_id', ids)
             .single();
 
         if (findError || !expense) {
@@ -1544,7 +1580,7 @@ app.delete('/api/expenses/:id', authenticate, async (req, res) => {
             .from('expenses')
             .delete()
             .eq('id', expenseId)
-            .eq('user_id', userId);
+            .in('user_id', ids);
 
         if (error) {
             console.error('Delete expense error:', error);
@@ -1564,10 +1600,12 @@ app.delete('/api/expenses/:id', authenticate, async (req, res) => {
 app.get('/api/expenses', authenticate, async (req, res) => {
     try {
         const userId = req.userId;
+        const fallbackUserId = req.reconciledUserId || null;
+        const ids = [userId, fallbackUserId].filter(Boolean);
         const { data, error } = await supabaseAdmin
             .from('expenses')
             .select('*')
-            .eq('user_id', userId)
+            .in('user_id', ids)
             .order('created_at', { ascending: false });
         if (error) {
             console.error('Supabase error:', error);
@@ -1586,17 +1624,19 @@ app.get('/api/expenses', authenticate, async (req, res) => {
 app.get('/api/expenses/export', authenticate, async (req, res) => {
     try {
         const userId = req.userId;
+        const fallbackUserId = req.reconciledUserId || null;
+        const ids = [userId, fallbackUserId].filter(Boolean);
 
         const { data: expenses, error } = await supabaseAdmin
             .from('expenses')
             .select('vendor, amount, currency, category, receipt_url, created_at')
-            .eq('user_id', userId)
+            .in('user_id', ids)
             .order('created_at', { ascending: false });
 
         if (error) throw error;
 
         const headers = ['Vendor', 'Amount', 'Currency', 'Category', 'Receipt URL', 'Date'];
-        const rows = expenses.map(e => [
+        const rows = (expenses || []).map(e => [
             e.vendor || '',
             e.amount || 0,
             e.currency || 'USD',
@@ -1605,10 +1645,12 @@ app.get('/api/expenses/export', authenticate, async (req, res) => {
             e.created_at ? new Date(e.created_at).toLocaleDateString() : ''
         ]);
 
-        let csv = headers.join(',') + '\n';
-        rows.forEach(row => { csv += row.join(',') + '\n'; });
+        let csv = headers.map(csvEscape).join(',') + '\n';
+        rows.forEach(row => {
+            csv += row.map(csvEscape).join(',') + '\n';
+        });
 
-        res.setHeader('Content-Type', 'text/csv');
+        res.setHeader('Content-Type', 'text/csv; charset=utf-8');
         res.setHeader('Content-Disposition', `attachment; filename=expenses-${Date.now()}.csv`);
         res.send(csv);
     } catch (err) {
@@ -1652,9 +1694,13 @@ app.post('/api/payments/initialize', authenticate, async (req, res) => {
             return res.status(400).json({ error: 'This deal has already been paid' });
         }
 
+        // ✅ FIX: never use a fake fallback email — Paystack will bounce it
         let customerEmail = email;
         if (!customerEmail || !isValidEmail(customerEmail)) {
-            customerEmail = 'customer@paypoint.com';
+            customerEmail = req.user.email;
+        }
+        if (!customerEmail) {
+            return res.status(400).json({ error: 'Email required' });
         }
 
         const totalAmount = Math.round(deal.amount * 100);
@@ -1721,7 +1767,7 @@ app.get('/api/payments/verify/:reference', authenticate, async (req, res) => {
         const dealId = result.data.metadata?.deal_id;
         const amountVerified = result.data.amount / 100;
 
-                // Ownership check
+        // Ownership check
         const metadataUserId = result.data.metadata?.user_id;
         const fallbackUserId = req.reconciledUserId || null;
         if (metadataUserId && metadataUserId !== req.userId && metadataUserId !== fallbackUserId) {
@@ -1752,7 +1798,8 @@ app.get('/api/payments/verify/:reference', authenticate, async (req, res) => {
                     return res.status(400).json({ error: 'Amount mismatch' });
                 }
 
-                const { error } = await supabase
+                // ✅ FIX: was `supabase` (anon) — the update silently failed under RLS
+                const { error } = await supabaseAdmin
                     .from('deals')
                     .update({
                         status: 'paid',
@@ -1792,6 +1839,9 @@ app.post('/api/invoices', authenticate, handleInvoiceCreate);
 async function handleInvoiceCreate(req, res) {
     try {
         const userId = req.userId;
+        const fallbackUserId = req.reconciledUserId || null;
+        const ids = [userId, fallbackUserId].filter(Boolean);
+
         const {
             dealId,
             brandEmail,
@@ -1814,7 +1864,7 @@ async function handleInvoiceCreate(req, res) {
             return res.status(400).json({ error: 'At least one line item is required' });
         }
 
-        const usage = await checkUsageLimit(userId, 'invoice');
+        const usage = await checkUsageLimit(ids, 'invoice');
         if (!usage.allowed) {
             return res.status(403).json({
                 error: `Invoice limit reached (${usage.max}). Upgrade to Pro.`,
@@ -1824,11 +1874,13 @@ async function handleInvoiceCreate(req, res) {
             });
         }
 
+        // ✅ FIX: use reconciled ids so invoices can be created against deals
+        // owned by the linked account
         const { data: deal, error: dealError } = await supabaseAdmin
             .from('deals')
             .select('*')
             .eq('id', dealId)
-            .eq('user_id', userId)
+            .in('user_id', ids)
             .single();
 
         if (dealError || !deal) {
@@ -1882,19 +1934,22 @@ async function handleInvoiceCreate(req, res) {
 
 // ---- explicit routes to avoid 404s ----
 app.post(['/api/invoices/create', '/api/invoices/create/'], authenticate, handleInvoiceCreate);
+
 // ============================================
 // GET USER INVOICES (with deal details)
 // ============================================
 app.get('/api/invoices', authenticate, async (req, res) => {
     try {
         const userId = req.userId;
+        const fallbackUserId = req.reconciledUserId || null;
+        const ids = [userId, fallbackUserId].filter(Boolean);
         const { data, error } = await supabaseAdmin
             .from('invoices')
             .select(`
                 *,
                 deals ( brand_name, amount, currency, status )
             `)
-            .eq('user_id', userId)
+            .in('user_id', ids)
             .order('created_at', { ascending: false });
 
         if (error) {
@@ -1914,17 +1969,19 @@ app.get('/api/invoices', authenticate, async (req, res) => {
 app.get('/api/invoices/export', authenticate, async (req, res) => {
     try {
         const userId = req.userId;
+        const fallbackUserId = req.reconciledUserId || null;
+        const ids = [userId, fallbackUserId].filter(Boolean);
 
         const { data: invoices, error } = await supabaseAdmin
             .from('invoices')
             .select('invoice_number, brand_name, total, currency, status, due_date, created_at')
-            .eq('user_id', userId)
+            .in('user_id', ids)
             .order('created_at', { ascending: false });
 
         if (error) throw error;
 
         const headers = ['Invoice #', 'Brand', 'Total', 'Currency', 'Status', 'Due Date', 'Created At'];
-        const rows = invoices.map(inv => [
+        const rows = (invoices || []).map(inv => [
             inv.invoice_number || '',
             inv.brand_name || '',
             inv.total || 0,
@@ -1934,10 +1991,13 @@ app.get('/api/invoices/export', authenticate, async (req, res) => {
             inv.created_at ? new Date(inv.created_at).toLocaleDateString() : ''
         ]);
 
-        let csv = headers.join(',') + '\n';
-        rows.forEach(row => { csv += row.join(',') + '\n'; });
+        // ✅ FIX: csvEscape on every field, and use reconciled ids
+        let csv = headers.map(csvEscape).join(',') + '\n';
+        rows.forEach(row => {
+            csv += row.map(csvEscape).join(',') + '\n';
+        });
 
-        res.setHeader('Content-Type', 'text/csv');
+        res.setHeader('Content-Type', 'text/csv; charset=utf-8');
         res.setHeader('Content-Disposition', `attachment; filename=invoices-${Date.now()}.csv`);
         res.send(csv);
     } catch (err) {
@@ -1946,8 +2006,6 @@ app.get('/api/invoices/export', authenticate, async (req, res) => {
     }
 });
 
-
-
 // ============================================
 // GENERATE INVOICE PDF
 // ============================================
@@ -1955,13 +2013,15 @@ app.post('/api/invoices/generate', authenticate, async (req, res) => {
     try {
         const { dealId } = req.body;
         const userId = req.userId;
+        const fallbackUserId = req.reconciledUserId || null;
+        const ids = [userId, fallbackUserId].filter(Boolean);
 
         // 1. Get deal details
         const { data: deal, error: dealError } = await supabaseAdmin
             .from('deals')
             .select('*')
             .eq('id', dealId)
-            .eq('user_id', userId)
+            .in('user_id', ids)
             .single();
 
         if (dealError || !deal) {
@@ -2197,7 +2257,7 @@ app.put('/api/profile/invoice-customization', authenticate, async (req, res) => 
         // ✅ Check if user is Pro
         const plan = await getUserPlan(userId);
         if (plan.tier !== 'pro') {
-            return res.status(403).json({ 
+            return res.status(403).json({
                 error: 'Pro feature. Upgrade to customize invoices.',
                 upgrade_required: true
             });
@@ -2260,6 +2320,7 @@ app.get('/api/profile/invoice-customization', authenticate, async (req, res) => 
         res.status(500).json({ error: 'Server error' });
     }
 });
+
 // ============================================
 // AUTO-CHASE PREFERENCE
 // ============================================
@@ -2478,7 +2539,7 @@ app.get('/api/public/invoice/:token', async (req, res) => {
             return res.status(404).json({ error: 'Associated deal not found' });
         }
 
-        // 3. Fetch creator’s bank details (public info)
+        // 3. Fetch creator's bank details (public info)
         const { data: profile, error: profError } = await supabaseAdmin
             .from('profiles')
             .select('bank_account_name, bank_name, bank_account_number, payment_instructions')
@@ -2514,13 +2575,6 @@ app.get('/api/public/invoice/:token', async (req, res) => {
         res.status(500).json({ error: 'Internal server error' });
     }
 });
-
-// ============================================
-// PUBLIC PORTAL - View Invoice
-// ============================================
-// ============================================
-// PUBLIC PORTAL – Redirect to payment page
-// ============================================
 
 // ============================================
 // ERROR HANDLERS
