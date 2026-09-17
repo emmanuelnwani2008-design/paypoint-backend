@@ -139,6 +139,12 @@
 </head>
 <body>
     <div class="container">
+        <div class="container" style="padding-top: 12px;">
+    <div style="background: #F0F4FF; border: 1px solid #4F7CFF; border-radius: 10px; padding: 12px 20px; color: #4F7CFF; font-size: 14px; font-weight: 500; display: flex; align-items: center; gap: 8px;">
+        <i class="fas fa-rocket"></i>
+        <span><strong>Pro is coming soon.</strong> For now, enjoy unlimited Free-tier access to all core features.</span>
+    </div>
+</div>
         <nav class="navbar">
             <a href="dashboard.html" class="logo">
                 <img src="logo.png" alt="PayPoint">
@@ -178,7 +184,7 @@
                     <li><span class="check">✅</span> Export Data</li>
                     <li><span class="check">✅</span> Priority Support</li>
                 </ul>
-                <button class="btn-primary" id="proMonthlyBtn">Upgrade Now</button>
+                <button class="btn-primary" id="proMonthlyBtn" disabled style="opacity: 0.6; cursor: not-allowed;">Coming Soon</button>
             </div>
 
             <!-- Pro Annual -->
@@ -194,7 +200,7 @@
                     <li><span class="check">✅</span> 2 months FREE</li>
                     <li><span class="check">✅</span> Priority support</li>
                 </ul>
-                <button class="btn-primary" id="proAnnualBtn">Upgrade Now</button>
+                <button class="btn-primary" id="proAnnualBtn" disabled style="opacity: 0.6; cursor: not-allowed;">Coming Soon</button>
             </div>
         </div>
 
@@ -313,8 +319,9 @@
         // ============================================
         // INIT
         // ============================================
-        document.getElementById('proMonthlyBtn').addEventListener('click', () => subscribe('pro', 'monthly'));
-        document.getElementById('proAnnualBtn').addEventListener('click', () => subscribe('pro', 'annual'));
+        // Pro buttons disabled — coming soon
+// document.getElementById('proMonthlyBtn').addEventListener('click', () => subscribe('pro', 'monthly'));
+// document.getElementById('proAnnualBtn').addEventListener('click', () => subscribe('pro', 'annual'));
 
         fetchExchangeRate();
         checkCurrentTier();

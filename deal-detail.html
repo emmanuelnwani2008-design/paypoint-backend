@@ -417,17 +417,21 @@ function setCachedData(key, data) {
 }
         // local escapeHtml and logout listener removed — use global helpers from `auth.js`
 
-        // ============================================
+                // ============================================
         // INIT
         // ============================================
-        if (checkAuth()) {
-            loadDeal();
-        }
-        document.getElementById('loadingIndicator').style.display = 'block';
-// ... fetch data ...
-document.getElementById('loadingIndicator').style.display = 'none';
+        (async function init() {
+            const loadingEl = document.getElementById('loadingIndicator');
+            if (loadingEl) loadingEl.style.display = 'block';
 
-        console.log('📄 PayPoint Deal Detail page loaded');
+            const authed = await checkAuth();
+            if (authed) {
+                await loadDeal();
+            }
+
+            if (loadingEl) loadingEl.style.display = 'none';
+            console.log('📄 PayPoint Deal Detail page loaded');
+        })();
     </script>
 </body>
 </html>

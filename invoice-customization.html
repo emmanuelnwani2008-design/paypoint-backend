@@ -264,7 +264,7 @@
         // ============================================
         // CONFIGURATION – stable local auth
         // ============================================
-        const API_URL = window.API_URL || (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' ? '/api' : 'https://paypoint-7dmc.onrender.com/api');
+        const API_URL = window.__API_URL__ || '/api';
 
         // ============================================
         // AUTH HELPERS (local token-based, works consistently)
@@ -325,20 +325,12 @@
                     updatePreview();
 
                     if (!d.is_pro) {
-                        statusEl.className = 'message info';
-                        statusEl.textContent = '🔒 This is a Pro feature. Upgrade to customize your invoices.';
-                        document.getElementById('customizationCard').classList.add('lock-overlay');
-                        document.getElementById('saveCustomizationBtn').disabled = true;
-
-                        // Ask user to upgrade
-                        const upgrade = confirm(
-                            '🔒 Invoice customization is a Pro feature.\n\n' +
-                            'Upgrade to Pro to customize your invoices with your logo, brand colors, and more.'
-                        );
-                        if (upgrade) {
-                            window.location.href = 'pricing.html';
-                        }
-                    } else {
+    statusEl.className = 'message info';
+    statusEl.textContent = '🚀 Invoice customization is coming soon. This will be available with Pro.';
+    document.getElementById('customizationCard').classList.add('lock-overlay');
+    document.getElementById('saveCustomizationBtn').disabled = true;
+    // No auto-redirect to pricing — that flow is disabled
+} else {
                         statusEl.className = 'message success';
                         statusEl.textContent = '✅ Pro – Customize your invoices below!';
                         document.getElementById('customizationCard').classList.remove('lock-overlay');

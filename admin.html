@@ -89,59 +89,57 @@
     </div>
 
     <script>
-        const API_URL = '/api';
+    const API_URL = '/api';
 
-        // prefer global getAuthHeaders
-        if (typeof getAuthHeaders !== 'function') {
-            function getAuthHeaders() {
-                const token = localStorage.getItem('paypoint_session');
-                return {
-                    'Content-Type': 'application/json'
-                };
-            }
-        }
-
-        document.getElementById('upgradeBtn').addEventListener('click', async () => {
-    const email = document.getElementById('adminEmail').value.trim();
-    document.getElementById('upgradeBtn').addEventListener('click', async () => {
-    const email = document.getElementById('adminEmail').value.trim();
-    const messageEl = document.getElementById('adminMessage');
-
-    if (!email) {
-        messageEl.className = 'message error';
-        messageEl.textContent = 'Please enter an email.';
-        return;
+    function getAuthHeaders() {
+        const token = sessionStorage.getItem('paypoint_session') || localStorage.getItem('paypoint_session');
+        const headers = { 'Content-Type': 'application/json' };
+        if (token) headers['Authorization'] = `Bearer ${token}`;
+        return headers;
     }
 
-    messageEl.className = 'message';
-    messageEl.textContent = 'Upgrading...';
-
-    try {
-        const response = await fetch(`${API_URL}/admin/force-pro`, {
-            method: 'POST',
-            headers: getAuthHeaders(),
-            body: JSON.stringify({ targetEmail: email })
-        });
-        const data = await response.json();
-        if (data.success) {
-            messageEl.className = 'message success';
-            messageEl.textContent = `${email} is now Pro. Expires: ${data.expires_at}`;
-        } else {
-            messageEl.className = 'message error';
-            messageEl.textContent = data.error || 'Upgrade failed';
-        }
-    } catch (err) {
-        messageEl.className = 'message error';
-        messageEl.textContent = 'Could not connect to server.';
-    }
-});
     function escapeHtml(text) {
-    if (!text) return '';
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
-}
-});
-    </script>
+        if (!text) return '';
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    document.getElementById('upgradeBtn').addEventListener('click', async () => {
+        const email = document.getElementById('adminEmail').value.trim();
+        const messageEl = document.getElementById('adminMessage');
+
+        if (!email) {
+            messageEl.className = 'message error';
+            messageEl.textContent = 'Please enter an email.';
+            return;
+        }
+
+        messageEl.className = 'message';
+        messageEl.textContent = 'Upgrading...';
+
+        try {
+            const response = await fetch(`${API_URL}/admin/force-pro`, {
+                method: 'POST',
+                headers: getAuthHeaders(),
+                body: JSON.stringify({ targetEmail: email })
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                messageEl.className = 'message success';
+                messageEl.textContent = `${escapeHtml(email)} is now Pro. Expires: ${escapeHtml(data.expires_at || '')}`;
+            } else {
+                messageEl.className = 'message error';
+                messageEl.textContent = data.error || 'Upgrade failed';
+            }
+        } catch (err) {
+            messageEl.className = 'message error';
+            messageEl.textContent = 'Could not connect to server.';
+            console.error(err);
+        }
+    });
+</script>
 </body>
 </html>
