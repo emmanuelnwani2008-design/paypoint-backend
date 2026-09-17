@@ -770,30 +770,42 @@ function setCachedData(key, data) {
         // LOAD DEALS FOR DROPDOWN (NEW)
         // ============================================
         async function loadDealsForDropdown() {
-            try {
-                const token = localStorage.getItem('paypoint_session');
-                const res = await fetch(`${API_URL}/deals`, {
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
-                    }
-                });
-                const result = await res.json();
-                if (result.success) {
-                    const select = document.getElementById('modalDeal');
-                    select.innerHTML = '<option value="">— None —</option>';
-                    result.data.forEach(deal => {
-                        const option = document.createElement('option');
-                        option.value = deal.id;
-                        const sym = deal.currency === 'USD' ? '$' : '₦';
-                        option.textContent = `${deal.brand_name} — ${sym}${Number(deal.amount).toLocaleString()}`;
-                        select.appendChild(option);
-                    });
-                }
-            } catch (err) {
-                console.error('Error loading deals:', err);
-            }
+    try {
+        const res = await fetch(`${API_URL}/deals`, {
+            headers: getAuthHeaders(),
+            credentials: 'include'
+        });
+        const result = await res.json();
+        const select = document.getElementById('modalDeal');
+
+        if (!result.success) {
+            select.innerHTML = '<option value="">— Failed to load deals —</option>';
+            console.error('Deals API failed:', result.error);
+            return;
         }
+
+        select.innerHTML = '<option value="">— None —</option>';
+        if (!result.data || result.data.length === 0) {
+            const opt = document.createElement('option');
+            opt.disabled = true;
+            opt.textContent = 'No deals yet — create one first';
+            select.appendChild(opt);
+            return;
+        }
+
+        result.data.forEach(deal => {
+            const option = document.createElement('option');
+            option.value = deal.id;
+            const sym = deal.currency === 'USD' ? '$' : '₦';
+            option.textContent = `${deal.brand_name} — ${sym}${Number(deal.amount).toLocaleString()}`;
+            select.appendChild(option);
+        });
+    } catch (err) {
+        console.error('Error loading deals:', err);
+        const select = document.getElementById('modalDeal');
+        if (select) select.innerHTML = '<option value="">— Failed to load —</option>';
+    }
+}
 
         // DOM REFERENCES
         const tableBody = document.getElementById('expensesTableBody');
@@ -1036,27 +1048,18 @@ function setCachedData(key, data) {
         // OPEN MODAL (Loads deals for dropdown)
         // ============================================
         openModalBtn.addEventListener('click', () => {
-            modalVendor.value = '';
-            modalAmount.value = '';
-            modalCategory.value = 'equipment';
-            const userData = JSON.parse(localStorage.getItem('paypoint_user') || '{}');
-const defaultCurrency = userData?.user_metadata?.default_currency || 'USD';
-modalCurrency.value = defaultCurrency;
-            modalReceipt.value = '';
-            receiptPreview.style.display = 'none';
-            // Load deals into the dropdown
-            loadDealsForDropdown();
-            modal.classList.add('active');
-        });
-
-        function closeModal() {
-            modal.classList.remove('active');
-        }
-
-        closeModalBtn.addEventListener('click', closeModal);
-        modal.addEventListener('click', (e) => {
-            if (e.target === modal) closeModal();
-        });
+    modalVendor.value = '';
+    modalAmount.value = '';
+    modalCategory.value = 'equipment';
+    // Default to user's preferred currency
+    const userData = JSON.parse(localStorage.getItem('paypoint_user') || '{}');
+    const defaultCurrency = userData?.user_metadata?.default_currency || 'USD';
+    modalCurrency.value = defaultCurrency;
+    modalReceipt.value = '';
+    receiptPreview.style.display = 'none';
+    loadDealsForDropdown();
+    modal.classList.add('active');
+});
 
         // ============================================
         // SAVE EXPENSE (Includes deal_id)
