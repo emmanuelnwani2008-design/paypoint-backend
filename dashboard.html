@@ -1254,7 +1254,13 @@
 
     // ----- MODAL CONTROLS -----
     const modal = document.getElementById('dealModal');
-    document.getElementById('openModalBtn').addEventListener('click', () => modal.classList.add('active'));
+    document.getElementById('openModalBtn').addEventListener('click', () => {
+    const userData = JSON.parse(localStorage.getItem('paypoint_user') || '{}');
+    const defaultCurrency = userData?.user_metadata?.default_currency || 'USD';
+    const currencySelect = document.getElementById('dealCurrency');
+    if (currencySelect) currencySelect.value = defaultCurrency;
+    modal.classList.add('active');
+});
     document.getElementById('closeModalBtn').addEventListener('click', () => modal.classList.remove('active'));
     modal.addEventListener('click', (e) => { if (e.target === modal) modal.classList.remove('active'); });
 

@@ -1039,7 +1039,9 @@ function setCachedData(key, data) {
             modalVendor.value = '';
             modalAmount.value = '';
             modalCategory.value = 'equipment';
-            modalCurrency.value = 'NGN';
+            const userData = JSON.parse(localStorage.getItem('paypoint_user') || '{}');
+const defaultCurrency = userData?.user_metadata?.default_currency || 'USD';
+modalCurrency.value = defaultCurrency;
             modalReceipt.value = '';
             receiptPreview.style.display = 'none';
             // Load deals into the dropdown

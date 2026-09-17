@@ -354,7 +354,9 @@
                     if (user) {
                         user.user_metadata = user.user_metadata || {};
                         user.user_metadata.default_currency = currency;
-                        localStorage.setItem('paypoint_user', JSON.stringify(user));
+localStorage.setItem('paypoint_user', JSON.stringify(user));
+// Also refresh the whole app so all pages see the new currency
+setTimeout(() => { window.location.reload(); }, 800);
                     }
                 } else {
                     showMessage('currencyMessage', '❌ ' + (result.error || 'Failed to update'), 'error');

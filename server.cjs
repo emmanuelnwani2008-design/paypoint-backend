@@ -1398,11 +1398,17 @@ app.get('/api/deals/export', authenticate, async (req, res) => {
 
         const { data: deals, error } = await supabaseAdmin
             .from('deals')
-            .select('brand_name, amount, currency, status, due_date, deliverable, notes, created_at')
+            .select('*')
             .in('user_id', ids)
             .order('created_at', { ascending: false });
 
-        if (error) throw error;
+        if (error) {
+            console.error('Export deals query error:', error);
+            return res.status(500).json({
+                error: 'Failed to export deals',
+                detail: error.message
+            });
+        }
 
         const headers = ['Brand', 'Amount', 'Currency', 'Status', 'Due Date', 'Deliverable', 'Notes', 'Created At'];
         const rows = (deals || []).map(d => [
@@ -1416,7 +1422,6 @@ app.get('/api/deals/export', authenticate, async (req, res) => {
             d.created_at ? new Date(d.created_at).toLocaleDateString() : ''
         ]);
 
-        // ✅ FIX: use csvEscape so commas/quotes/newlines don't corrupt the file
         let csv = headers.map(csvEscape).join(',') + '\n';
         rows.forEach(row => {
             csv += row.map(csvEscape).join(',') + '\n';
@@ -1427,7 +1432,10 @@ app.get('/api/deals/export', authenticate, async (req, res) => {
         res.send(csv);
     } catch (err) {
         console.error('Export deals error:', err);
-        res.status(500).json({ error: 'Failed to export deals' });
+        res.status(500).json({
+            error: 'Failed to export deals',
+            detail: err.message
+        });
     }
 });
 
@@ -1966,43 +1974,50 @@ app.get('/api/invoices', authenticate, async (req, res) => {
 // ============================================
 // EXPORT INVOICES TO CSV
 // ============================================
-app.get('/api/invoices/export', authenticate, async (req, res) => {
+app.get('/api/expenses/export', authenticate, async (req, res) => {
     try {
         const userId = req.userId;
         const fallbackUserId = req.reconciledUserId || null;
         const ids = [userId, fallbackUserId].filter(Boolean);
 
-        const { data: invoices, error } = await supabaseAdmin
-            .from('invoices')
-            .select('invoice_number, brand_name, total, currency, status, due_date, created_at')
+        const { data: expenses, error } = await supabaseAdmin
+            .from('expenses')
+            .select('*')
             .in('user_id', ids)
             .order('created_at', { ascending: false });
 
-        if (error) throw error;
+        if (error) {
+            console.error('Export expenses query error:', error);
+            return res.status(500).json({
+                error: 'Failed to export expenses',
+                detail: error.message
+            });
+        }
 
-        const headers = ['Invoice #', 'Brand', 'Total', 'Currency', 'Status', 'Due Date', 'Created At'];
-        const rows = (invoices || []).map(inv => [
-            inv.invoice_number || '',
-            inv.brand_name || '',
-            inv.total || 0,
-            inv.currency || 'USD',
-            inv.status || 'sent',
-            inv.due_date ? new Date(inv.due_date).toLocaleDateString() : '',
-            inv.created_at ? new Date(inv.created_at).toLocaleDateString() : ''
+        const headers = ['Vendor', 'Amount', 'Currency', 'Category', 'Receipt URL', 'Date'];
+        const rows = (expenses || []).map(e => [
+            e.vendor || '',
+            e.amount || 0,
+            e.currency || 'USD',
+            e.category || '',
+            e.receipt_url || '',
+            e.created_at ? new Date(e.created_at).toLocaleDateString() : ''
         ]);
 
-        // ✅ FIX: csvEscape on every field, and use reconciled ids
         let csv = headers.map(csvEscape).join(',') + '\n';
         rows.forEach(row => {
             csv += row.map(csvEscape).join(',') + '\n';
         });
 
         res.setHeader('Content-Type', 'text/csv; charset=utf-8');
-        res.setHeader('Content-Disposition', `attachment; filename=invoices-${Date.now()}.csv`);
+        res.setHeader('Content-Disposition', `attachment; filename=expenses-${Date.now()}.csv`);
         res.send(csv);
     } catch (err) {
-        console.error('Export invoices error:', err);
-        res.status(500).json({ error: 'Failed to export invoices' });
+        console.error('Export expenses error:', err);
+        res.status(500).json({
+            error: 'Failed to export expenses',
+            detail: err.message
+        });
     }
 });
 
