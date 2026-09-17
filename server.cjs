@@ -1974,34 +1974,35 @@ app.get('/api/invoices', authenticate, async (req, res) => {
 // ============================================
 // EXPORT INVOICES TO CSV
 // ============================================
-app.get('/api/expenses/export', authenticate, async (req, res) => {
+app.get('/api/invoices/export', authenticate, async (req, res) => {
     try {
         const userId = req.userId;
         const fallbackUserId = req.reconciledUserId || null;
         const ids = [userId, fallbackUserId].filter(Boolean);
 
-        const { data: expenses, error } = await supabaseAdmin
-            .from('expenses')
+        const { data: invoices, error } = await supabaseAdmin
+            .from('invoices')
             .select('*')
             .in('user_id', ids)
             .order('created_at', { ascending: false });
 
         if (error) {
-            console.error('Export expenses query error:', error);
+            console.error('Export invoices query error:', error);
             return res.status(500).json({
-                error: 'Failed to export expenses',
+                error: 'Failed to export invoices',
                 detail: error.message
             });
         }
 
-        const headers = ['Vendor', 'Amount', 'Currency', 'Category', 'Receipt URL', 'Date'];
-        const rows = (expenses || []).map(e => [
-            e.vendor || '',
-            e.amount || 0,
-            e.currency || 'USD',
-            e.category || '',
-            e.receipt_url || '',
-            e.created_at ? new Date(e.created_at).toLocaleDateString() : ''
+        const headers = ['Invoice #', 'Brand', 'Total', 'Currency', 'Status', 'Due Date', 'Created At'];
+        const rows = (invoices || []).map(inv => [
+            inv.invoice_number || '',
+            inv.brand_name || '',
+            inv.total || 0,
+            inv.currency || 'USD',
+            inv.status || 'sent',
+            inv.due_date ? new Date(inv.due_date).toLocaleDateString() : '',
+            inv.created_at ? new Date(inv.created_at).toLocaleDateString() : ''
         ]);
 
         let csv = headers.map(csvEscape).join(',') + '\n';
@@ -2010,12 +2011,12 @@ app.get('/api/expenses/export', authenticate, async (req, res) => {
         });
 
         res.setHeader('Content-Type', 'text/csv; charset=utf-8');
-        res.setHeader('Content-Disposition', `attachment; filename=expenses-${Date.now()}.csv`);
+        res.setHeader('Content-Disposition', `attachment; filename=invoices-${Date.now()}.csv`);
         res.send(csv);
     } catch (err) {
-        console.error('Export expenses error:', err);
+        console.error('Export invoices error:', err);
         res.status(500).json({
-            error: 'Failed to export expenses',
+            error: 'Failed to export invoices',
             detail: err.message
         });
     }
